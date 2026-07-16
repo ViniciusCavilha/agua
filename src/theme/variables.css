@@ -1,2 +1,8 @@
-/* For information on how to create your own theme, please refer to:
-http://ionicframework.com/docs/theming/ */
+:root {
+  --ion-font-family: 'DM Sans', system-ui, sans-serif;
+  --ion-background-color: #f4f7fb;
+  --ion-color-primary: #2875f4;
+}
+
+html, body { background: #f4f7fb; }
+button { font-family: inherit; }
