@@ -1,0 +1,7 @@
+{
+  "name": "Agua+",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue-vite"
+}
