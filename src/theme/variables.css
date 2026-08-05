@@ -1,8 +1,99 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
 :root {
-  --ion-font-family: 'DM Sans', system-ui, sans-serif;
-  --ion-background-color: #f4f7fb;
-  --ion-color-primary: #2875f4;
+  --ion-font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --ion-background-color: #f2f4f7;
+  --ion-color-primary: #0d4b5e;
+  --ion-text-color: #16343d;
+
+  --agua-petroleo: #0d4b5e;
+  --agua-agua: #1ca7a0;
+  --agua-claro: #f2f4f7;
+  --agua-branco: #ffffff;
+  --agua-sucesso: #22c55e;
+  --agua-alerta: #f59e0b;
+  --agua-erro: #ef4444;
+  --agua-texto: #16343d;
+  --agua-suave: #718087;
+  --agua-borda: #e1e7e8;
+  --agua-muted: #f7fbfb;
+  --agua-input-border: #d8e1e3;
+  --agua-danger-bg: #fff2f2;
+  --agua-danger-border: #ffd8d8;
+  --agua-auth-bg: linear-gradient(120deg, #ffffff, #f7fbfb 48%, #eaf4f4);
+  --agua-shadow: 0 20px 60px rgba(13, 75, 94, 0.1);
 }
 
-html, body { background: #f4f7fb; }
-button { font-family: inherit; }
+:root[data-theme='dark'] {
+  --ion-background-color: #08191f;
+  --ion-color-primary: #55d6ce;
+  --ion-text-color: #e6f4f5;
+
+  --agua-petroleo: #55d6ce;
+  --agua-agua: #28c4bc;
+  --agua-claro: #08191f;
+  --agua-branco: #10252d;
+  --agua-texto: #e6f4f5;
+  --agua-suave: #9cb5bc;
+  --agua-borda: #24414a;
+  --agua-muted: #132c34;
+  --agua-input-border: #31535d;
+  --agua-danger-bg: rgba(239, 68, 68, 0.12);
+  --agua-danger-border: rgba(239, 68, 68, 0.3);
+  --agua-auth-bg: linear-gradient(120deg, #08191f, #0d2028 48%, #0a2f34);
+  --agua-shadow: 0 20px 60px rgba(0, 0, 0, 0.24);
+}
+
+* {
+  box-sizing: border-box;
+}
+:root.theme-transitioning *,
+:root.theme-transitioning *::before,
+:root.theme-transitioning *::after {
+  transition:
+    background-color 0.34s ease,
+    background 0.34s ease,
+    border-color 0.34s ease,
+    box-shadow 0.34s ease,
+    color 0.34s ease,
+    fill 0.34s ease,
+    opacity 0.34s ease,
+    stroke 0.34s ease !important;
+}
+
+:root.theme-transitioning body,
+:root.theme-transitioning ion-content,
+:root.theme-transitioning ion-page {
+  transition: background-color 0.34s ease, color 0.34s ease !important;
+}
+
+html,
+body {
+  background: var(--agua-claro);
+}
+
+body {
+  color: var(--agua-texto);
+}
+
+button,
+input,
+select {
+  font-family: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+select {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] input,
+:root[data-theme='dark'] select {
+  color-scheme: dark;
+}
+
+
