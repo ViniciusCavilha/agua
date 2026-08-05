@@ -13,10 +13,10 @@
         </router-link>
       </nav>
 
-      <button class="settings" type="button">
+      <router-link class="settings" to="/configuracoes" :class="{ active: isActive('/configuracoes') }">
         <ion-icon :icon="settingsOutline" />
         Configuracoes
-      </button>
+      </router-link>
     </aside>
 
     <section class="workspace">
@@ -28,10 +28,18 @@
           <p>{{ eyebrow }}</p>
           <h1>{{ title }}</h1>
         </div>
-        <button v-if="showPeriod" class="period" type="button">
-          {{ periodLabel }}
-          <ion-icon :icon="chevronDownOutline" />
-        </button>
+        <div v-if="showPeriod" class="period-menu">
+          <button class="period" type="button" :aria-expanded="isPeriodMenuOpen" aria-haspopup="menu" @click="togglePeriodMenu">
+            {{ periodLabel }}
+            <ion-icon :icon="chevronDownOutline" />
+          </button>
+          <div v-if="isPeriodMenuOpen" class="period-card" role="menu">
+            <router-link v-for="option in periodOptions" :key="option.to" :to="option.to" role="menuitem" @click="closePeriodMenu">
+              <span>{{ option.label }}</span>
+              <small>{{ option.detail }}</small>
+            </router-link>
+          </div>
+        </div>
         <button class="icon-button" type="button" aria-label="Notificacoes">
           <ion-icon :icon="notificationsOutline" />
           <i />
@@ -51,6 +59,7 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { IonIcon } from '@ionic/vue';
 import {
@@ -85,6 +94,7 @@ defineProps({
 });
 
 const route = useRoute();
+const isPeriodMenuOpen = ref(false);
 
 const navItems = [
   { label: 'Inicio', shortLabel: 'Inicio', to: '/dashboard', icon: homeOutline },
@@ -93,7 +103,21 @@ const navItems = [
   { label: 'Perfil', shortLabel: 'Perfil', to: '/perfil', icon: personOutline },
 ];
 
-const isActive = (path) => route.path === path;
+const periodOptions = [
+  { label: 'Esta semana', detail: 'Resumo da semana atual', to: '/consumo' },
+  { label: 'Semana passada', detail: 'Resumo dos ultimos 7 dias fechados', to: '/consumo/semana-passada' },
+  { label: 'Mes passado', detail: 'Resumo do ciclo mensal anterior', to: '/consumo/mes-passado' },
+];
+
+const togglePeriodMenu = () => {
+  isPeriodMenuOpen.value = !isPeriodMenuOpen.value;
+};
+
+const closePeriodMenu = () => {
+  isPeriodMenuOpen.value = false;
+};
+
+const isActive = (path) => (path === '/consumo' ? route.path.startsWith('/consumo') : route.path === path);
 </script>
 
 <style scoped>
@@ -107,7 +131,7 @@ const isActive = (path) => route.path === path;
 }
 
 .sidebar {
-  background: var(--agua-petroleo);
+  background: linear-gradient(180deg, #08242c, #0a323b);
   color: var(--agua-branco);
   display: flex;
   flex-direction: column;
@@ -119,7 +143,7 @@ const isActive = (path) => route.path === path;
 
 .brand {
   align-items: center;
-  color: var(--agua-branco);
+  color: #7de2d9;
   display: inline-flex;
   font-size: 23px;
   font-weight: 700;
@@ -153,7 +177,7 @@ const isActive = (path) => route.path === path;
   background: transparent;
   border: 0;
   border-radius: 12px;
-  color: rgba(255, 255, 255, 0.74);
+  color: rgba(255, 255, 255, 0.82);
   cursor: pointer;
   display: flex;
   font: 600 13px Poppins, sans-serif;
@@ -166,8 +190,9 @@ const isActive = (path) => route.path === path;
 
 .side-nav a.active,
 .side-nav a:hover,
+.settings.active,
 .settings:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.14);
   color: var(--agua-branco);
 }
 
@@ -247,6 +272,50 @@ const isActive = (path) => route.path === path;
   padding: 0 14px;
 }
 
+.period-menu {
+  position: relative;
+}
+
+.period-card {
+  background: var(--agua-branco);
+  border: 1px solid var(--agua-borda);
+  border-radius: 16px;
+  box-shadow: var(--agua-shadow);
+  display: grid;
+  gap: 4px;
+  min-width: 230px;
+  padding: 8px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  z-index: 5;
+}
+
+.period-card a {
+  border-radius: 12px;
+  color: var(--agua-petroleo);
+  display: grid;
+  gap: 3px;
+  padding: 11px 12px;
+  text-decoration: none;
+}
+
+.period-card a:hover,
+.period-card a.router-link-active {
+  background: #f0fbfa;
+}
+
+.period-card span {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.period-card small {
+  color: var(--agua-suave);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
 .mobile-only,
 .bottom-nav {
   display: none;
@@ -318,8 +387,19 @@ const isActive = (path) => route.path === path;
     gap: 10px;
   }
 
-  .period {
-    display: none;
+  .topbar {
+    align-items: start;
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .period-menu {
+    grid-column: 2 / 4;
+    justify-self: start;
+  }
+
+  .period-card {
+    left: 0;
+    right: auto;
   }
 }
 </style>

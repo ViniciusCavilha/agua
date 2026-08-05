@@ -23,7 +23,7 @@
                 Nome completo
                 <span class="input-shell">
                   <ion-icon :icon="personOutline" />
-                  <input v-model="name" type="text" autocomplete="name" placeholder="Seu nome" required />
+                  <input :value="name" type="text" autocomplete="name" placeholder="Seu nome" required @input="updateName" />
                 </span>
               </label>
 
@@ -31,7 +31,16 @@
                 Telefone
                 <span class="input-shell">
                   <ion-icon :icon="callOutline" />
-                  <input v-model="phone" type="tel" autocomplete="tel" placeholder="(00) 00000-0000" required />
+                  <input
+                    :value="phone"
+                    type="tel"
+                    autocomplete="tel"
+                    inputmode="numeric"
+                    maxlength="15"
+                    placeholder="(00) 00000-0000"
+                    required
+                    @input="updatePhone"
+                  />
                 </span>
               </label>
             </div>
@@ -49,14 +58,21 @@
                 Instituicao
                 <span class="input-shell">
                   <ion-icon :icon="businessOutline" />
-                  <input v-model="company" type="text" autocomplete="organization" placeholder="Ex: Senac" required />
+                  <input
+                    :value="company"
+                    type="text"
+                    autocomplete="organization"
+                    placeholder="Ex: Senac"
+                    required
+                    @input="updateCompany"
+                  />
                 </span>
               </label>
               <UnitPicker v-if="unitOptions.length" v-model="unit" :options="unitOptions" locked-light />
             </div>
 
             <div class="field-grid">
-              <label>
+              <label v-if="!isGoogleRegistration">
                 Senha
                 <span class="input-shell password">
                   <ion-icon :icon="lockClosedOutline" />
@@ -67,7 +83,7 @@
                 </span>
               </label>
 
-              <label>
+              <label v-if="!isGoogleRegistration">
                 Confirmar senha
                 <span class="input-shell password">
                   <ion-icon :icon="lockClosedOutline" />
@@ -82,10 +98,19 @@
             </label>
 
             <PrimaryButton :disabled="!canSubmit">
-              Criar conta
+              {{ loading ? 'Criando conta...' : 'Criar conta' }}
               <ion-icon :icon="arrowForwardOutline" />
             </PrimaryButton>
           </form>
+
+          <p v-if="errorMessage" class="auth-error">{{ errorMessage }}</p>
+
+          <div class="divider"><span />ou cadastre com<span /></div>
+
+          <SecondaryButton :disabled="loading" @click="googleSignup">
+            <ion-icon :icon="logoGoogle" />
+            Google
+          </SecondaryButton>
 
           <p class="switch-auth">Ja tem uma conta? <router-link to="/login">Entrar</router-link></p>
         </section>
@@ -110,7 +135,7 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { IonContent, IonIcon, IonPage } from '@ionic/vue';
 import {
   arrowForwardOutline,
@@ -120,16 +145,20 @@ import {
   eyeOffOutline,
   eyeOutline,
   lockClosedOutline,
+  logoGoogle,
   mailOutline,
   personAddOutline,
   personOutline,
   waterOutline,
 } from 'ionicons/icons';
 import PrimaryButton from '../components/PrimaryButton.vue';
+import SecondaryButton from '../components/SecondaryButton.vue';
 import UnitPicker from '../components/UnitPicker.vue';
 import { getAvailableUnits, saveAccount } from '../data/account-store.js';
+import { createFirebaseAccount, getCurrentUser, isFirebaseReady, loginWithGoogle } from '../services/firebase.js';
 
 const router = useRouter();
+const route = useRoute();
 const name = ref('');
 const phone = ref('');
 const email = ref('');
@@ -139,6 +168,28 @@ const password = ref('');
 const confirmPassword = ref('');
 const acceptedTerms = ref(false);
 const showPassword = ref(false);
+const loading = ref(false);
+const errorMessage = ref('');
+const googleAvatarImage = ref('');
+const isGoogleRegistration = ref(false);
+
+const formatPhone = (value) => {
+  const digits = String(value || '').replace(/\D/g, '').slice(0, 11);
+
+  if (digits.length <= 2) {
+    return digits ? `(${digits}` : '';
+  }
+
+  if (digits.length <= 6) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  }
+
+  if (digits.length <= 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+};
 
 const unitOptions = computed(() => getAvailableUnits(company.value));
 
@@ -155,27 +206,121 @@ const canSubmit = computed(() => {
     email.value &&
     company.value &&
     (!unitOptions.value.length || unit.value) &&
-    password.value.length >= 8 &&
-    password.value === confirmPassword.value &&
+    (isGoogleRegistration.value || (password.value.length >= 8 && password.value === confirmPassword.value)) &&
     acceptedTerms.value,
   );
 });
 
-const createAccount = () => {
+const updatePhone = (event) => {
+  phone.value = formatPhone(event.target.value);
+};
+
+const capitalizeWords = (value) => {
+  return String(value || '').replace(/(^|\s)(\S)/g, (match, space, letter) => `${space}${letter.toUpperCase()}`);
+};
+
+const updateName = (event) => {
+  name.value = capitalizeWords(event.target.value);
+};
+
+const capitalizeFirstLetter = (value) => {
+  const text = String(value || '');
+  return text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
+};
+
+const updateCompany = (event) => {
+  company.value = capitalizeFirstLetter(event.target.value);
+};
+
+const getAuthMessage = (error) => {
+  const code = error?.code || '';
+
+  if (code.includes('email-already-in-use')) {
+    return 'Esse e-mail ja esta cadastrado.';
+  }
+
+  if (code.includes('weak-password')) {
+    return 'Use uma senha mais forte, com pelo menos 8 caracteres.';
+  }
+
+  return error?.message || 'Nao foi possivel criar a conta agora.';
+};
+
+const createAccount = async () => {
   if (!canSubmit.value) {
     return;
   }
 
-  saveAccount({
+  errorMessage.value = '';
+  const account = {
     name: name.value,
-    phone: phone.value,
+    phone: formatPhone(phone.value),
     email: email.value,
     company: company.value,
     unit: unitOptions.value.length ? unit.value : '',
-  });
+  };
 
-  router.push('/dashboard');
+  try {
+    loading.value = true;
+
+    if (isFirebaseReady()) {
+      const firebaseAccount = await createFirebaseAccount({
+        ...account,
+        password: password.value,
+        avatarImage: googleAvatarImage.value,
+      });
+      saveAccount(firebaseAccount);
+    } else {
+      saveAccount(account);
+    }
+
+    router.push('/dashboard');
+  } catch (error) {
+    errorMessage.value = getAuthMessage(error);
+  } finally {
+    loading.value = false;
+  }
 };
+
+const googleSignup = async () => {
+  errorMessage.value = '';
+
+  try {
+    loading.value = true;
+    const { account, profileComplete } = await loginWithGoogle();
+    saveAccount(account);
+
+    if (profileComplete) {
+      router.push('/dashboard');
+      return;
+    }
+
+    name.value = account.name;
+    email.value = account.email;
+    phone.value = formatPhone(account.phone);
+    googleAvatarImage.value = account.avatarImage || '';
+    isGoogleRegistration.value = true;
+  } catch (error) {
+    errorMessage.value = getAuthMessage(error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const fillGoogleRegistration = () => {
+  const currentUser = getCurrentUser();
+
+  if (!currentUser || route.query.google !== '1') {
+    return;
+  }
+
+  name.value = currentUser.displayName || name.value;
+  email.value = currentUser.email || email.value;
+  googleAvatarImage.value = currentUser.photoURL || '';
+  isGoogleRegistration.value = true;
+};
+
+fillGoogleRegistration();
 </script>
 
 <style scoped>
@@ -360,6 +505,33 @@ select {
   font-size: 12px;
   margin: 24px 0 0;
   text-align: center;
+}
+
+.auth-error {
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: 14px;
+  color: #be123c;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+  margin: 14px 0 0;
+  padding: 12px 14px;
+}
+
+.divider {
+  align-items: center;
+  color: #8a9a9f;
+  display: flex;
+  font-size: 12px;
+  gap: 12px;
+  margin: 22px 0 14px;
+}
+
+.divider span {
+  background: #e4eaeb;
+  flex: 1;
+  height: 1px;
 }
 
 .switch-auth a {

@@ -8,12 +8,12 @@
             <h2>Pronto para receber dados do hidrometro.</h2>
             <p>{{ dashboardData.target }}</p>
           </div>
-          <strong>{{ dashboardData.today }}</strong>
+          <strong>{{ currentConsumption }}</strong>
         </section>
 
         <section class="grid">
           <div class="main-column">
-            <MetricCard title="Consumo hoje" :value="dashboardData.today" :variation="dashboardData.variation" trend="neutral" />
+            <MetricCard title="Consumo hoje" :value="currentConsumption" :variation="dashboardStatus" trend="neutral" />
 
             <article class="chart-card">
               <div class="card-title">
@@ -21,7 +21,7 @@
                   <h2>Consumo de agua</h2>
                   <p>Ultimas 24 horas</p>
                 </div>
-                <span class="waiting"><i /> Aguardando dados</span>
+                <span class="waiting"><i /> {{ settings.simulationMode ? 'Simulacao ativa' : 'Aguardando dados' }}</span>
               </div>
 
               <div class="chart" aria-label="Grafico de consumo das ultimas 24 horas">
@@ -72,7 +72,7 @@
                   <p>Indicadores principais</p>
                 </div>
               </div>
-              <ListItem v-for="metric in dashboardData.monthly" :key="metric.label" v-bind="metric" @click="openMetricInfo(metric)" />
+              <ListItem v-for="metric in visibleMonthlyMetrics" :key="metric.label" v-bind="metric" @click="openMetricInfo(metric)" />
             </article>
 
             <article v-if="dashboardGoal" class="target-card">
@@ -116,9 +116,26 @@ import ListItem from '../components/ListItem.vue';
 import MetricCard from '../components/MetricCard.vue';
 import { userGoals } from '../data/goals-store.js';
 import { dashboardData } from '../data/mock-data.js';
+import { formatVolume, getSettings } from '../data/settings-store.js';
 
 const selectedMetric = ref(null);
+const settings = getSettings();
 const dashboardGoal = computed(() => userGoals.value[0] || null);
+const currentConsumption = computed(() => formatVolume(settings.anomalyDemo ? 720 : 0, settings));
+const dashboardStatus = computed(() => {
+  if (settings.anomalyDemo) {
+    return 'Cenario de anomalia ativo';
+  }
+
+  return settings.simulationMode ? `Simulando a cada ${settings.readingInterval}s` : dashboardData.variation;
+});
+const visibleMonthlyMetrics = computed(() => dashboardData.monthly.map((metric) => {
+  if (metric.value === '0 L') {
+    return { ...metric, value: formatVolume(0, settings) };
+  }
+
+  return metric;
+}));
 
 const openMetricInfo = (metric) => {
   selectedMetric.value = metric;

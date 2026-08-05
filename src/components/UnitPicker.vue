@@ -1,7 +1,7 @@
 ﻿<template>
   <div v-if="modelValue && !isExpanded" :class="['unit-summary', { light: lockedLight }]">
     <span>Unidade principal</span>
-    <button class="summary-box" type="button" @click="openPicker">
+    <button class="summary-box" type="button" :disabled="disabled" @click="openPicker">
       <span>
         <ion-icon :icon="businessOutline" />
         <strong>{{ modelValue }}</strong>
@@ -29,7 +29,7 @@
 
     <div class="search-box">
       <ion-icon :icon="searchOutline" />
-      <input v-model="search" type="search" placeholder="Buscar por estado ou sigla, ex: SC" />
+      <input v-model="search" type="search" :disabled="disabled" placeholder="Buscar por estado ou sigla, ex: SC" />
     </div>
 
     <div class="unit-list" role="listbox" aria-label="Unidades Senac">
@@ -37,6 +37,7 @@
         v-for="option in filteredOptions"
         :key="option"
         :class="{ active: option === modelValue }"
+        :disabled="disabled"
         type="button"
         @click="selectUnit(option)"
       >
@@ -70,6 +71,10 @@ const props = defineProps({
     default: () => [],
   },
   lockedLight: {
+    type: Boolean,
+    default: false,
+  },
+  disabled: {
     type: Boolean,
     default: false,
   },
@@ -110,10 +115,18 @@ watch(
 );
 
 const openPicker = () => {
+  if (props.disabled) {
+    return;
+  }
+
   isExpanded.value = true;
 };
 
 const selectUnit = (option) => {
+  if (props.disabled) {
+    return;
+  }
+
   emit('update:modelValue', option);
   search.value = '';
   isExpanded.value = false;
@@ -185,6 +198,13 @@ const selectUnit = (option) => {
   border-color: var(--picker-accent);
   box-shadow: 0 0 0 4px rgba(28, 167, 160, 0.14);
   transform: translateY(-1px);
+}
+
+.summary-box:disabled,
+.unit-list button:disabled,
+.search-box input:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
 }
 
 .summary-box > span,

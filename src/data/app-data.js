@@ -1,5 +1,5 @@
 ﻿export const consumptionStats = [
-  { label: 'Hoje', value: '0 L', detail: 'Aguardando dados' },
+  { label: 'Esta semana', value: '0 L', detail: 'Consumo acumulado semanal' },
   { label: 'Media diaria', value: '0 L', detail: 'Aguardando dados' },
   { label: 'Pico do dia', value: '0 L', detail: 'Aguardando dados' },
   { label: 'Custo estimado', value: 'R$ 0,00', detail: 'Aguardando tarifa' },
@@ -12,7 +12,7 @@ export const weeklyBars = [
   { day: 'Qui', value: 0, liters: '0 L' },
   { day: 'Sex', value: 0, liters: '0 L' },
   { day: 'Sab', value: 0, liters: '0 L' },
-  { day: 'Hoje', value: 0, liters: '0 L' },
+  { day: 'Dom', value: 0, liters: '0 L' },
 ];
 
 export const readings = [];

@@ -96,4 +96,19 @@ select {
   color-scheme: dark;
 }
 
+:root[data-compact='true'] {
+  --agua-shadow: 0 12px 34px rgba(13, 75, 94, 0.08);
+}
+
+:root[data-compact='true'] .workspace {
+  padding-top: 20px;
+}
+
+:root[data-compact='true'] article,
+:root[data-compact='true'] .profile-card,
+:root[data-compact='true'] .settings-panel,
+:root[data-compact='true'] .summary-panel {
+  border-radius: 14px;
+}
+
 

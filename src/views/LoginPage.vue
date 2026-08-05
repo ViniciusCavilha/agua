@@ -47,16 +47,18 @@
             </div>
 
             <PrimaryButton>
-              Entrar
+              {{ loading ? 'Entrando...' : 'Entrar' }}
               <ion-icon :icon="arrowForwardOutline" />
             </PrimaryButton>
           </form>
 
+          <p v-if="errorMessage" class="auth-error">{{ errorMessage }}</p>
+
           <div class="divider"><span />ou continue com<span /></div>
 
           <div class="social">
-            <SecondaryButton><ion-icon :icon="logoGoogle" /> Google</SecondaryButton>
-            <SecondaryButton><ion-icon :icon="logoApple" /> Apple</SecondaryButton>
+            <SecondaryButton :disabled="loading" @click="googleLogin"><ion-icon :icon="logoGoogle" /> Google</SecondaryButton>
+            <SecondaryButton disabled><ion-icon :icon="logoApple" /> Apple</SecondaryButton>
           </div>
 
           <p class="signup">Nao tem uma conta? <router-link to="/cadastro">Cadastre-se</router-link></p>
@@ -99,14 +101,78 @@ import {
 } from 'ionicons/icons';
 import PrimaryButton from '../components/PrimaryButton.vue';
 import SecondaryButton from '../components/SecondaryButton.vue';
+import { isFirebaseReady, loginWithEmail, loginWithGoogle } from '../services/firebase.js';
+import { saveAccount } from '../data/account-store.js';
 
 const router = useRouter();
 const email = ref('');
 const password = ref('');
 const remember = ref(false);
 const showPassword = ref(false);
+const loading = ref(false);
+const errorMessage = ref('');
 
-const login = () => router.push('/dashboard');
+const finishLogin = (account) => {
+  if (account) {
+    saveAccount(account);
+  }
+
+  router.push('/dashboard');
+};
+
+const getAuthMessage = (error) => {
+  const code = error?.code || '';
+
+  if (code.includes('invalid-credential') || code.includes('wrong-password') || code.includes('user-not-found')) {
+    return 'E-mail ou senha incorretos.';
+  }
+
+  if (code.includes('popup-closed-by-user')) {
+    return 'Login com Google cancelado.';
+  }
+
+  return error?.message || 'Nao foi possivel entrar agora.';
+};
+
+const login = async () => {
+  errorMessage.value = '';
+
+  if (!isFirebaseReady()) {
+    finishLogin();
+    return;
+  }
+
+  try {
+    loading.value = true;
+    const account = await loginWithEmail(email.value, password.value);
+    finishLogin(account);
+  } catch (error) {
+    errorMessage.value = getAuthMessage(error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const googleLogin = async () => {
+  errorMessage.value = '';
+
+  try {
+    loading.value = true;
+    const { account, profileComplete } = await loginWithGoogle();
+    saveAccount(account);
+
+    if (!profileComplete) {
+      router.push('/cadastro?google=1');
+      return;
+    }
+
+    finishLogin(account);
+  } catch (error) {
+    errorMessage.value = getAuthMessage(error);
+  } finally {
+    loading.value = false;
+  }
+};
 </script>
 
 <style scoped>
@@ -288,6 +354,18 @@ input:focus {
   font-size: 12px;
   gap: 12px;
   margin: 25px 0 17px;
+}
+
+.auth-error {
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: 14px;
+  color: #be123c;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+  margin: 14px 0 0;
+  padding: 12px 14px;
 }
 
 .divider span {

@@ -1,9 +1,9 @@
-﻿<template>
+<template>
   <ion-page>
     <ion-content :fullscreen="true">
-      <AppShell title="Consumo" period-label="7 dias">
+      <AppShell title="Consumo" :period-label="periodLabel">
         <section class="summary-grid">
-          <article v-for="item in visibleConsumptionStats" :key="item.label" class="stat-card">
+          <article v-for="item in stats" :key="item.label" class="stat-card">
             <span>{{ item.label }}</span>
             <strong>{{ item.value }}</strong>
             <p>{{ item.detail }}</p>
@@ -14,16 +14,16 @@
           <article class="usage-card">
             <div class="card-title">
               <div>
-                <h2>Historico semanal</h2>
-                <p>Consumo por dia em {{ volumeUnitLabel }}</p>
+                <h2>{{ chartTitle }}</h2>
+                <p>Consumo por dia em litros</p>
               </div>
-              <span><ion-icon :icon="calendarOutline" /> {{ settings.simulationMode ? 'Semana simulada' : 'Semana atual' }}</span>
+              <span><ion-icon :icon="calendarOutline" /> {{ chartBadge }}</span>
             </div>
 
-            <div class="bar-chart" aria-label="Grafico semanal de consumo">
-              <div v-for="bar in visibleWeeklyBars" :key="bar.day" class="bar-item">
+            <div class="bar-chart" aria-label="Grafico do periodo selecionado">
+              <div v-for="bar in bars" :key="bar.day" class="bar-item">
                 <strong>{{ bar.liters }}</strong>
-                <span :class="{ empty: bar.value === 0 }" :style="{ height: bar.value ? bar.value + '%' : '0%' }" />
+                <span class="empty" />
                 <small>{{ bar.day }}</small>
               </div>
             </div>
@@ -31,11 +31,11 @@
 
           <article class="alert-card">
             <span class="alert-icon"><ion-icon :icon="alertCircleOutline" /></span>
-            <h2>{{ settings.anomalyDemo ? 'Anomalia simulada' : 'Aguardando leituras' }}</h2>
-            <p>{{ alertMessage }}</p>
+            <h2>Periodo sem leituras</h2>
+            <p>Esta tela ja esta pronta para receber os dados historicos quando o hidrometro for conectado.</p>
             <div class="health-row">
-              <span>{{ settings.simulationMode ? 'Motor de simulacao' : 'Saude da rede' }}</span>
-              <strong>{{ settings.simulationMode ? settings.readingInterval + 's' : '0%' }}</strong>
+              <span>Total registrado</span>
+              <strong>0 L</strong>
             </div>
           </article>
         </section>
@@ -43,23 +43,14 @@
         <article class="readings-card">
           <div class="card-title">
             <div>
-              <h2>Ultimas leituras</h2>
+              <h2>Leituras do periodo</h2>
               <p>Eventos capturados pelos medidores</p>
             </div>
           </div>
 
-          <div v-if="readings.length" class="readings-list">
-            <div v-for="reading in readings" :key="reading.time + reading.area" class="reading-row">
-              <span>{{ reading.time }}</span>
-              <strong>{{ reading.area }}</strong>
-              <em>{{ reading.liters }}</em>
-              <small>{{ reading.status }}</small>
-            </div>
-          </div>
-
-          <div v-else class="empty-readings">
+          <div class="empty-readings">
             <strong>Nenhuma leitura registrada</strong>
-            <p>Quando o sistema receber os primeiros dados, eles serao listados automaticamente aqui.</p>
+            <p>Os registros deste periodo aparecerao aqui automaticamente quando houver historico disponivel.</p>
           </div>
         </article>
       </AppShell>
@@ -68,39 +59,38 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import { IonContent, IonIcon, IonPage } from '@ionic/vue';
 import { alertCircleOutline, calendarOutline } from 'ionicons/icons';
 import AppShell from '../components/AppShell.vue';
-import { consumptionStats, readings, weeklyBars } from '../data/app-data.js';
-import { formatVolume, getSettings } from '../data/settings-store.js';
 
-const settings = getSettings();
-
-const volumeUnitLabel = settings.measurementUnit === 'Metros cubicos' ? 'm3' : 'litros';
-
-const visibleConsumptionStats = consumptionStats.map((item) => {
-  if (item.value === '0 L') {
-    return { ...item, value: formatVolume(0, settings) };
-  }
-
-  return item;
+const props = defineProps({
+  periodLabel: {
+    type: String,
+    required: true,
+  },
+  chartTitle: {
+    type: String,
+    required: true,
+  },
+  chartBadge: {
+    type: String,
+    required: true,
+  },
+  days: {
+    type: Array,
+    required: true,
+  },
 });
 
-const visibleWeeklyBars = weeklyBars.map((bar, index) => {
-  if (!settings.simulationMode) {
-    return { ...bar, liters: formatVolume(0, settings) };
-  }
+const stats = computed(() => [
+  { label: props.periodLabel, value: '0 L', detail: 'Aguardando dados' },
+  { label: 'Media diaria', value: '0 L', detail: 'Aguardando dados' },
+  { label: 'Pico do periodo', value: '0 L', detail: 'Aguardando dados' },
+  { label: 'Custo estimado', value: 'R$ 0,00', detail: 'Aguardando tarifa' },
+]);
 
-  if (settings.anomalyDemo && index === weeklyBars.length - 1) {
-    return { ...bar, value: 72, liters: formatVolume(720, settings) };
-  }
-
-  return { ...bar, liters: formatVolume(0, settings) };
-});
-
-const alertMessage = settings.anomalyDemo
-  ? 'Cenario de demonstracao ativo: o sistema simula consumo fora do padrao para testar alertas.'
-  : 'Assim que os medidores enviarem informacoes, os alertas e variacoes aparecem aqui.';
+const bars = computed(() => props.days.map((day) => ({ day, liters: '0 L' })));
 </script>
 
 <style scoped>
@@ -211,16 +201,11 @@ const alertMessage = settings.anomalyDemo
 
 .bar-item span {
   align-self: end;
-  background: linear-gradient(180deg, var(--agua-agua), var(--agua-petroleo));
-  border-radius: 999px 999px 6px 6px;
-  min-height: 28px;
-  width: min(100%, 34px);
-}
-
-.bar-item span.empty {
   background: rgba(31, 206, 195, 0.18);
   border: 1px solid rgba(31, 206, 195, 0.28);
+  border-radius: 999px 999px 6px 6px;
   min-height: 8px;
+  width: min(100%, 34px);
 }
 
 .bar-item small {
@@ -271,12 +256,6 @@ const alertMessage = settings.anomalyDemo
   margin-top: 20px;
 }
 
-.readings-list {
-  display: grid;
-  gap: 10px;
-  margin-top: 16px;
-}
-
 .empty-readings {
   background: #f7fbfb;
   border: 1px dashed #cfe2e5;
@@ -299,36 +278,6 @@ const alertMessage = settings.anomalyDemo
   margin: 0;
 }
 
-.reading-row {
-  align-items: center;
-  background: #f7fbfb;
-  border: 1px solid #edf2f2;
-  border-radius: 14px;
-  display: grid;
-  gap: 10px;
-  grid-template-columns: 70px 1fr 90px 150px;
-  padding: 13px 14px;
-}
-
-.reading-row span,
-.reading-row small {
-  color: var(--agua-suave);
-  font-size: 12px;
-  font-style: normal;
-}
-
-.reading-row strong {
-  color: var(--agua-texto);
-  font-size: 13px;
-}
-
-.reading-row em {
-  color: var(--agua-petroleo);
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 700;
-}
-
 @media (max-width: 980px) {
   .summary-grid,
   .content-grid {
@@ -343,11 +292,6 @@ const alertMessage = settings.anomalyDemo
 @media (max-width: 620px) {
   .summary-grid,
   .content-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .reading-row {
-    align-items: start;
     grid-template-columns: 1fr;
   }
 }
