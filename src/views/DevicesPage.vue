@@ -8,10 +8,16 @@
             <h2>ESP32 e sensor de vazao prontos para integracao futura.</h2>
             <p>Os dados abaixo continuam simulados, mas seguem o formato esperado para o hardware real.</p>
           </div>
-          <button type="button" @click="addSimulatedDevice">
-            <ion-icon :icon="addOutline" />
-            Adicionar simulado
-          </button>
+          <div class="toolbar-actions">
+            <button class="link-device-button" type="button" @click="openLinkModal">
+              <ion-icon :icon="linkOutline" />
+              Vincular por codigo
+            </button>
+            <button type="button" @click="addSimulatedDevice">
+              <ion-icon :icon="addOutline" />
+              Adicionar simulado
+            </button>
+          </div>
         </section>
 
         <section class="architecture-grid">
@@ -92,8 +98,72 @@
         <article v-if="!devices.length && !errorMessage" class="empty-devices">
           <span><ion-icon :icon="hardwareChipOutline" /></span>
           <h2>Nenhum dispositivo preparado ainda.</h2>
-          <p>Crie um dispositivo simulado para deixar o Firestore pronto para receber leituras do ESP32 no futuro.</p>
+          <p>Vincule um codigo de dispositivo ou crie um simulado para preparar o Firestore para o ESP32 no futuro.</p>
         </article>
+
+        <div v-if="isLinkModalOpen" class="modal-backdrop" role="presentation" @click.self="closeLinkModal">
+          <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="device-link-title">
+            <div class="modal-title">
+              <span class="modal-icon edit-icon"><ion-icon :icon="linkOutline" /></span>
+              <div>
+                <h2 id="device-link-title">Vincular dispositivo</h2>
+                <p>Use o codigo que sera gravado no ESP32 para conectar este monitor a sua conta.</p>
+              </div>
+            </div>
+
+            <form class="edit-form" @submit.prevent="saveLinkedDevice">
+              <label>
+                Codigo do dispositivo
+                <input v-model="linkForm.deviceCode" type="text" placeholder="Ex: ESP32-FLOW-001" required @input="formatDeviceCode" />
+              </label>
+              <label>
+                Nome do dispositivo
+                <input v-model="linkForm.name" type="text" placeholder="Ex: Caixa d'agua principal" required />
+              </label>
+              <label>
+                Local de instalacao
+                <input v-model="linkForm.location" type="text" placeholder="Ex: Laboratorio 2" required />
+              </label>
+              <label>
+                Unidade vinculada
+                <input v-model="linkForm.unit" type="text" placeholder="Ex: Senac SC" />
+              </label>
+              <label>
+                Modelo do sensor
+                <select v-model="linkForm.sensorModel">
+                  <option v-for="model in sensorModels" :key="model" :value="model">{{ model }}</option>
+                </select>
+              </label>
+              <label>
+                Codigo do sensor
+                <input v-model="linkForm.sensorCode" type="text" placeholder="Ex: FLOW-YF-S201-001" @input="formatSensorCode" />
+              </label>
+              <label>
+                Fator de calibracao
+                <input v-model.number="linkForm.calibrationFactor" type="number" min="0.1" step="0.1" required />
+              </label>
+              <label>
+                Intervalo de envio
+                <select v-model.number="linkForm.readingInterval">
+                  <option :value="5">5 segundos</option>
+                  <option :value="10">10 segundos</option>
+                  <option :value="30">30 segundos</option>
+                  <option :value="60">60 segundos</option>
+                </select>
+              </label>
+
+              <p v-if="linkError" class="modal-error">{{ linkError }}</p>
+
+              <div class="modal-actions">
+                <button class="cancel-delete" type="button" @click="closeLinkModal">Cancelar</button>
+                <button class="save-edit" type="submit" :disabled="loading">
+                  <ion-icon :icon="linkOutline" />
+                  Vincular
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
 
         <div v-if="deviceToDelete" class="modal-backdrop" role="presentation" @click.self="closeDeleteModal">
           <section class="delete-modal" role="dialog" aria-modal="true" aria-labelledby="device-delete-title">
@@ -193,6 +263,7 @@ import {
   analyticsOutline,
   createOutline,
   hardwareChipOutline,
+  linkOutline,
   pulseOutline,
   radioOutline,
   saveOutline,
@@ -204,6 +275,7 @@ import {
   createSimulatedDevice,
   DEVICE_STATUSES,
   SENSOR_MODELS,
+  linkDeviceByCode,
   listDevices,
   removeDevice,
   updateDevice,
@@ -213,12 +285,24 @@ import {
 const devices = ref([]);
 const loading = ref(false);
 const errorMessage = ref('');
+const linkError = ref('');
 const deviceToDelete = ref(null);
 const deviceToEdit = ref(null);
+const isLinkModalOpen = ref(false);
 const editForm = ref(null);
+const account = getAccount();
+const linkForm = ref({
+  deviceCode: '',
+  name: '',
+  location: '',
+  unit: account.unit || '',
+  sensorModel: 'YF-S201',
+  sensorCode: '',
+  calibrationFactor: 7.5,
+  readingInterval: 10,
+});
 const statuses = DEVICE_STATUSES;
 const sensorModels = SENSOR_MODELS;
-const account = getAccount();
 
 const architectureItems = computed(() => [
   { label: 'Dispositivos', value: `${devices.value.length} cadastrados`, icon: hardwareChipOutline },
@@ -249,6 +333,63 @@ const addSimulatedDevice = async () => {
     await loadDevices();
   } catch (error) {
     errorMessage.value = 'Nao foi possivel criar o dispositivo simulado agora.';
+  }
+  loading.value = false;
+};
+
+const resetLinkForm = () => {
+  linkForm.value = {
+    deviceCode: '',
+    name: '',
+    location: '',
+    unit: account.unit || '',
+    sensorModel: 'YF-S201',
+    sensorCode: '',
+    calibrationFactor: 7.5,
+    readingInterval: 10,
+  };
+  linkError.value = '';
+};
+
+const openLinkModal = () => {
+  resetLinkForm();
+  isLinkModalOpen.value = true;
+};
+
+const closeLinkModal = () => {
+  isLinkModalOpen.value = false;
+  linkError.value = '';
+};
+
+const normalizeCodeInput = (value) => {
+  return String(value || '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9-]/g, '')
+    .slice(0, 32);
+};
+
+const formatDeviceCode = () => {
+  linkForm.value.deviceCode = normalizeCodeInput(linkForm.value.deviceCode);
+};
+
+const formatSensorCode = () => {
+  linkForm.value.sensorCode = normalizeCodeInput(linkForm.value.sensorCode);
+};
+
+const saveLinkedDevice = async () => {
+  if (loading.value) {
+    return;
+  }
+
+  loading.value = true;
+  try {
+    errorMessage.value = '';
+    linkError.value = '';
+    await linkDeviceByCode(linkForm.value);
+    closeLinkModal();
+    await loadDevices();
+  } catch (error) {
+    linkError.value = error.message || 'Nao foi possivel vincular este dispositivo.';
   }
   loading.value = false;
 };
@@ -356,7 +497,7 @@ onMounted(loadDevices);
 }
 
 .devices-toolbar span {
-  color: #7de2d9;
+  color: #0b4a55;
   display: block;
   font-size: 12px;
   font-weight: 700;
@@ -371,7 +512,7 @@ onMounted(loadDevices);
 }
 
 .devices-toolbar p {
-  color: #d3e5e8;
+  color: #155a66;
   font-size: 13px;
   line-height: 1.7;
   margin: 12px 0 0;
@@ -393,6 +534,20 @@ onMounted(loadDevices);
   background: #7de2d9;
   border: 1px solid #7de2d9;
   color: #073039;
+}
+
+.toolbar-actions {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: end;
+}
+
+.devices-toolbar .link-device-button {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.26);
+  color: var(--agua-branco);
 }
 
 .architecture-grid,
@@ -680,6 +835,19 @@ onMounted(loadDevices);
   grid-column: 1 / -1;
 }
 
+.modal-error {
+  background: var(--agua-danger-bg);
+  border: 1px solid var(--agua-danger-border);
+  border-radius: 14px;
+  color: var(--agua-erro);
+  font-size: 12px;
+  font-weight: 700;
+  grid-column: 1 / -1;
+  line-height: 1.5;
+  margin: 0;
+  padding: 12px 14px;
+}
+
 .modal-actions {
   display: flex;
   flex-wrap: wrap;
@@ -725,6 +893,11 @@ onMounted(loadDevices);
   padding: 0 16px;
 }
 
+.save-edit:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
 @media (max-width: 980px) {
   .devices-toolbar,
   .device-grid {
@@ -733,6 +906,10 @@ onMounted(loadDevices);
 
   .architecture-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .toolbar-actions {
+    justify-content: start;
   }
 }
 

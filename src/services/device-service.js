@@ -10,6 +10,7 @@ import {
   setDoc,
 } from 'firebase/firestore';
 import { getCurrentUser, getFirestoreDb, isFirebaseReady } from './firebase.js';
+import { normalizeReadingPayload, READING_PAYLOAD_VERSION } from './reading-service.js';
 
 const DEVICES_KEY = 'agua-plus-devices';
 
@@ -139,11 +140,19 @@ export const createDevice = async (device) => {
   });
 
   await addDoc(collection(devicesRef, created.id, 'readings'), {
-    liters: 0,
-    flowRate: 0,
-    pulseCount: 0,
-    source: 'simulated',
+    ...normalizeReadingPayload({
+      deviceId: created.id,
+      deviceCode: nextDevice.deviceCode,
+      sensorId: nextDevice.sensor.sensorCode || 'flow-sensor',
+      sensorCode: nextDevice.sensor.sensorCode || 'flow-sensor',
+      calibrationFactor: nextDevice.sensor.calibrationFactor,
+      intervalSeconds: nextDevice.readingInterval,
+      status: 'waiting',
+      source: 'simulated',
+    }),
+    schemaVersion: READING_PAYLOAD_VERSION,
     createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   });
 
   await addDoc(collection(devicesRef, created.id, 'alerts'), {
@@ -168,6 +177,46 @@ export const createSimulatedDevice = (unit = '') => {
   return createDevice({
     ...simulatedDevice,
     unit,
+  });
+};
+
+export const linkDeviceByCode = async ({
+  deviceCode,
+  name = '',
+  location = '',
+  unit = '',
+  sensorModel = 'YF-S201',
+  sensorCode = '',
+  calibrationFactor = 7.5,
+  readingInterval = 10,
+}) => {
+  const normalizedCode = String(deviceCode || '').trim().toUpperCase();
+
+  if (!normalizedCode) {
+    throw new Error('Informe o codigo do dispositivo.');
+  }
+
+  const alreadyLinked = (await listDevices()).some(
+    (device) => String(device.deviceCode || '').trim().toUpperCase() === normalizedCode,
+  );
+
+  if (alreadyLinked) {
+    throw new Error('Este dispositivo ja esta vinculado a sua conta.');
+  }
+
+  return createDevice({
+    name: name || `Dispositivo ${normalizedCode}`,
+    deviceCode: normalizedCode,
+    location,
+    unit,
+    status: 'Aguardando conexao',
+    sensor: {
+      name: sensorModel,
+      sensorCode: sensorCode || `${normalizedCode}-FLOW`,
+      type: 'Fluxo de agua por pulso',
+      calibrationFactor,
+    },
+    readingInterval,
   });
 };
 
