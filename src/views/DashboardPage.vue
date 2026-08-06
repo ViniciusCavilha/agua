@@ -7,6 +7,9 @@
             <span>Resumo operacional</span>
             <h2>{{ heroTitle }}</h2>
             <p>{{ heroDescription }}</p>
+            <router-link v-if="heroActionLabel" class="hero-action" to="/dispositivos">
+              {{ heroActionLabel }}
+            </router-link>
           </div>
           <strong>{{ currentConsumption }}</strong>
         </section>
@@ -14,7 +17,7 @@
         <section class="grid">
           <div class="main-column">
             <MetricCard title="Consumo hoje" :value="currentConsumption" :variation="dashboardStatus" trend="neutral" />
-            <article class="device-status-card">
+            <article v-if="activeDevice" class="device-status-card">
               <div class="card-title">
                 <div>
                   <h2>Dispositivo principal</h2>
@@ -26,22 +29,13 @@
                 </span>
               </div>
 
-              <div v-if="activeDevice" class="device-panel">
+              <div class="device-panel">
                 <span class="device-icon"><ion-icon :icon="hardwareChipOutline" /></span>
                 <div>
                   <strong>{{ activeDevice.name }}</strong>
                   <small>{{ activeDevice.deviceCode }}</small>
                 </div>
                 <router-link to="/dispositivos">Gerenciar</router-link>
-              </div>
-
-              <div v-else class="device-panel empty-device">
-                <span class="device-icon"><ion-icon :icon="hardwareChipOutline" /></span>
-                <div>
-                  <strong>Nenhum dispositivo vinculado</strong>
-                  <small>Cadastre um codigo para preparar a conexao do ESP32.</small>
-                </div>
-                <router-link to="/dispositivos">Vincular</router-link>
               </div>
 
               <div class="device-kpis">
@@ -58,6 +52,10 @@
                   <strong>{{ activeDevice?.sensor?.name || 'Nao definido' }}</strong>
                 </div>
               </div>
+
+              <router-link v-if="hasMoreDevices" class="more-devices-link" to="/dispositivos">
+                Ver outros dispositivos
+              </router-link>
             </article>
 
             <article class="chart-card">
@@ -190,22 +188,26 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue';
-import { IonContent, IonIcon, IonPage } from '@ionic/vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { IonContent, IonIcon, IonPage, onIonViewWillEnter } from '@ionic/vue';
 import { alertCircleOutline, hardwareChipOutline, shieldCheckmarkOutline, warningOutline } from 'ionicons/icons';
+import { useRoute } from 'vue-router';
 import AppShell from '../components/AppShell.vue';
 import ListItem from '../components/ListItem.vue';
 import MetricCard from '../components/MetricCard.vue';
 import { userGoals } from '../data/goals-store.js';
 import { dashboardData } from '../data/mock-data.js';
 import { formatVolume, getSettings } from '../data/settings-store.js';
+import { getCurrentUser, watchAuthUser } from '../services/firebase.js';
 import { listDevices } from '../services/device-service.js';
 import { getConsumptionReadings } from '../services/reading-service.js';
 import { generateTechnicalAlerts, syncTechnicalAlertNotifications } from '../services/technical-alert-service.js';
 
 const selectedMetric = ref(null);
+const route = useRoute();
 const devices = ref([]);
 const devicesError = ref('');
+let stopAuthListener = null;
 const settings = getSettings();
 const consumptionData = getConsumptionReadings(settings);
 const dashboardGoal = computed(() => userGoals.value[0] || null);
@@ -221,8 +223,10 @@ const todayTotalLiters = computed(() => consumptionData.rawReadings.reduce((tota
 }, 0));
 const currentConsumption = computed(() => formatVolume(todayTotalLiters.value, settings));
 const activeDevice = computed(() => {
-  return devices.value.find((device) => device.status === 'Ativo') || devices.value[0] || null;
+  return devices.value.find((device) => device.status === 'Ativo') || null;
 });
+const hasMoreDevices = computed(() => devices.value.length > 1);
+const deviceCount = computed(() => devices.value.length);
 const technicalAlerts = computed(() =>
   generateTechnicalAlerts({
     devices: devices.value,
@@ -237,18 +241,37 @@ const lastSimulatedReading = computed(() => {
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0] || null;
 });
 const heroTitle = computed(() => {
-  if (activeDevice.value) {
-    return `${activeDevice.value.name} conectado ao painel.`;
+  if (deviceCount.value > 1) {
+    return `${deviceCount.value} dispositivos conectados ao painel.`;
+  }
+
+  if (deviceCount.value === 1) {
+    return `${devices.value[0].name} conectado ao painel.`;
   }
 
   return 'Pronto para receber dados do ESP32.';
 });
 const heroDescription = computed(() => {
-  if (activeDevice.value) {
-    return `${activeDevice.value.deviceCode} esta preparado para receber leituras no formato do sensor de vazao.`;
+  if (deviceCount.value > 1) {
+    return 'Visualize todos os dispositivos preparados para receber leituras do ESP32.';
+  }
+
+  if (deviceCount.value === 1) {
+    return `${devices.value[0].deviceCode} esta preparado para receber leituras no formato do sensor de vazao.`;
   }
 
   return dashboardData.target;
+});
+const heroActionLabel = computed(() => {
+  if (deviceCount.value > 1) {
+    return 'Ver todos os dispositivos';
+  }
+
+  if (deviceCount.value === 1) {
+    return 'Visualizar dispositivo';
+  }
+
+  return '';
 });
 const dashboardStatus = computed(() => {
   if (devicesError.value) {
@@ -321,7 +344,37 @@ const loadDashboardDevices = async () => {
   }
 };
 
-onMounted(loadDashboardDevices);
+const refreshDashboardDevices = () => {
+  loadDashboardDevices();
+};
+
+onIonViewWillEnter(loadDashboardDevices);
+
+onMounted(() => {
+  stopAuthListener = watchAuthUser(() => {
+    loadDashboardDevices();
+  });
+
+  if (getCurrentUser()) {
+    loadDashboardDevices();
+  }
+
+  window.addEventListener('focus', refreshDashboardDevices);
+});
+
+watch(
+  () => route.path,
+  (path) => {
+    if (path === '/dashboard') {
+      loadDashboardDevices();
+    }
+  },
+);
+
+onUnmounted(() => {
+  stopAuthListener?.();
+  window.removeEventListener('focus', refreshDashboardDevices);
+});
 </script>
 
 <style scoped>
@@ -353,7 +406,7 @@ onMounted(loadDashboardDevices);
 }
 
 .hero-strip span {
-  color: #7de2d9;
+  color: #0b4a55;
   display: block;
   font-size: 12px;
   font-weight: 700;
@@ -370,9 +423,24 @@ onMounted(loadDashboardDevices);
 }
 
 .hero-strip p {
-  color: #d3e5e8;
+  color: #155a66;
   font-size: 13px;
   margin: 12px 0 0;
+}
+
+.hero-action {
+  align-items: center;
+  background: rgba(3, 48, 57, 0.12);
+  border: 1px solid rgba(3, 48, 57, 0.2);
+  border-radius: 12px;
+  color: #073039;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  margin-top: 16px;
+  min-height: 40px;
+  padding: 0 13px;
+  text-decoration: none;
 }
 
 .hero-strip strong {
@@ -544,15 +612,22 @@ onMounted(loadDashboardDevices);
   text-decoration: none;
 }
 
-.empty-device a {
-  background: var(--agua-agua);
-  color: #073039;
-}
-
 .device-kpis {
   display: grid;
   gap: 10px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.more-devices-link {
+  background: transparent;
+  border: 1px solid var(--agua-borda);
+  border-radius: 12px;
+  color: var(--agua-petroleo);
+  font-size: 12px;
+  font-weight: 700;
+  justify-self: start;
+  padding: 10px 12px;
+  text-decoration: none;
 }
 
 .device-kpis div {

@@ -125,7 +125,7 @@ const deleteGoal = (goalId) => {
 }
 
 .goals-hero span {
-  color: #7de2d9;
+  color: #0b4a55;
   display: block;
   font-size: 12px;
   font-weight: 700;
@@ -140,7 +140,7 @@ const deleteGoal = (goalId) => {
 }
 
 .goals-hero p {
-  color: #d3e5e8;
+  color: #155a66;
   font-size: 13px;
   margin: 12px 0 0;
 }
