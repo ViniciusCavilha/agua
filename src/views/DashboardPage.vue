@@ -5,8 +5,8 @@
         <section class="hero-strip">
           <div>
             <span>Resumo operacional</span>
-            <h2>Pronto para receber dados do hidrometro.</h2>
-            <p>{{ dashboardData.target }}</p>
+            <h2>{{ heroTitle }}</h2>
+            <p>{{ heroDescription }}</p>
           </div>
           <strong>{{ currentConsumption }}</strong>
         </section>
@@ -14,6 +14,51 @@
         <section class="grid">
           <div class="main-column">
             <MetricCard title="Consumo hoje" :value="currentConsumption" :variation="dashboardStatus" trend="neutral" />
+            <article class="device-status-card">
+              <div class="card-title">
+                <div>
+                  <h2>Dispositivo principal</h2>
+                  <p>{{ deviceSummaryText }}</p>
+                </div>
+                <span :class="['device-badge', statusClass(activeDevice?.status)]">
+                  <i />
+                  {{ activeDevice?.status || 'Nao vinculado' }}
+                </span>
+              </div>
+
+              <div v-if="activeDevice" class="device-panel">
+                <span class="device-icon"><ion-icon :icon="hardwareChipOutline" /></span>
+                <div>
+                  <strong>{{ activeDevice.name }}</strong>
+                  <small>{{ activeDevice.deviceCode }}</small>
+                </div>
+                <router-link to="/dispositivos">Gerenciar</router-link>
+              </div>
+
+              <div v-else class="device-panel empty-device">
+                <span class="device-icon"><ion-icon :icon="hardwareChipOutline" /></span>
+                <div>
+                  <strong>Nenhum dispositivo vinculado</strong>
+                  <small>Cadastre um codigo para preparar a conexao do ESP32.</small>
+                </div>
+                <router-link to="/dispositivos">Vincular</router-link>
+              </div>
+
+              <div class="device-kpis">
+                <div>
+                  <span>Ultima leitura</span>
+                  <strong>{{ lastReadingLabel }}</strong>
+                </div>
+                <div>
+                  <span>Vazao</span>
+                  <strong>{{ activeDevice ? activeDevice.lastFlowRate + ' L/min' : '0 L/min' }}</strong>
+                </div>
+                <div>
+                  <span>Sensor</span>
+                  <strong>{{ activeDevice?.sensor?.name || 'Nao definido' }}</strong>
+                </div>
+              </div>
+            </article>
 
             <article class="chart-card">
               <div class="card-title">
@@ -109,25 +154,93 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { IonContent, IonIcon, IonPage } from '@ionic/vue';
+import { hardwareChipOutline } from 'ionicons/icons';
 import AppShell from '../components/AppShell.vue';
 import ListItem from '../components/ListItem.vue';
 import MetricCard from '../components/MetricCard.vue';
 import { userGoals } from '../data/goals-store.js';
 import { dashboardData } from '../data/mock-data.js';
 import { formatVolume, getSettings } from '../data/settings-store.js';
+import { listDevices } from '../services/device-service.js';
+import { getConsumptionReadings } from '../services/reading-service.js';
 
 const selectedMetric = ref(null);
+const devices = ref([]);
+const devicesError = ref('');
 const settings = getSettings();
+const consumptionData = getConsumptionReadings(settings);
 const dashboardGoal = computed(() => userGoals.value[0] || null);
-const currentConsumption = computed(() => formatVolume(settings.anomalyDemo ? 720 : 0, settings));
+const todayTotalLiters = computed(() => consumptionData.rawReadings.reduce((total, reading) => {
+  const readingDate = new Date(reading.timestamp);
+  const today = new Date();
+  const isToday =
+    readingDate.getDate() === today.getDate() &&
+    readingDate.getMonth() === today.getMonth() &&
+    readingDate.getFullYear() === today.getFullYear();
+
+  return isToday ? total + reading.liters : total;
+}, 0));
+const currentConsumption = computed(() => formatVolume(todayTotalLiters.value, settings));
+const activeDevice = computed(() => {
+  return devices.value.find((device) => device.status === 'Ativo') || devices.value[0] || null;
+});
+const lastSimulatedReading = computed(() => {
+  return consumptionData.rawReadings
+    .slice()
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0] || null;
+});
+const heroTitle = computed(() => {
+  if (activeDevice.value) {
+    return `${activeDevice.value.name} conectado ao painel.`;
+  }
+
+  return 'Pronto para receber dados do ESP32.';
+});
+const heroDescription = computed(() => {
+  if (activeDevice.value) {
+    return `${activeDevice.value.deviceCode} esta preparado para receber leituras no formato do sensor de vazao.`;
+  }
+
+  return dashboardData.target;
+});
 const dashboardStatus = computed(() => {
+  if (devicesError.value) {
+    return 'Nao foi possivel carregar dispositivos';
+  }
+
+  if (activeDevice.value) {
+    return `${activeDevice.value.status} - ${activeDevice.value.deviceCode}`;
+  }
+
   if (settings.anomalyDemo) {
     return 'Cenario de anomalia ativo';
   }
 
   return settings.simulationMode ? `Simulando a cada ${settings.readingInterval}s` : dashboardData.variation;
+});
+const deviceSummaryText = computed(() => {
+  if (devicesError.value) {
+    return 'Confira as permissoes do Firestore.';
+  }
+
+  if (!activeDevice.value) {
+    return 'Nenhum ESP32 preparado nesta conta.';
+  }
+
+  return activeDevice.value.location || activeDevice.value.unit || 'Local ainda nao informado';
+});
+const lastReadingLabel = computed(() => {
+  if (!activeDevice.value) {
+    return formatVolume(0, settings);
+  }
+
+  if (activeDevice.value.lastReadingAt) {
+    return formatVolume(activeDevice.value.lastReadingLiters, settings);
+  }
+
+  return formatVolume(lastSimulatedReading.value?.liters || activeDevice.value.lastReadingLiters || 0, settings);
 });
 const visibleMonthlyMetrics = computed(() => dashboardData.monthly.map((metric) => {
   if (metric.value === '0 L') {
@@ -144,6 +257,25 @@ const openMetricInfo = (metric) => {
 const closeMetricInfo = () => {
   selectedMetric.value = null;
 };
+
+const statusClass = (status = '') => ({
+  active: status === 'Ativo',
+  waiting: status === 'Aguardando conexao',
+  offline: status === 'Offline',
+  maintenance: status === 'Manutencao',
+});
+
+const loadDashboardDevices = async () => {
+  try {
+    devicesError.value = '';
+    devices.value = await listDevices();
+  } catch (error) {
+    devicesError.value = 'Nao foi possivel carregar dispositivos.';
+    devices.value = [];
+  }
+};
+
+onMounted(loadDashboardDevices);
 </script>
 
 <style scoped>
@@ -218,12 +350,19 @@ const closeMetricInfo = () => {
 }
 
 .chart-card,
+.device-status-card,
 .monthly-card,
 .target-card {
   background: var(--agua-branco);
   border: 1px solid var(--agua-borda);
   border-radius: 18px;
   box-shadow: var(--agua-shadow);
+  padding: 20px;
+}
+
+.device-status-card {
+  display: grid;
+  gap: 15px;
   padding: 20px;
 }
 
@@ -271,6 +410,123 @@ const closeMetricInfo = () => {
 
 .card-title span.waiting i {
   background: var(--agua-suave);
+}
+
+.device-badge {
+  align-items: center;
+  border-radius: 999px;
+  color: var(--agua-suave);
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 700;
+  gap: 6px;
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+
+.device-badge i {
+  background: currentColor;
+  border-radius: 50%;
+  height: 7px;
+  width: 7px;
+}
+
+.device-badge.active {
+  background: #eaf9ef;
+  color: var(--agua-sucesso);
+}
+
+.device-badge.waiting {
+  background: #fff7ed;
+  color: var(--agua-alerta);
+}
+
+.device-badge.offline {
+  background: var(--agua-danger-bg);
+  color: var(--agua-erro);
+}
+
+.device-badge.maintenance {
+  background: var(--agua-muted);
+  color: var(--agua-petroleo);
+}
+
+.device-panel {
+  align-items: center;
+  background: var(--agua-muted);
+  border: 1px solid var(--agua-borda);
+  border-radius: 16px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: auto 1fr auto;
+  padding: 14px;
+}
+
+.device-icon {
+  background: rgba(28, 167, 160, 0.14);
+  border-radius: 14px;
+  color: var(--agua-petroleo);
+  display: grid;
+  font-size: 24px;
+  height: 48px;
+  place-items: center;
+  width: 48px;
+}
+
+.device-panel strong {
+  color: var(--agua-petroleo);
+  display: block;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.device-panel small {
+  color: var(--agua-suave);
+  display: block;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.device-panel a {
+  background: var(--agua-petroleo);
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 10px 12px;
+  text-decoration: none;
+}
+
+.empty-device a {
+  background: var(--agua-agua);
+  color: #073039;
+}
+
+.device-kpis {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.device-kpis div {
+  background: #f7fbfb;
+  border: 1px solid #edf2f2;
+  border-radius: 14px;
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+}
+
+.device-kpis span {
+  color: var(--agua-suave);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.device-kpis strong {
+  color: var(--agua-petroleo);
+  font-size: 13px;
+  line-height: 1.35;
 }
 
 .chart {
@@ -506,6 +762,7 @@ const closeMetricInfo = () => {
   }
 
   .chart-card,
+  .device-status-card,
   .monthly-card,
   .target-card {
     border-radius: 16px;
@@ -514,6 +771,11 @@ const closeMetricInfo = () => {
 
   .monthly-card {
     padding-bottom: 6px;
+  }
+
+  .device-panel,
+  .device-kpis {
+    grid-template-columns: 1fr;
   }
 }
 </style>
