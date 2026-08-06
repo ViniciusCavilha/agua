@@ -21,11 +21,25 @@
             </div>
 
             <div class="bar-chart" aria-label="Grafico semanal de consumo">
-              <div v-for="bar in visibleWeeklyBars" :key="bar.day" class="bar-item">
+              <button
+                v-for="bar in visibleWeeklyBars"
+                :key="bar.day"
+                class="bar-item"
+                :class="{ active: activeBar === bar.day }"
+                type="button"
+                :aria-label="`${bar.day}: ${bar.liters}`"
+                @click="toggleActiveBar(bar.day)"
+                @focus="activeBar = bar.day"
+                @blur="activeBar = ''"
+                @mouseenter="activeBar = bar.day"
+                @mouseleave="activeBar = ''"
+              >
                 <strong>{{ bar.liters }}</strong>
-                <span :class="{ empty: bar.value === 0 }" :style="{ height: bar.value ? bar.value + '%' : '0%' }" />
+                <span :class="{ empty: bar.value === 0 }" :style="{ height: bar.value ? bar.value + '%' : '0%' }">
+                  <em>{{ bar.liters }}</em>
+                </span>
                 <small>{{ bar.day }}</small>
-              </div>
+              </button>
             </div>
           </article>
 
@@ -77,6 +91,7 @@ import { getConsumptionReadings } from '../services/reading-service.js';
 
 const settings = reactive(getSettings());
 const consumptionData = ref(getConsumptionReadings(settings));
+const activeBar = ref('');
 let stopSettingsListener = null;
 
 const refreshConsumptionData = (nextSettings = getSettings()) => {
@@ -89,6 +104,10 @@ const volumeUnitLabel = computed(() => (settings.measurementUnit === 'Metros cub
 const visibleConsumptionStats = computed(() => consumptionData.value.stats);
 const visibleWeeklyBars = computed(() => consumptionData.value.weeklyBars);
 const readings = computed(() => consumptionData.value.readings);
+
+const toggleActiveBar = (day) => {
+  activeBar.value = activeBar.value === day ? '' : day;
+};
 
 const chartBadge = computed(() => (settings.presentationMode ? 'Modo apresentacao' : settings.simulationMode ? 'Semana simulada' : 'Semana atual'));
 const alertTitle = computed(() => (settings.anomalyDemo ? 'Anomalia simulada' : settings.presentationMode ? 'Demo operacional' : 'Aguardando leituras'));
@@ -208,17 +227,25 @@ onUnmounted(() => {
 
 .bar-item {
   align-items: center;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
   display: grid;
   gap: 8px;
   grid-template-rows: auto 1fr auto;
   height: 100%;
   justify-items: center;
+  min-width: 0;
+  padding: 0;
+  position: relative;
 }
 
 .bar-item strong {
   color: var(--agua-suave);
   font-size: 10px;
   font-weight: 700;
+  opacity: 0.7;
+  transition: color 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
 }
 
 .bar-item span {
@@ -226,7 +253,41 @@ onUnmounted(() => {
   background: linear-gradient(180deg, var(--agua-agua), var(--agua-petroleo));
   border-radius: 999px 999px 6px 6px;
   min-height: 28px;
+  position: relative;
+  transition: filter 0.18s ease, transform 0.18s ease;
   width: min(100%, 34px);
+}
+
+.bar-item span em {
+  background: var(--agua-petroleo);
+  border: 1px solid color-mix(in srgb, var(--agua-agua) 40%, transparent);
+  border-radius: 999px;
+  bottom: calc(100% + 10px);
+  box-shadow: 0 10px 24px rgba(3, 48, 57, 0.2);
+  color: #ffffff;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+  left: 50%;
+  opacity: 0;
+  padding: 6px 9px;
+  pointer-events: none;
+  position: absolute;
+  transform: translate(-50%, 6px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.bar-item span em::after {
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--agua-petroleo);
+  content: '';
+  left: 50%;
+  position: absolute;
+  top: 100%;
+  transform: translateX(-50%);
 }
 
 .bar-item span.empty {
@@ -239,6 +300,40 @@ onUnmounted(() => {
   color: var(--agua-suave);
   font-size: 11px;
   font-weight: 700;
+  transition: color 0.18s ease;
+}
+
+.bar-item:hover strong,
+.bar-item:focus-visible strong,
+.bar-item.active strong {
+  color: var(--agua-petroleo);
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
+.bar-item:hover span,
+.bar-item:focus-visible span,
+.bar-item.active span {
+  filter: drop-shadow(0 10px 16px rgba(28, 167, 160, 0.22));
+  transform: translateY(-3px);
+}
+
+.bar-item:hover span em,
+.bar-item:focus-visible span em,
+.bar-item.active span em {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.bar-item:hover small,
+.bar-item:focus-visible small,
+.bar-item.active small {
+  color: var(--agua-petroleo);
+}
+
+.bar-item:focus-visible {
+  outline: 2px solid var(--agua-agua);
+  outline-offset: 6px;
 }
 
 .alert-card {
