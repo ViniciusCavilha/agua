@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <main class="app-shell" :class="{ 'mobile-nav-open': isMobileNavOpen }">
     <aside class="sidebar" aria-label="Navegacao principal">
       <router-link class="brand" to="/dashboard" aria-label="Agua+ dashboard">
@@ -32,7 +32,7 @@
           <ion-icon :icon="menuOutline" />
         </button>
         <div>
-          <p>{{ eyebrowText }}</p>
+          <p>{{ displayedEyebrow }}</p>
           <h1>{{ title }}</h1>
         </div>
         <div v-if="showPeriod" class="period-menu">
@@ -112,7 +112,8 @@ import {
   settingsOutline,
   waterOutline,
 } from 'ionicons/icons';
-import { getAccount, onAccountChange } from '../data/account-store.js';
+import { getAccount, onAccountChange, saveAccount } from '../data/account-store.js';
+import { getCurrentUser, getUserProfile, watchAuthUser } from '../services/firebase.js';
 import { getNotifications, markAllNotificationsRead, markNotificationRead, onNotificationsChange } from '../data/notifications-store.js';
 
 const props = defineProps({
@@ -143,6 +144,7 @@ const notifications = ref(getNotifications());
 const account = ref(getAccount());
 let stopNotificationsListener = null;
 let stopAccountListener = null;
+let stopAuthListener = null;
 
 const navItems = [
   { label: 'Inicio', shortLabel: 'Inicio', to: '/dashboard', icon: homeOutline },
@@ -163,6 +165,31 @@ const periodOptions = [
   { label: 'Mes passado', detail: 'Resumo do ciclo mensal anterior', to: '/consumo/mes-passado' },
 ];
 
+const firstName = computed(() => String(account.value.name || '').trim().split(/\s+/).filter(Boolean)[0] || '');
+const displayedEyebrow = computed(() => props.eyebrow || (firstName.value ? `Ola, ${firstName.value}` : 'Ola'));
+
+const refreshAccountName = async (user = getCurrentUser()) => {
+  if (!user) {
+    account.value = getAccount();
+    return;
+  }
+
+  try {
+    const remoteProfile = await getUserProfile(user.uid);
+    account.value = saveAccount({
+      ...(remoteProfile || {}),
+      uid: user.uid,
+      email: user.email || remoteProfile?.email || '',
+      name: remoteProfile?.name || user.displayName || '',
+      avatarImage: remoteProfile?.avatarImage || user.photoURL || '',
+    });
+  } catch (error) {
+    account.value = {
+      ...getAccount({ uid: user.uid, email: user.email }),
+      name: getAccount({ uid: user.uid, email: user.email }).name || user.displayName || '',
+    };
+  }
+};
 const togglePeriodMenu = () => {
   isPeriodMenuOpen.value = !isPeriodMenuOpen.value;
 };
@@ -172,9 +199,6 @@ const closePeriodMenu = () => {
 };
 
 const unreadCount = computed(() => notifications.value.filter((notification) => !notification.read).length);
-
-const firstName = computed(() => String(account.value.name || '').trim().split(/\s+/)[0] || '');
-const eyebrowText = computed(() => props.eyebrow || (firstName.value ? `Ola, ${firstName.value}` : 'Ola'));
 
 const refreshNotifications = () => {
   notifications.value = getNotifications();
@@ -214,11 +238,16 @@ onMounted(() => {
   stopAccountListener = onAccountChange((nextAccount) => {
     account.value = nextAccount;
   });
+  refreshAccountName();
+  stopAuthListener = watchAuthUser((user) => {
+    refreshAccountName(user);
+  });
 });
 
 onUnmounted(() => {
   stopNotificationsListener?.();
   stopAccountListener?.();
+  stopAuthListener?.();
 });
 </script>
 
@@ -642,4 +671,6 @@ onUnmounted(() => {
   }
 }
 </style>
+
+
 

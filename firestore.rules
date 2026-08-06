@@ -10,8 +10,13 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
+    function validOptionalUid() {
+      return !request.resource.data.keys().hasAny(['uid']) || request.resource.data.uid == request.auth.uid;
+    }
+
     function validUserProfile() {
-      return request.resource.data.keys().hasOnly([
+      return validOptionalUid() && request.resource.data.keys().hasOnly([
+        'uid',
         'name',
         'phone',
         'email',
