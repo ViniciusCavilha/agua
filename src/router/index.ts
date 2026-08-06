@@ -10,11 +10,13 @@ import GoalsPage from '../views/GoalsPage.vue';
 import DevicesPage from '../views/DevicesPage.vue';
 import ProfilePage from '../views/ProfilePage.vue';
 import SettingsPage from '../views/SettingsPage.vue';
+import TermsPage from '../views/TermsPage.vue';
 
 const routes: Array<RouteRecordRaw> = [
   { path: '/', redirect: '/login' },
   { path: '/login', name: 'Login', component: LoginPage },
   { path: '/cadastro', name: 'Cadastro', component: CadastroPage },
+  { path: '/termos', name: 'Termos', component: TermsPage },
   { path: '/esqueci-senha', name: 'EsqueciSenha', component: ForgotPasswordPage },
   { path: '/dashboard', name: 'Dashboard', component: DashboardPage },
   { path: '/consumo', name: 'Consumo', component: ConsumptionPage },

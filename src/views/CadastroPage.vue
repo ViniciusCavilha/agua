@@ -109,7 +109,10 @@
 
             <label class="terms">
               <input v-model="acceptedTerms" type="checkbox" autocomplete="off" required />
-              <span>Aceito os termos de uso e a politica de privacidade.</span>
+              <span>
+                Aceito os termos de uso e a politica de privacidade.
+                <router-link to="/termos" target="_blank" @click.stop>Clique aqui para ver os termos.</router-link>
+              </span>
             </label>
 
             <PrimaryButton :disabled="!canSubmit">
@@ -613,6 +616,16 @@ select {
   height: 16px;
   margin-top: 2px;
   width: 16px;
+}
+
+.terms a {
+  color: var(--auth-petroleo);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.terms a:hover {
+  color: var(--auth-agua);
 }
 
 .switch-auth {
