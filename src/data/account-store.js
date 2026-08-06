@@ -51,7 +51,13 @@ const fallbackAccount = {
   company: '',
   unit: '',
   role: '',
+  avatarColor: '#1ca7a0',
+  avatarImage: '',
+  emailAlerts: true,
+  weeklyReport: true,
+  reportFrequency: 'Semanal',
   emailVerified: false,
+  settings: null,
 };
 
 export const isSenacInstitution = (value) => {

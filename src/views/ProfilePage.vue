@@ -323,6 +323,7 @@ import {
   saveUserProfile,
   sendCurrentEmailVerification,
 } from '../services/firebase.js';
+import { saveSettings } from '../data/settings-store.js';
 
 const router = useRouter();
 const account = getAccount();
@@ -519,6 +520,11 @@ const removeProfilePhoto = () => {
 const clearAvatarImage = () => {
   avatarImage.value = '';
   updateAccount({ avatarImage: '' });
+  const currentUser = getCurrentUser();
+
+  if (currentUser) {
+    saveUserProfile(currentUser.uid, { avatarImage: '' }).catch(() => {});
+  }
 };
 
 const saveProfile = () => {
@@ -720,6 +726,10 @@ onMounted(async () => {
 
     providerIds.value = getCurrentProviderIds();
     const remoteProfile = await getUserProfile(currentUser.uid);
+    if (remoteProfile?.settings) {
+      saveSettings(remoteProfile.settings);
+    }
+
     const hasPendingVerification = hasVerificationNotification();
     const storedVerified = hasPendingVerification ? false : remoteProfile?.emailVerified ?? account.emailVerified ?? false;
     const mergedAccount = updateAccount({

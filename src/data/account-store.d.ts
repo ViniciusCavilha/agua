@@ -9,7 +9,13 @@ export function getAccount(): {
   company: string;
   unit: string;
   role: string;
+  avatarColor: string;
+  avatarImage: string;
+  emailAlerts: boolean;
+  weeklyReport: boolean;
+  reportFrequency: string;
   emailVerified: boolean;
+  settings: Record<string, unknown> | null;
 };
 export function saveAccount(account: Partial<ReturnType<typeof getAccount>>): ReturnType<typeof getAccount>;
 export function updateAccount(account: Partial<ReturnType<typeof getAccount>>): ReturnType<typeof getAccount>;

@@ -172,6 +172,7 @@ import SecondaryButton from '../components/SecondaryButton.vue';
 import UnitPicker from '../components/UnitPicker.vue';
 import { getAvailableUnits, ROLE_OPTIONS, saveAccount } from '../data/account-store.js';
 import { ensureEmailVerificationNotification } from '../data/notifications-store.js';
+import { getSettings, saveSettings } from '../data/settings-store.js';
 import {
   createFirebaseAccount,
   getCurrentUser,
@@ -328,6 +329,7 @@ const createAccount = async () => {
         ...account,
         password: password.value,
         avatarImage: googleAvatarImage.value,
+        settings: getSettings(),
       });
       saveAccount({ ...firebaseAccount, emailVerified: false });
 
@@ -337,7 +339,7 @@ const createAccount = async () => {
 
       ensureEmailVerificationNotification();
     } else {
-      saveAccount(account);
+      saveAccount({ ...account, settings: getSettings() });
       ensureEmailVerificationNotification();
     }
 
@@ -358,6 +360,9 @@ const googleSignup = async () => {
 
     if (profileComplete) {
       saveAccount(account);
+      if (account.settings) {
+        saveSettings(account.settings);
+      }
       router.push('/dashboard');
       return;
     }
@@ -371,6 +376,7 @@ const googleSignup = async () => {
       unit: '',
       role: '',
       emailVerified: false,
+      settings: account.settings || null,
     });
 
     name.value = getGoogleDisplayName(account.name);

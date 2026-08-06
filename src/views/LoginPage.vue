@@ -103,6 +103,7 @@ import PrimaryButton from '../components/PrimaryButton.vue';
 import SecondaryButton from '../components/SecondaryButton.vue';
 import { isFirebaseReady, loginWithEmail, loginWithGoogle } from '../services/firebase.js';
 import { saveAccount } from '../data/account-store.js';
+import { saveSettings } from '../data/settings-store.js';
 
 const router = useRouter();
 const email = ref('');
@@ -115,6 +116,10 @@ const errorMessage = ref('');
 const finishLogin = (account) => {
   if (account) {
     saveAccount(account);
+
+    if (account.settings) {
+      saveSettings(account.settings);
+    }
   }
 
   router.push('/dashboard');
@@ -168,7 +173,9 @@ const googleLogin = async () => {
         phone: '',
         company: '',
         unit: '',
+        role: '',
         emailVerified: false,
+        settings: account.settings || null,
       });
       router.push('/cadastro?google=1');
       return;

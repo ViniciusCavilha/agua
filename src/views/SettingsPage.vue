@@ -178,6 +178,7 @@ import AppShell from '../components/AppShell.vue';
 import { updateAccount } from '../data/account-store.js';
 import { getDefaultPeriodRoute, getSettings, resetSettings, saveSettings } from '../data/settings-store.js';
 import { getSavedTheme, toggleTheme } from '../data/theme-store.js';
+import { syncCurrentUserProfile } from '../services/firebase.js';
 
 const router = useRouter();
 const settings = reactive(getSettings());
@@ -219,16 +220,19 @@ const showSaved = () => {
 
 const saveAppSettings = () => {
   saveSettings(settings);
-  updateAccount({
+  const account = updateAccount({
     emailAlerts: settings.emailAlerts,
     weeklyReport: settings.weeklySummary,
     reportFrequency: settings.defaultPeriod,
+    settings: { ...settings },
   });
+  syncCurrentUserProfile(account).catch(() => {});
   showSaved();
 };
 
 const restoreDefaults = () => {
   Object.assign(settings, resetSettings());
+  saveAppSettings();
   showSaved();
 };
 
@@ -261,11 +265,13 @@ watch(
   settings,
   () => {
     saveSettings(settings);
-    updateAccount({
+    const account = updateAccount({
       emailAlerts: settings.emailAlerts,
       weeklyReport: settings.weeklySummary,
       reportFrequency: settings.defaultPeriod,
+      settings: { ...settings },
     });
+    syncCurrentUserProfile(account).catch(() => {});
   },
   { deep: true },
 );

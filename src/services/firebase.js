@@ -43,6 +43,22 @@ const ensureFirebase = () => {
   }
 };
 
+const normalizeProfile = (profile = {}) => ({
+  name: profile.name || '',
+  phone: profile.phone || '',
+  email: profile.email || '',
+  company: profile.company || '',
+  unit: profile.unit || '',
+  role: profile.role || '',
+  avatarColor: profile.avatarColor || '#1ca7a0',
+  avatarImage: profile.avatarImage || '',
+  emailAlerts: profile.emailAlerts ?? true,
+  weeklyReport: profile.weeklyReport ?? true,
+  reportFrequency: profile.reportFrequency || 'Semanal',
+  emailVerified: profile.emailVerified ?? false,
+  settings: profile.settings || null,
+});
+
 export const isFirebaseReady = () => hasFirebaseConfig;
 
 export const getCurrentUser = () => auth?.currentUser || null;
@@ -56,20 +72,17 @@ export const watchAuthUser = (callback) => {
   return onAuthStateChanged(auth, callback);
 };
 
-export const buildAccountFromUser = (user, extra = {}) => ({
-  name: extra.name || user.displayName || '',
-  phone: extra.phone || user.phoneNumber || '',
-  email: user.email || extra.email || '',
-  company: extra.company || '',
-  unit: extra.unit || '',
-  role: extra.role || '',
-  avatarColor: extra.avatarColor || '#1ca7a0',
-  avatarImage: extra.avatarImage || user.photoURL || '',
-  emailAlerts: extra.emailAlerts ?? true,
-  weeklyReport: extra.weeklyReport ?? true,
-  reportFrequency: extra.reportFrequency || 'Semanal',
-  emailVerified: extra.emailVerified ?? false,
-});
+export const buildAccountFromUser = (user, extra = {}) => {
+  const profile = normalizeProfile(extra);
+
+  return {
+    ...profile,
+    name: profile.name || user.displayName || '',
+    phone: profile.phone || user.phoneNumber || '',
+    email: user.email || profile.email || '',
+    avatarImage: profile.avatarImage || user.photoURL || '',
+  };
+};
 
 export const isProfileComplete = (profile) => {
   return Boolean(profile?.name && profile?.email && profile?.phone && profile?.company && profile?.role);
@@ -78,7 +91,7 @@ export const isProfileComplete = (profile) => {
 export const getUserProfile = async (uid) => {
   ensureFirebase();
   const snapshot = await getDoc(doc(db, 'users', uid));
-  return snapshot.exists() ? snapshot.data() : null;
+  return snapshot.exists() ? normalizeProfile(snapshot.data()) : null;
 };
 
 export const saveUserProfile = async (uid, profile) => {
@@ -93,6 +106,31 @@ export const saveUserProfile = async (uid, profile) => {
   );
 };
 
+export const loadCurrentUserProfile = async () => {
+  ensureFirebase();
+  const currentUser = auth.currentUser;
+
+  if (!currentUser) {
+    return null;
+  }
+
+  const profile = await getUserProfile(currentUser.uid);
+  return buildAccountFromUser(currentUser, profile || {});
+};
+
+export const syncCurrentUserProfile = async (profile) => {
+  ensureFirebase();
+  const currentUser = auth.currentUser;
+
+  if (!currentUser) {
+    return null;
+  }
+
+  const nextProfile = buildAccountFromUser(currentUser, profile);
+  await saveUserProfile(currentUser.uid, normalizeProfile(nextProfile));
+  return nextProfile;
+};
+
 export const loginWithEmail = async (email, password) => {
   ensureFirebase();
   const credential = await signInWithEmailAndPassword(auth, email, password);
@@ -101,7 +139,7 @@ export const loginWithEmail = async (email, password) => {
   return buildAccountFromUser(credential.user, profile || {});
 };
 
-export const createFirebaseAccount = async ({ name, email, password, phone, company, unit, role, avatarColor, avatarImage }) => {
+export const createFirebaseAccount = async ({ name, email, password, phone, company, unit, role, avatarColor, avatarImage, settings }) => {
   ensureFirebase();
   const currentUser = auth.currentUser;
   const isGoogleUser = currentUser?.providerData.some((provider) => provider.providerId === 'google.com');
@@ -120,6 +158,7 @@ export const createFirebaseAccount = async ({ name, email, password, phone, comp
     avatarColor,
     avatarImage,
     emailVerified: false,
+    settings,
   });
 
   await saveUserProfile(credential.user.uid, {

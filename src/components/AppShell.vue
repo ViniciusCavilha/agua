@@ -193,10 +193,9 @@ onUnmounted(() => {
 .app-shell {
   background: var(--agua-claro);
   color: var(--agua-texto);
-  display: grid;
   font-family: Poppins, sans-serif;
-  grid-template-columns: 248px 1fr;
   min-height: 100%;
+  padding-left: 248px;
 }
 
 .sidebar {
@@ -204,10 +203,14 @@ onUnmounted(() => {
   color: var(--agua-branco);
   display: flex;
   flex-direction: column;
+  bottom: 0;
+  left: 0;
   min-height: 100vh;
   padding: 28px 18px;
-  position: sticky;
+  position: fixed;
   top: 0;
+  width: 248px;
+  z-index: 4;
 }
 
 .brand {
@@ -271,7 +274,7 @@ onUnmounted(() => {
 }
 
 .settings {
-  margin-top: auto;
+  margin-top: 6px;
 }
 
 .workspace {
@@ -478,6 +481,7 @@ onUnmounted(() => {
   .app-shell {
     display: block;
     padding-bottom: 84px;
+    padding-left: 0;
   }
 
   .sidebar {
