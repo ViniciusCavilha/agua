@@ -170,7 +170,7 @@ import {
 import PrimaryButton from '../components/PrimaryButton.vue';
 import SecondaryButton from '../components/SecondaryButton.vue';
 import UnitPicker from '../components/UnitPicker.vue';
-import { getAvailableUnits, ROLE_OPTIONS, saveAccount } from '../data/account-store.js';
+import { deleteAccount, getAvailableUnits, ROLE_OPTIONS, saveAccount } from '../data/account-store.js';
 import { ensureEmailVerificationNotification } from '../data/notifications-store.js';
 import { getSettings, saveSettings } from '../data/settings-store.js';
 import {
@@ -178,6 +178,7 @@ import {
   getCurrentUser,
   isFirebaseReady,
   loginWithGoogle,
+  logoutFirebase,
   sendCurrentEmailVerification,
   watchAuthUser,
 } from '../services/firebase.js';
@@ -295,6 +296,10 @@ const clearRegistrationDetailsAfterAutofill = () => {
 const getAuthMessage = (error) => {
   const code = error?.code || '';
 
+  if (code.includes('permission-denied') || String(error?.message || '').includes('Missing or insufficient permissions')) {
+    return 'Sessao local antiga limpa. Tente criar a conta novamente.';
+  }
+
   if (code.includes('email-already-in-use')) {
     return 'Esse e-mail ja esta cadastrado.';
   }
@@ -330,6 +335,7 @@ const createAccount = async () => {
         password: password.value,
         avatarImage: googleAvatarImage.value,
         settings: getSettings(),
+        useCurrentUser: isGoogleRegistration.value,
       });
       saveAccount({ ...firebaseAccount, emailVerified: false });
 
@@ -345,6 +351,14 @@ const createAccount = async () => {
 
     router.push('/dashboard');
   } catch (error) {
+    if ((error?.code || '').includes('permission-denied') || String(error?.message || '').includes('Missing or insufficient permissions')) {
+      deleteAccount();
+      logoutFirebase().catch(() => {});
+      isGoogleRegistration.value = false;
+      googleAvatarImage.value = '';
+      clearRegistrationDetailsAfterAutofill();
+    }
+
     errorMessage.value = getAuthMessage(error);
   } finally {
     loading.value = false;

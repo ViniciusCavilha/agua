@@ -141,11 +141,14 @@ export const loginWithEmail = async (email, password) => {
   return buildAccountFromUser(credential.user, profile || {});
 };
 
-export const createFirebaseAccount = async ({ name, email, password, phone, company, unit, role, avatarColor, avatarImage, settings }) => {
+export const createFirebaseAccount = async ({ name, email, password, phone, company, unit, role, avatarColor, avatarImage, settings, useCurrentUser = false }) => {
   ensureFirebase();
   const currentUser = auth.currentUser;
   const isGoogleUser = currentUser?.providerData.some((provider) => provider.providerId === 'google.com');
-  const credential = isGoogleUser ? { user: currentUser } : await createUserWithEmailAndPassword(auth, email, password);
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const currentUserEmail = String(currentUser?.email || '').trim().toLowerCase();
+  const canUseCurrentUser = useCurrentUser && isGoogleUser && currentUserEmail === normalizedEmail;
+  const credential = canUseCurrentUser ? { user: currentUser } : await createUserWithEmailAndPassword(auth, email, password);
 
   if (credential.user.displayName !== name) {
     await updateProfile(credential.user, { displayName: name });

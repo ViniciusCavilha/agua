@@ -32,7 +32,7 @@
           <ion-icon :icon="menuOutline" />
         </button>
         <div>
-          <p>{{ eyebrow }}</p>
+          <p>{{ eyebrowText }}</p>
           <h1>{{ title }}</h1>
         </div>
         <div v-if="showPeriod" class="period-menu">
@@ -112,16 +112,17 @@ import {
   settingsOutline,
   waterOutline,
 } from 'ionicons/icons';
+import { getAccount, onAccountChange } from '../data/account-store.js';
 import { getNotifications, markAllNotificationsRead, markNotificationRead, onNotificationsChange } from '../data/notifications-store.js';
 
-defineProps({
+const props = defineProps({
   title: {
     type: String,
     required: true,
   },
   eyebrow: {
     type: String,
-    default: 'Ola, Vinicius',
+    default: '',
   },
   periodLabel: {
     type: String,
@@ -139,7 +140,9 @@ const isPeriodMenuOpen = ref(false);
 const isNotificationsOpen = ref(false);
 const isMobileNavOpen = ref(false);
 const notifications = ref(getNotifications());
+const account = ref(getAccount());
 let stopNotificationsListener = null;
+let stopAccountListener = null;
 
 const navItems = [
   { label: 'Inicio', shortLabel: 'Inicio', to: '/dashboard', icon: homeOutline },
@@ -169,6 +172,9 @@ const closePeriodMenu = () => {
 };
 
 const unreadCount = computed(() => notifications.value.filter((notification) => !notification.read).length);
+
+const firstName = computed(() => String(account.value.name || '').trim().split(/\s+/)[0] || '');
+const eyebrowText = computed(() => props.eyebrow || (firstName.value ? `Ola, ${firstName.value}` : 'Ola'));
 
 const refreshNotifications = () => {
   notifications.value = getNotifications();
@@ -205,10 +211,14 @@ const isActive = (path) => (path === '/consumo' ? route.path.startsWith('/consum
 
 onMounted(() => {
   stopNotificationsListener = onNotificationsChange(refreshNotifications);
+  stopAccountListener = onAccountChange((nextAccount) => {
+    account.value = nextAccount;
+  });
 });
 
 onUnmounted(() => {
   stopNotificationsListener?.();
+  stopAccountListener?.();
 });
 </script>
 

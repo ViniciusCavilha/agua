@@ -43,6 +43,7 @@ export const ROLE_OPTIONS = [
 ];
 
 const ACCOUNT_KEY = 'agua-plus-account';
+const ACCOUNT_EVENT = 'agua-plus-account-updated';
 
 const fallbackAccount = {
   name: '',
@@ -89,6 +90,7 @@ export const getAccount = () => {
 export const saveAccount = (account) => {
   const nextAccount = { ...fallbackAccount, ...account };
   localStorage.setItem(ACCOUNT_KEY, JSON.stringify(nextAccount));
+  window.dispatchEvent(new CustomEvent(ACCOUNT_EVENT, { detail: nextAccount }));
   return nextAccount;
 };
 
@@ -100,6 +102,18 @@ export const deleteAccount = () => {
   localStorage.removeItem(ACCOUNT_KEY);
   localStorage.removeItem('agua-plus-goals');
   localStorage.removeItem('agua-plus-notifications');
+  window.dispatchEvent(new CustomEvent(ACCOUNT_EVENT, { detail: { ...fallbackAccount } }));
   return { ...fallbackAccount };
+};
+
+export const onAccountChange = (callback) => {
+  const listener = (event) => callback(event.detail || getAccount());
+  window.addEventListener(ACCOUNT_EVENT, listener);
+  window.addEventListener('storage', listener);
+
+  return () => {
+    window.removeEventListener(ACCOUNT_EVENT, listener);
+    window.removeEventListener('storage', listener);
+  };
 };
 
