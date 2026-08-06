@@ -3,6 +3,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   orderBy,
   query,
@@ -11,6 +12,7 @@ import {
 } from 'firebase/firestore';
 import { getCurrentUser, getFirestoreDb, isFirebaseReady } from './firebase.js';
 import { normalizeReadingPayload, READING_PAYLOAD_VERSION } from './reading-service.js';
+import { getSettings } from '../data/settings-store.js';
 
 const DEVICES_KEY = 'agua-plus-devices';
 
@@ -106,6 +108,148 @@ export const listDevices = async () => {
   const devicesRef = getUserDevicesCollection();
   const snapshot = await getDocs(query(devicesRef, orderBy('createdAt', 'desc')));
   return snapshot.docs.map((item) => normalizeDevice({ ...item.data(), id: item.id }));
+};
+
+export const getDeviceById = async (deviceId) => {
+  if (!deviceId) {
+    return null;
+  }
+
+  if (!isFirebaseReady() || !getCurrentUser()) {
+    return getLocalDevices().find((device) => device.id === deviceId) || null;
+  }
+
+  const devicesRef = getUserDevicesCollection();
+  const snapshot = await getDoc(doc(devicesRef, deviceId));
+  return snapshot.exists() ? normalizeDevice({ ...snapshot.data(), id: snapshot.id }) : null;
+};
+
+const buildLocalDeviceReadings = (device) => {
+  const settings = getSettings();
+
+  if (!settings.simulationMode || !device) {
+    return [];
+  }
+
+  const now = new Date();
+  const values = settings.presentationMode
+    ? [
+        { liters: settings.anomalyDemo ? 920 : 420, flowRate: settings.anomalyDemo ? 18.5 : 7.8, minutesAgo: 8, status: settings.anomalyDemo ? 'anomaly' : 'normal' },
+        { liters: 380, flowRate: 6.2, minutesAgo: 52, status: 'normal' },
+        { liters: 540, flowRate: 8.9, minutesAgo: 145, status: 'normal' },
+        { liters: 590, flowRate: 9.4, minutesAgo: 260, status: 'normal' },
+        { liters: 465, flowRate: 7.1, minutesAgo: 410, status: 'normal' },
+      ]
+    : [
+        { liters: device.lastReadingLiters || 0, flowRate: device.lastFlowRate || 0, minutesAgo: 12, status: 'normal' },
+      ];
+
+  return values
+    .filter((reading) => reading.liters > 0 || reading.flowRate > 0 || settings.presentationMode)
+    .map((reading, index) => {
+      const timestamp = new Date(now);
+      timestamp.setMinutes(timestamp.getMinutes() - reading.minutesAgo);
+
+      return normalizeReadingPayload({
+        id: `${device.id}-local-reading-${index}`,
+        deviceId: device.id,
+        deviceCode: device.deviceCode,
+        sensorId: device.sensor.sensorCode,
+        sensorCode: device.sensor.sensorCode,
+        liters: reading.liters,
+        flowRate: reading.flowRate,
+        pulseCount: Math.round(Number(reading.liters || 0) * Number(device.sensor.calibrationFactor || 7.5) * 60),
+        calibrationFactor: device.sensor.calibrationFactor,
+        intervalSeconds: device.readingInterval,
+        status: reading.status,
+        source: 'simulated',
+        timestamp,
+        receivedAt: timestamp,
+      });
+    });
+};
+
+const normalizeFirestoreDate = (value) => {
+  if (value?.toDate) {
+    return value.toDate().toISOString();
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  return value || new Date().toISOString();
+};
+
+export const listDeviceReadings = async (deviceId) => {
+  const device = await getDeviceById(deviceId);
+
+  if (!device) {
+    return [];
+  }
+
+  if (!isFirebaseReady() || !getCurrentUser()) {
+    return buildLocalDeviceReadings(device);
+  }
+
+  const devicesRef = getUserDevicesCollection();
+  const snapshot = await getDocs(query(collection(devicesRef, deviceId, 'readings'), orderBy('timestamp', 'desc')));
+  const readings = snapshot.docs.map((item) =>
+    normalizeReadingPayload({
+      ...item.data(),
+      id: item.id,
+      timestamp: normalizeFirestoreDate(item.data().timestamp),
+      receivedAt: normalizeFirestoreDate(item.data().receivedAt),
+    }),
+  );
+
+  return readings.length ? readings : buildLocalDeviceReadings(device);
+};
+
+export const listDeviceAlerts = async (deviceId) => {
+  const device = await getDeviceById(deviceId);
+
+  if (!device) {
+    return [];
+  }
+
+  if (!isFirebaseReady() || !getCurrentUser()) {
+    return [
+      {
+        id: `${device.id}-waiting`,
+        title: 'Dispositivo aguardando conexao',
+        message: 'Pronto para receber leituras reais quando o ESP32 for conectado.',
+        status: device.status === 'Ativo' ? 'Resolvido' : 'Aberto',
+      },
+    ];
+  }
+
+  const devicesRef = getUserDevicesCollection();
+  const snapshot = await getDocs(query(collection(devicesRef, deviceId, 'alerts'), orderBy('createdAt', 'desc')));
+  return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+};
+
+export const listDeviceMaintenanceOrders = async (deviceId) => {
+  const device = await getDeviceById(deviceId);
+
+  if (!device) {
+    return [];
+  }
+
+  if (!isFirebaseReady() || !getCurrentUser()) {
+    return [
+      {
+        id: `${device.id}-installation-check`,
+        title: 'Validar instalacao do sensor',
+        description: 'Conferir posicao do YF-S201, sentido do fluxo e vedacao antes das leituras reais.',
+        status: 'Planejada',
+      },
+    ];
+  }
+
+  const devicesRef = getUserDevicesCollection();
+  const snapshot = await getDocs(query(collection(devicesRef, deviceId, 'maintenanceOrders'), orderBy('createdAt', 'desc')));
+  return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
 };
 
 export const createDevice = async (device) => {

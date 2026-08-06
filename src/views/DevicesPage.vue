@@ -98,6 +98,10 @@
             </div>
 
             <div class="device-actions">
+              <router-link class="view-device" :to="`/dispositivos/${device.id}`">
+                <ion-icon :icon="eyeOutline" />
+                Visualizar
+              </router-link>
               <select :value="device.status" @change="changeStatus(device.id, $event.target.value)">
                 <option v-for="status in statuses" :key="status" :value="status">{{ status }}</option>
               </select>
@@ -282,6 +286,7 @@ import {
   alertCircleOutline,
   analyticsOutline,
   createOutline,
+  eyeOutline,
   hardwareChipOutline,
   linkOutline,
   pulseOutline,
@@ -553,7 +558,8 @@ onMounted(loadDevices);
 }
 
 .devices-toolbar button,
-.device-actions button {
+.device-actions button,
+.device-actions a {
   align-items: center;
   border-radius: 14px;
   cursor: pointer;
@@ -838,6 +844,13 @@ onMounted(loadDevices);
   background: var(--agua-danger-bg);
   border: 1px solid var(--agua-danger-border);
   color: var(--agua-erro);
+}
+
+.device-actions .view-device {
+  background: var(--agua-petroleo);
+  border: 1px solid var(--agua-petroleo);
+  color: #ffffff;
+  text-decoration: none;
 }
 
 .device-actions .edit-device {

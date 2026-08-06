@@ -106,7 +106,7 @@ export const syncTechnicalAlertNotifications = (alerts = []) => {
       type: alert.severity === 'critical' ? 'warning' : 'info',
       title: alert.title,
       message: alert.deviceCode ? `${alert.deviceCode}: ${alert.message}` : alert.message,
-      to: alert.deviceId ? '/dispositivos' : '/consumo',
+      to: alert.deviceId ? `/dispositivos/${alert.deviceId}` : '/consumo',
     });
   });
 

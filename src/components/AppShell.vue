@@ -231,7 +231,13 @@ const readAllNotifications = () => {
   notifications.value = markAllNotificationsRead();
 };
 
-const isActive = (path) => (path === '/consumo' ? route.path.startsWith('/consumo') : route.path === path);
+const isActive = (path) => {
+  if (path === '/consumo' || path === '/dispositivos') {
+    return route.path.startsWith(path);
+  }
+
+  return route.path === path;
+};
 
 onMounted(() => {
   stopNotificationsListener = onNotificationsChange(refreshNotifications);
