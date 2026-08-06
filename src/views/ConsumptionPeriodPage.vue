@@ -15,7 +15,7 @@
             <div class="card-title">
               <div>
                 <h2>{{ chartTitle }}</h2>
-                <p>Consumo por dia em litros</p>
+                <p>Consumo por dia em {{ volumeUnitLabel }}</p>
               </div>
               <span><ion-icon :icon="calendarOutline" /> {{ chartBadge }}</span>
             </div>
@@ -35,7 +35,7 @@
             <p>Esta tela ja esta pronta para receber os dados historicos quando o hidrometro for conectado.</p>
             <div class="health-row">
               <span>Total registrado</span>
-              <strong>0 L</strong>
+              <strong>{{ totalRegistered }}</strong>
             </div>
           </article>
         </section>
@@ -63,6 +63,8 @@ import { computed } from 'vue';
 import { IonContent, IonIcon, IonPage } from '@ionic/vue';
 import { alertCircleOutline, calendarOutline } from 'ionicons/icons';
 import AppShell from '../components/AppShell.vue';
+import { getSettings } from '../data/settings-store.js';
+import { getPeriodConsumptionReadings } from '../services/reading-service.js';
 
 const props = defineProps({
   periodLabel: {
@@ -83,14 +85,12 @@ const props = defineProps({
   },
 });
 
-const stats = computed(() => [
-  { label: props.periodLabel, value: '0 L', detail: 'Aguardando dados' },
-  { label: 'Media diaria', value: '0 L', detail: 'Aguardando dados' },
-  { label: 'Pico do periodo', value: '0 L', detail: 'Aguardando dados' },
-  { label: 'Custo estimado', value: 'R$ 0,00', detail: 'Aguardando tarifa' },
-]);
-
-const bars = computed(() => props.days.map((day) => ({ day, liters: '0 L' })));
+const settings = getSettings();
+const periodData = computed(() => getPeriodConsumptionReadings({ periodLabel: props.periodLabel, days: props.days }, settings));
+const stats = computed(() => periodData.value.stats);
+const bars = computed(() => periodData.value.bars);
+const volumeUnitLabel = settings.measurementUnit === 'Metros cubicos' ? 'm3' : 'litros';
+const totalRegistered = computed(() => stats.value[0]?.value ?? '0 L');
 </script>
 
 <style scoped>

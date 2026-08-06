@@ -71,32 +71,17 @@
 import { IonContent, IonIcon, IonPage } from '@ionic/vue';
 import { alertCircleOutline, calendarOutline } from 'ionicons/icons';
 import AppShell from '../components/AppShell.vue';
-import { consumptionStats, readings, weeklyBars } from '../data/app-data.js';
-import { formatVolume, getSettings } from '../data/settings-store.js';
+import { getSettings } from '../data/settings-store.js';
+import { getConsumptionReadings } from '../services/reading-service.js';
 
 const settings = getSettings();
+const consumptionData = getConsumptionReadings(settings);
 
 const volumeUnitLabel = settings.measurementUnit === 'Metros cubicos' ? 'm3' : 'litros';
 
-const visibleConsumptionStats = consumptionStats.map((item) => {
-  if (item.value === '0 L') {
-    return { ...item, value: formatVolume(0, settings) };
-  }
-
-  return item;
-});
-
-const visibleWeeklyBars = weeklyBars.map((bar, index) => {
-  if (!settings.simulationMode) {
-    return { ...bar, liters: formatVolume(0, settings) };
-  }
-
-  if (settings.anomalyDemo && index === weeklyBars.length - 1) {
-    return { ...bar, value: 72, liters: formatVolume(720, settings) };
-  }
-
-  return { ...bar, liters: formatVolume(0, settings) };
-});
+const visibleConsumptionStats = consumptionData.stats;
+const visibleWeeklyBars = consumptionData.weeklyBars;
+const readings = consumptionData.readings;
 
 const alertMessage = settings.anomalyDemo
   ? 'Cenario de demonstracao ativo: o sistema simula consumo fora do padrao para testar alertas.'
