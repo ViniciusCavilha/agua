@@ -716,7 +716,7 @@ onUnmounted(() => {
   margin-bottom: 2px;
 }
 
-.alert-counter {
+.card-title .alert-counter {
   background: var(--agua-muted);
   border-radius: 999px;
   color: var(--agua-suave);
@@ -728,7 +728,7 @@ onUnmounted(() => {
   width: 30px;
 }
 
-.alert-counter.has-alerts {
+.card-title .alert-counter.has-alerts {
   background: var(--agua-danger-bg);
   color: var(--agua-erro);
 }
