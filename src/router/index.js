@@ -6,6 +6,7 @@ import ForgotPasswordPage from '../views/ForgotPasswordPage.vue';
 import ConsumptionPage from '../views/ConsumptionPage.vue';
 import ConsumptionPeriodPage from '../views/ConsumptionPeriodPage.vue';
 import GoalsPage from '../views/GoalsPage.vue';
+import DevicesPage from '../views/DevicesPage.vue';
 import ProfilePage from '../views/ProfilePage.vue';
 import SettingsPage from '../views/SettingsPage.vue';
 
@@ -39,6 +40,7 @@ const routes = [
     },
   },
   { path: '/metas', name: 'Metas', component: GoalsPage },
+  { path: '/dispositivos', name: 'Dispositivos', component: DevicesPage },
   { path: '/perfil', name: 'Perfil', component: ProfilePage },
   { path: '/configuracoes', name: 'Configuracoes', component: SettingsPage },
 ];

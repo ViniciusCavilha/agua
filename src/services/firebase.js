@@ -63,6 +63,8 @@ export const isFirebaseReady = () => hasFirebaseConfig;
 
 export const getCurrentUser = () => auth?.currentUser || null;
 
+export const getFirestoreDb = () => db;
+
 export const watchAuthUser = (callback) => {
   if (!auth) {
     callback(null);

@@ -96,6 +96,7 @@ import { IonIcon } from '@ionic/vue';
 import {
   barChartOutline,
   chevronDownOutline,
+  hardwareChipOutline,
   homeOutline,
   menuOutline,
   notificationsOutline,
@@ -136,6 +137,7 @@ const navItems = [
   { label: 'Inicio', shortLabel: 'Inicio', to: '/dashboard', icon: homeOutline },
   { label: 'Consumo', shortLabel: 'Consumo', to: '/consumo', icon: barChartOutline },
   { label: 'Metas', shortLabel: 'Metas', to: '/metas', icon: pieChartOutline },
+  { label: 'Dispositivos', shortLabel: 'Disp.', to: '/dispositivos', icon: hardwareChipOutline },
   { label: 'Perfil', shortLabel: 'Perfil', to: '/perfil', icon: personOutline },
 ];
 
