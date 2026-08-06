@@ -97,6 +97,10 @@ export const removeNotification = (id) => {
   return saveNotifications(getNotifications().filter((notification) => notification.id !== id));
 };
 
+export const removeNotificationsByPrefix = (prefix) => {
+  return saveNotifications(getNotifications().filter((notification) => !notification.id.startsWith(prefix)));
+};
+
 export const clearNotifications = () => {
   localStorage.removeItem(NOTIFICATIONS_KEY);
   dispatchUpdate();

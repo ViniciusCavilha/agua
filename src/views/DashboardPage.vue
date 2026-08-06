@@ -110,6 +110,42 @@
           </div>
 
           <aside class="side-column">
+            <article class="technical-alert-card">
+              <div class="card-title compact">
+                <div>
+                  <h2>Alertas tecnicos</h2>
+                  <p>Status operacional dos dispositivos</p>
+                </div>
+                <span :class="['alert-counter', technicalAlerts.length ? 'has-alerts' : '']">
+                  {{ technicalAlerts.length }}
+                </span>
+              </div>
+
+              <div v-if="technicalAlerts.length" class="technical-alert-list">
+                <router-link
+                  v-for="alert in visibleTechnicalAlerts"
+                  :key="alert.id"
+                  class="technical-alert"
+                  :class="alert.severity"
+                  :to="alert.deviceId ? '/dispositivos' : '/consumo'"
+                >
+                  <ion-icon :icon="alert.severity === 'critical' ? warningOutline : alertCircleOutline" />
+                  <div>
+                    <strong>{{ alert.title }}</strong>
+                    <small>{{ alert.deviceCode || alert.deviceName }}</small>
+                  </div>
+                </router-link>
+              </div>
+
+              <div v-else class="no-technical-alerts">
+                <ion-icon :icon="shieldCheckmarkOutline" />
+                <div>
+                  <strong>Nenhum alerta ativo</strong>
+                  <small>O app esta pronto para destacar falhas quando as leituras chegarem.</small>
+                </div>
+              </div>
+            </article>
+
             <article class="monthly-card">
               <div class="card-title compact">
                 <div>
@@ -156,7 +192,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 import { IonContent, IonIcon, IonPage } from '@ionic/vue';
-import { hardwareChipOutline } from 'ionicons/icons';
+import { alertCircleOutline, hardwareChipOutline, shieldCheckmarkOutline, warningOutline } from 'ionicons/icons';
 import AppShell from '../components/AppShell.vue';
 import ListItem from '../components/ListItem.vue';
 import MetricCard from '../components/MetricCard.vue';
@@ -165,6 +201,7 @@ import { dashboardData } from '../data/mock-data.js';
 import { formatVolume, getSettings } from '../data/settings-store.js';
 import { listDevices } from '../services/device-service.js';
 import { getConsumptionReadings } from '../services/reading-service.js';
+import { generateTechnicalAlerts, syncTechnicalAlertNotifications } from '../services/technical-alert-service.js';
 
 const selectedMetric = ref(null);
 const devices = ref([]);
@@ -186,6 +223,14 @@ const currentConsumption = computed(() => formatVolume(todayTotalLiters.value, s
 const activeDevice = computed(() => {
   return devices.value.find((device) => device.status === 'Ativo') || devices.value[0] || null;
 });
+const technicalAlerts = computed(() =>
+  generateTechnicalAlerts({
+    devices: devices.value,
+    readings: consumptionData.rawReadings,
+    settings,
+  }),
+);
+const visibleTechnicalAlerts = computed(() => technicalAlerts.value.slice(0, 3));
 const lastSimulatedReading = computed(() => {
   return consumptionData.rawReadings
     .slice()
@@ -269,6 +314,7 @@ const loadDashboardDevices = async () => {
   try {
     devicesError.value = '';
     devices.value = await listDevices();
+    syncTechnicalAlertNotifications(technicalAlerts.value);
   } catch (error) {
     devicesError.value = 'Nao foi possivel carregar dispositivos.';
     devices.value = [];
@@ -352,6 +398,7 @@ onMounted(loadDashboardDevices);
 .chart-card,
 .device-status-card,
 .monthly-card,
+.technical-alert-card,
 .target-card {
   background: var(--agua-branco);
   border: 1px solid var(--agua-borda);
@@ -580,8 +627,106 @@ onMounted(loadDashboardDevices);
   padding: 18px 18px 6px;
 }
 
+.technical-alert-card {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
 .compact {
   margin-bottom: 2px;
+}
+
+.alert-counter {
+  background: var(--agua-muted);
+  border-radius: 999px;
+  color: var(--agua-suave);
+  display: grid;
+  font-size: 12px;
+  font-weight: 800;
+  height: 30px;
+  place-items: center;
+  width: 30px;
+}
+
+.alert-counter.has-alerts {
+  background: var(--agua-danger-bg);
+  color: var(--agua-erro);
+}
+
+.technical-alert-list {
+  display: grid;
+  gap: 9px;
+}
+
+.technical-alert,
+.no-technical-alerts {
+  align-items: center;
+  border-radius: 14px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto 1fr;
+  padding: 12px;
+  text-decoration: none;
+}
+
+.technical-alert {
+  background: var(--agua-muted);
+  border: 1px solid var(--agua-borda);
+  color: var(--agua-texto);
+}
+
+.technical-alert.critical {
+  background: var(--agua-danger-bg);
+  border-color: var(--agua-danger-border);
+}
+
+.technical-alert.warning {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.technical-alert ion-icon,
+.no-technical-alerts ion-icon {
+  border-radius: 12px;
+  font-size: 21px;
+  padding: 8px;
+}
+
+.technical-alert.critical ion-icon {
+  background: rgba(230, 57, 70, 0.12);
+  color: var(--agua-erro);
+}
+
+.technical-alert.warning ion-icon {
+  background: rgba(245, 158, 11, 0.14);
+  color: var(--agua-alerta);
+}
+
+.technical-alert strong,
+.no-technical-alerts strong {
+  color: var(--agua-petroleo);
+  display: block;
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+.technical-alert small,
+.no-technical-alerts small {
+  color: var(--agua-suave);
+  display: block;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.no-technical-alerts {
+  background: #f7fbfb;
+  border: 1px dashed #cfe2e5;
+}
+
+.no-technical-alerts ion-icon {
+  background: #eaf9ef;
+  color: var(--agua-sucesso);
 }
 
 .target-card {
@@ -764,6 +909,7 @@ onMounted(loadDashboardDevices);
   .chart-card,
   .device-status-card,
   .monthly-card,
+  .technical-alert-card,
   .target-card {
     border-radius: 16px;
     padding: 18px;

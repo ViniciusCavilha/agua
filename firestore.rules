@@ -69,13 +69,25 @@ service cloud.firestore {
 
     function validReading() {
       return request.resource.data.keys().hasOnly([
+        'schemaVersion',
+        'id',
         'deviceId',
+        'deviceCode',
         'sensorId',
+        'sensorCode',
+        'unitId',
         'liters',
         'flowRate',
         'pulseCount',
+        'rawPulseCount',
+        'calibrationFactor',
+        'intervalSeconds',
+        'batteryVoltage',
+        'rssi',
+        'status',
         'source',
         'timestamp',
+        'receivedAt',
         'createdAt',
         'updatedAt'
       ]);
@@ -83,13 +95,18 @@ service cloud.firestore {
 
     function validAlert() {
       return request.resource.data.keys().hasOnly([
+        'id',
         'type',
+        'severity',
         'title',
         'message',
         'status',
         'deviceId',
+        'deviceCode',
+        'deviceName',
         'sensorId',
         'readingId',
+        'source',
         'createdAt',
         'updatedAt'
       ]);

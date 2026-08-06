@@ -28,6 +28,26 @@
           </article>
         </section>
 
+        <section v-if="technicalAlerts.length" class="technical-alerts-panel">
+          <div class="panel-title">
+            <div>
+              <h2>Alertas tecnicos</h2>
+              <p>Eventos simulados que o app ja esta preparado para tratar.</p>
+            </div>
+            <strong>{{ technicalAlerts.length }} ativo{{ technicalAlerts.length > 1 ? 's' : '' }}</strong>
+          </div>
+
+          <div class="technical-alerts-grid">
+            <article v-for="alert in technicalAlerts" :key="alert.id" :class="['technical-alert-card', alert.severity]">
+              <ion-icon :icon="alert.severity === 'critical' ? warningOutline : alertCircleOutline" />
+              <div>
+                <h3>{{ alert.title }}</h3>
+                <p>{{ alert.deviceCode ? alert.deviceCode + ' - ' : '' }}{{ alert.message }}</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
         <section v-if="devices.length" class="device-grid">
           <article v-for="device in devices" :key="device.id" class="device-card">
             <div class="device-head">
@@ -268,9 +288,11 @@ import {
   radioOutline,
   saveOutline,
   trashOutline,
+  warningOutline,
 } from 'ionicons/icons';
 import AppShell from '../components/AppShell.vue';
 import { getAccount } from '../data/account-store.js';
+import { getSettings } from '../data/settings-store.js';
 import {
   createSimulatedDevice,
   DEVICE_STATUSES,
@@ -281,6 +303,8 @@ import {
   updateDevice,
   updateDeviceStatus,
 } from '../services/device-service.js';
+import { getConsumptionReadings } from '../services/reading-service.js';
+import { generateTechnicalAlerts, syncTechnicalAlertNotifications } from '../services/technical-alert-service.js';
 
 const devices = ref([]);
 const loading = ref(false);
@@ -303,19 +327,29 @@ const linkForm = ref({
 });
 const statuses = DEVICE_STATUSES;
 const sensorModels = SENSOR_MODELS;
+const settings = getSettings();
+const consumptionData = getConsumptionReadings(settings);
+const technicalAlerts = computed(() =>
+  generateTechnicalAlerts({
+    devices: devices.value,
+    readings: consumptionData.rawReadings,
+    settings,
+  }),
+);
 
 const architectureItems = computed(() => [
   { label: 'Dispositivos', value: `${devices.value.length} cadastrados`, icon: hardwareChipOutline },
   { label: 'Sensores', value: 'Modelos configuraveis', icon: pulseOutline },
   { label: 'Leituras', value: 'Simuladas', icon: analyticsOutline },
   { label: 'Status', value: 'Online/offline', icon: radioOutline },
-  { label: 'Alertas', value: 'Preparados', icon: alertCircleOutline },
+  { label: 'Alertas', value: technicalAlerts.value.length ? `${technicalAlerts.value.length} ativos` : 'Preparados', icon: alertCircleOutline },
 ]);
 
 const loadDevices = async () => {
   try {
     errorMessage.value = '';
     devices.value = await listDevices();
+    syncTechnicalAlertNotifications(technicalAlerts.value);
   } catch (error) {
     errorMessage.value = 'Nao foi possivel carregar os dispositivos. Confira as permissoes do Firestore.';
   }
@@ -554,6 +588,100 @@ onMounted(loadDevices);
 .device-grid {
   display: grid;
   gap: 16px;
+}
+
+.technical-alerts-panel {
+  background: var(--agua-branco);
+  border: 1px solid var(--agua-borda);
+  border-radius: 18px;
+  box-shadow: var(--agua-shadow);
+  display: grid;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding: 18px;
+}
+
+.panel-title {
+  align-items: start;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+}
+
+.panel-title h2 {
+  color: var(--agua-petroleo);
+  font-size: 17px;
+  margin: 0 0 4px;
+}
+
+.panel-title p {
+  color: var(--agua-suave);
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.panel-title strong {
+  background: var(--agua-danger-bg);
+  border-radius: 999px;
+  color: var(--agua-erro);
+  font-size: 11px;
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+
+.technical-alerts-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.technical-alert-card {
+  align-items: start;
+  border-radius: 14px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto 1fr;
+  padding: 13px;
+}
+
+.technical-alert-card.critical {
+  background: var(--agua-danger-bg);
+  border: 1px solid var(--agua-danger-border);
+}
+
+.technical-alert-card.warning {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+}
+
+.technical-alert-card ion-icon {
+  border-radius: 12px;
+  font-size: 21px;
+  padding: 8px;
+}
+
+.technical-alert-card.critical ion-icon {
+  background: rgba(230, 57, 70, 0.12);
+  color: var(--agua-erro);
+}
+
+.technical-alert-card.warning ion-icon {
+  background: rgba(245, 158, 11, 0.14);
+  color: var(--agua-alerta);
+}
+
+.technical-alert-card h3 {
+  color: var(--agua-petroleo);
+  font-size: 13px;
+  margin: 0 0 4px;
+}
+
+.technical-alert-card p {
+  color: var(--agua-suave);
+  font-size: 11px;
+  line-height: 1.55;
+  margin: 0;
 }
 
 .architecture-grid {
@@ -906,6 +1034,10 @@ onMounted(loadDevices);
 
   .architecture-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .technical-alerts-grid {
+    grid-template-columns: 1fr;
   }
 
   .toolbar-actions {
