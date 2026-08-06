@@ -1,0 +1,139 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function ownsUserDocument(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function validUserProfile() {
+      return request.resource.data.keys().hasOnly([
+        'name',
+        'phone',
+        'email',
+        'company',
+        'unit',
+        'role',
+        'avatarColor',
+        'avatarImage',
+        'emailAlerts',
+        'weeklyReport',
+        'reportFrequency',
+        'emailVerified',
+        'settings',
+        'createdAt',
+        'updatedAt'
+      ]);
+    }
+
+    function validDevice() {
+      return request.resource.data.keys().hasOnly([
+        'name',
+        'deviceCode',
+        'location',
+        'unit',
+        'status',
+        'sensor',
+        'readingInterval',
+        'totalConsumption',
+        'lastReadingLiters',
+        'lastFlowRate',
+        'lastPulseCount',
+        'lastReadingAt',
+        'createdAt',
+        'updatedAt'
+      ]);
+    }
+
+    function validSensor() {
+      return request.resource.data.keys().hasOnly([
+        'name',
+        'sensorCode',
+        'type',
+        'calibrationFactor',
+        'deviceId',
+        'status',
+        'createdAt',
+        'updatedAt'
+      ]);
+    }
+
+    function validReading() {
+      return request.resource.data.keys().hasOnly([
+        'deviceId',
+        'sensorId',
+        'liters',
+        'flowRate',
+        'pulseCount',
+        'source',
+        'timestamp',
+        'createdAt',
+        'updatedAt'
+      ]);
+    }
+
+    function validAlert() {
+      return request.resource.data.keys().hasOnly([
+        'type',
+        'title',
+        'message',
+        'status',
+        'deviceId',
+        'sensorId',
+        'readingId',
+        'createdAt',
+        'updatedAt'
+      ]);
+    }
+
+    function validMaintenanceOrder() {
+      return request.resource.data.keys().hasOnly([
+        'title',
+        'description',
+        'status',
+        'deviceId',
+        'sensorId',
+        'createdAt',
+        'updatedAt'
+      ]);
+    }
+
+    match /users/{uid} {
+      allow create, update: if ownsUserDocument(uid) && validUserProfile();
+      allow read, delete: if ownsUserDocument(uid);
+
+      match /devices/{deviceId} {
+        allow create, update: if ownsUserDocument(uid) && validDevice();
+        allow read, delete: if ownsUserDocument(uid);
+
+        match /sensors/{sensorId} {
+          allow create, update: if ownsUserDocument(uid) && validSensor();
+          allow read, delete: if ownsUserDocument(uid);
+        }
+
+        match /readings/{readingId} {
+          allow create, update: if ownsUserDocument(uid) && validReading();
+          allow read, delete: if ownsUserDocument(uid);
+        }
+
+        match /alerts/{alertId} {
+          allow create, update: if ownsUserDocument(uid) && validAlert();
+          allow read, delete: if ownsUserDocument(uid);
+        }
+
+        match /maintenanceOrders/{orderId} {
+          allow create, update: if ownsUserDocument(uid) && validMaintenanceOrder();
+          allow read, delete: if ownsUserDocument(uid);
+        }
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
