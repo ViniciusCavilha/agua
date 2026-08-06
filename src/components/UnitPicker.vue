@@ -14,7 +14,7 @@
     <div class="unit-head">
       <span>
         <ion-icon :icon="businessOutline" />
-        Senac detectado
+        {{ institutionName }} detectado
       </span>
       <small>{{ options.length }} unidades</small>
     </div>
@@ -22,7 +22,7 @@
     <div :class="['selected-box', { empty: !modelValue }]">
       <div>
         <small>Unidade principal</small>
-        <strong>{{ modelValue || 'Selecione uma unidade do Senac' }}</strong>
+        <strong>{{ modelValue || `Selecione uma unidade do ${institutionName}` }}</strong>
       </div>
       <ion-icon :icon="chevronDownOutline" />
     </div>
@@ -39,7 +39,7 @@
       />
     </div>
 
-    <div class="unit-list" role="listbox" aria-label="Unidades Senac">
+    <div class="unit-list" role="listbox" :aria-label="`Unidades ${institutionName}`">
       <button
         v-for="option in filteredOptions"
         :key="option"
@@ -76,6 +76,10 @@ const props = defineProps({
   options: {
     type: Array,
     default: () => [],
+  },
+  institutionName: {
+    type: String,
+    default: 'Senac',
   },
   lockedLight: {
     type: Boolean,

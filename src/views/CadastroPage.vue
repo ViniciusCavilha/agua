@@ -83,7 +83,7 @@
             </div>
 
             <div v-if="unitOptions.length" class="field-grid">
-              <UnitPicker v-model="unit" :options="unitOptions" locked-light />
+              <UnitPicker v-model="unit" :options="unitOptions" :institution-name="detectedInstitutionName" locked-light />
             </div>
 
             <div class="field-grid">
@@ -170,7 +170,7 @@ import {
 import PrimaryButton from '../components/PrimaryButton.vue';
 import SecondaryButton from '../components/SecondaryButton.vue';
 import UnitPicker from '../components/UnitPicker.vue';
-import { deleteAccount, getAvailableUnits, ROLE_OPTIONS, saveAccount } from '../data/account-store.js';
+import { deleteAccount, getAvailableUnits, getDetectedInstitution, ROLE_OPTIONS, saveAccount } from '../data/account-store.js';
 import { ensureEmailVerificationNotification } from '../data/notifications-store.js';
 import { getSettings, saveSettings } from '../data/settings-store.js';
 import {
@@ -222,6 +222,7 @@ const formatPhone = (value) => {
 };
 
 const unitOptions = computed(() => getAvailableUnits(company.value));
+const detectedInstitutionName = computed(() => getDetectedInstitution(company.value)?.name || 'instituicao');
 
 watch(unitOptions, (options) => {
   if (options.length && !options.includes(unit.value)) {

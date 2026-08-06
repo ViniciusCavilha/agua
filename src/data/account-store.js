@@ -29,6 +29,86 @@ export const SENAC_UNITS = [
   'Senac TO',
 ];
 
+export const SESC_UNITS = [
+  'Sesc Nacional',
+  'Sesc AC',
+  'Sesc AL',
+  'Sesc AM',
+  'Sesc AP',
+  'Sesc BA',
+  'Sesc CE',
+  'Sesc DF',
+  'Sesc ES',
+  'Sesc GO',
+  'Sesc MA',
+  'Sesc MG',
+  'Sesc MS',
+  'Sesc MT',
+  'Sesc PA',
+  'Sesc PB',
+  'Sesc PE',
+  'Sesc PI',
+  'Sesc PR',
+  'Sesc RJ',
+  'Sesc RN',
+  'Sesc RO',
+  'Sesc RR',
+  'Sesc RS',
+  'Sesc SC',
+  'Sesc SE',
+  'Sesc SP',
+  'Sesc TO',
+];
+
+export const SENAI_UNITS = [
+  'Senai Nacional',
+  'Senai AC',
+  'Senai AL',
+  'Senai AM',
+  'Senai AP',
+  'Senai BA',
+  'Senai CE',
+  'Senai DF',
+  'Senai ES',
+  'Senai GO',
+  'Senai MA',
+  'Senai MG',
+  'Senai MS',
+  'Senai MT',
+  'Senai PA',
+  'Senai PB',
+  'Senai PE',
+  'Senai PI',
+  'Senai PR',
+  'Senai RJ',
+  'Senai RN',
+  'Senai RO',
+  'Senai RR',
+  'Senai RS',
+  'Senai SC',
+  'Senai SE',
+  'Senai SP',
+  'Senai TO',
+];
+
+export const INSTITUTION_UNIT_GROUPS = [
+  {
+    name: 'Senac',
+    match: 'senac',
+    units: SENAC_UNITS,
+  },
+  {
+    name: 'Sesc',
+    match: 'sesc',
+    units: SESC_UNITS,
+  },
+  {
+    name: 'Senai',
+    match: 'senai',
+    units: SENAI_UNITS,
+  },
+];
+
 export const ROLE_OPTIONS = [
   'Administrador',
   'Gestor',
@@ -101,12 +181,14 @@ export const isSenacInstitution = (value) => {
   return String(value || '').trim().toLowerCase().includes('senac');
 };
 
-export const getAvailableUnits = (company) => {
-  if (isSenacInstitution(company)) {
-    return SENAC_UNITS;
-  }
+export const getDetectedInstitution = (company) => {
+  const normalizedCompany = String(company || '').trim().toLowerCase();
 
-  return [];
+  return INSTITUTION_UNIT_GROUPS.find((institution) => normalizedCompany.includes(institution.match)) || null;
+};
+
+export const getAvailableUnits = (company) => {
+  return getDetectedInstitution(company)?.units || [];
 };
 
 export const getAccount = (owner = null) => {

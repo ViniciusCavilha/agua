@@ -1,6 +1,14 @@
 export const SENAC_UNITS: string[];
+export const SESC_UNITS: string[];
+export const SENAI_UNITS: string[];
+export const INSTITUTION_UNIT_GROUPS: Array<{
+  name: string;
+  match: string;
+  units: string[];
+}>;
 export const ROLE_OPTIONS: string[];
 export function isSenacInstitution(value: string): boolean;
+export function getDetectedInstitution(company: string): { name: string; match: string; units: string[] } | null;
 export function getAvailableUnits(company: string): string[];
 export function getAccount(owner?: { uid?: string; email?: string } | null): {
   uid: string;

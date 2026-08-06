@@ -114,7 +114,13 @@
                       @input="updateCompany"
                     />
                   </label>
-                  <UnitPicker v-if="unitOptions.length" v-model="unit" :options="unitOptions" :disabled="!isEditing" />
+                  <UnitPicker
+                    v-if="unitOptions.length"
+                    v-model="unit"
+                    :options="unitOptions"
+                    :institution-name="detectedInstitutionName"
+                    :disabled="!isEditing"
+                  />
                   <label v-else>
                     Unidade principal
                     <input v-model="unit" type="text" :disabled="!isEditing" placeholder="Ex: Campus Centro" />
@@ -304,7 +310,15 @@ import {
 import AppShell from '../components/AppShell.vue';
 import PrimaryButton from '../components/PrimaryButton.vue';
 import UnitPicker from '../components/UnitPicker.vue';
-import { clearActiveAccount, deleteAccount, getAccount, getAvailableUnits, ROLE_OPTIONS, updateAccount } from '../data/account-store.js';
+import {
+  clearActiveAccount,
+  deleteAccount,
+  getAccount,
+  getAvailableUnits,
+  getDetectedInstitution,
+  ROLE_OPTIONS,
+  updateAccount,
+} from '../data/account-store.js';
 import {
   ensureEmailVerificationNotification,
   ensureEmailVerifiedNotification,
@@ -401,6 +415,7 @@ const applyAccount = (nextAccount) => {
 };
 
 const unitOptions = computed(() => getAvailableUnits(company.value));
+const detectedInstitutionName = computed(() => getDetectedInstitution(company.value)?.name || 'instituicao');
 
 watch(unitOptions, (options) => {
   if (options.length && !options.includes(unit.value)) {
