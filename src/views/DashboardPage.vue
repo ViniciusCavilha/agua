@@ -286,6 +286,10 @@ const dashboardStatus = computed(() => {
     return 'Cenario de anomalia ativo';
   }
 
+  if (settings.presentationMode) {
+    return 'Modo apresentacao ativo';
+  }
+
   return settings.simulationMode ? `Simulando a cada ${settings.readingInterval}s` : dashboardData.variation;
 });
 const deviceSummaryText = computed(() => {

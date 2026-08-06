@@ -102,6 +102,17 @@
             </div>
 
             <div class="stack">
+              <div class="presentation-box" :class="{ active: settings.presentationMode }">
+                <div>
+                  <strong>Modo apresentacao</strong>
+                  <small>Preenche a demonstracao com leituras realistas, alerta simulado e intervalo rapido.</small>
+                </div>
+                <button type="button" @click="togglePresentationMode">
+                  <ion-icon :icon="sparklesOutline" />
+                  {{ settings.presentationMode ? 'Desativar' : 'Ativar' }}
+                </button>
+              </div>
+
               <label class="switch-row">
                 <span>
                   Modo simulacao
@@ -172,11 +183,19 @@ import {
   refreshOutline,
   saveOutline,
   settingsOutline,
+  sparklesOutline,
   sunnyOutline,
 } from 'ionicons/icons';
 import AppShell from '../components/AppShell.vue';
 import { updateAccount } from '../data/account-store.js';
-import { getDefaultPeriodRoute, getSettings, resetSettings, saveSettings } from '../data/settings-store.js';
+import {
+  disablePresentationMode,
+  enablePresentationMode,
+  getDefaultPeriodRoute,
+  getSettings,
+  resetSettings,
+  saveSettings,
+} from '../data/settings-store.js';
 import { getSavedTheme, toggleTheme } from '../data/theme-store.js';
 import { syncCurrentUserProfile } from '../services/firebase.js';
 
@@ -189,6 +208,7 @@ const pushPermission = ref(typeof Notification === 'undefined' ? 'unsupported' :
 const summaryRows = computed(() => [
   { label: 'Tema', value: isDark.value ? 'Escuro' : 'Claro' },
   { label: 'Modo simulacao', value: settings.simulationMode ? 'Ativo' : 'Inativo' },
+  { label: 'Apresentacao', value: settings.presentationMode ? 'Ativa' : 'Inativa' },
   { label: 'Anomalia demo', value: settings.anomalyDemo ? 'Ativa' : 'Inativa' },
   { label: 'Intervalo', value: `${settings.readingInterval}s` },
   { label: 'Periodo padrao', value: settings.defaultPeriod },
@@ -254,6 +274,12 @@ const togglePushAlerts = async (event) => {
 
   pushPermission.value = await Notification.requestPermission();
   settings.pushAlerts = pushPermission.value === 'granted';
+};
+
+const togglePresentationMode = () => {
+  const nextSettings = settings.presentationMode ? disablePresentationMode(settings) : enablePresentationMode(settings);
+  Object.assign(settings, nextSettings);
+  saveAppSettings();
 };
 
 const openDefaultPeriod = () => {
@@ -412,6 +438,52 @@ label {
   gap: 10px;
 }
 
+.presentation-box {
+  align-items: center;
+  background:
+    linear-gradient(135deg, rgba(31, 206, 195, 0.14), transparent 48%),
+    var(--agua-muted);
+  border: 1px solid var(--agua-borda);
+  border-radius: 14px;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 1fr auto;
+  min-height: 68px;
+  padding: 13px 14px;
+}
+
+.presentation-box.active {
+  border-color: rgba(28, 167, 160, 0.42);
+}
+
+.presentation-box strong {
+  color: var(--agua-texto);
+  display: block;
+  font-size: 12px;
+}
+
+.presentation-box small {
+  color: var(--agua-suave);
+  display: block;
+  font-size: 11px;
+  line-height: 1.45;
+  margin-top: 4px;
+}
+
+.presentation-box button {
+  align-items: center;
+  background: var(--agua-petroleo);
+  border: 1px solid var(--agua-petroleo);
+  border-radius: 12px;
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  font: 700 12px Poppins, sans-serif;
+  gap: 7px;
+  min-height: 42px;
+  padding: 0 12px;
+}
+
 .field-grid {
   display: grid;
   gap: 14px;
@@ -519,6 +591,10 @@ select:focus {
   }
 
   .range-row {
+    grid-template-columns: 1fr;
+  }
+
+  .presentation-box {
     grid-template-columns: 1fr;
   }
 

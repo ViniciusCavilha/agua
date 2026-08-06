@@ -6,6 +6,7 @@ const fallbackSettings = {
   pushAlerts: false,
   weeklySummary: true,
   simulationMode: true,
+  presentationMode: false,
   anomalyDemo: false,
   readingInterval: 10,
   defaultPeriod: 'Semanal',
@@ -39,6 +40,27 @@ export const saveSettings = (settings) => {
   const nextSettings = { ...fallbackSettings, ...settings };
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(nextSettings));
   return applySettings(nextSettings);
+};
+
+export const enablePresentationMode = (settings = getSettings()) => {
+  return saveSettings({
+    ...settings,
+    simulationMode: true,
+    presentationMode: true,
+    anomalyDemo: true,
+    readingInterval: 5,
+    defaultPeriod: 'Semanal',
+    measurementUnit: 'Litros',
+  });
+};
+
+export const disablePresentationMode = (settings = getSettings()) => {
+  return saveSettings({
+    ...settings,
+    presentationMode: false,
+    anomalyDemo: false,
+    readingInterval: 10,
+  });
 };
 
 export const resetSettings = () => {

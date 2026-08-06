@@ -9,6 +9,8 @@ export const SIMULATED_SENSOR_CODE = 'FLOW-YF-S201-001';
 
 const weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
 const todayIndex = weekDays.length - 1;
+const presentationLiters = [420, 510, 465, 590, 540, 380, 720];
+const presentationFlowRates = [7.8, 8.6, 7.1, 9.4, 8.9, 6.2, 14.8];
 
 const emptyStats = [
   { label: 'Esta semana', value: '0 L', detail: 'Consumo acumulado semanal' },
@@ -100,6 +102,23 @@ export const createSimulatedReading = ({
 const getSimulatedReadings = (settings = getSettings()) => {
   if (!settings.simulationMode) {
     return [];
+  }
+
+  if (settings.presentationMode) {
+    return weekDays.map((day, index) => {
+      const isToday = index === todayIndex;
+      const liters = settings.anomalyDemo && isToday ? 920 : presentationLiters[index];
+      const flowRate = settings.anomalyDemo && isToday ? 18.5 : presentationFlowRates[index];
+
+      return createSimulatedReading({
+        dayIndex: index,
+        liters,
+        flowRate,
+        minutesAgo: isToday ? 8 : (todayIndex - index) * 24 * 60,
+        status: settings.anomalyDemo && isToday ? 'anomaly' : 'normal',
+        settings,
+      });
+    });
   }
 
   const litersToday = settings.anomalyDemo ? 720 : 0;

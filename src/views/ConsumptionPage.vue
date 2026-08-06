@@ -17,7 +17,7 @@
                 <h2>Historico semanal</h2>
                 <p>Consumo por dia em {{ volumeUnitLabel }}</p>
               </div>
-              <span><ion-icon :icon="calendarOutline" /> {{ settings.simulationMode ? 'Semana simulada' : 'Semana atual' }}</span>
+              <span><ion-icon :icon="calendarOutline" /> {{ chartBadge }}</span>
             </div>
 
             <div class="bar-chart" aria-label="Grafico semanal de consumo">
@@ -31,7 +31,7 @@
 
           <article class="alert-card">
             <span class="alert-icon"><ion-icon :icon="alertCircleOutline" /></span>
-            <h2>{{ settings.anomalyDemo ? 'Anomalia simulada' : 'Aguardando leituras' }}</h2>
+            <h2>{{ alertTitle }}</h2>
             <p>{{ alertMessage }}</p>
             <div class="health-row">
               <span>{{ settings.simulationMode ? 'Motor de simulacao' : 'Saude da rede' }}</span>
@@ -83,8 +83,12 @@ const visibleConsumptionStats = consumptionData.stats;
 const visibleWeeklyBars = consumptionData.weeklyBars;
 const readings = consumptionData.readings;
 
+const chartBadge = settings.presentationMode ? 'Modo apresentacao' : settings.simulationMode ? 'Semana simulada' : 'Semana atual';
+const alertTitle = settings.anomalyDemo ? 'Anomalia simulada' : settings.presentationMode ? 'Demo operacional' : 'Aguardando leituras';
 const alertMessage = settings.anomalyDemo
   ? 'Cenario de demonstracao ativo: o sistema simula consumo fora do padrao para testar alertas.'
+  : settings.presentationMode
+    ? 'Modo apresentacao ativo: as leituras simuladas representam um dia comum de operacao.'
   : 'Assim que os medidores enviarem informacoes, os alertas e variacoes aparecem aqui.';
 </script>
 

@@ -4,6 +4,7 @@ export type AppSettings = {
   pushAlerts: boolean;
   weeklySummary: boolean;
   simulationMode: boolean;
+  presentationMode: boolean;
   anomalyDemo: boolean;
   readingInterval: number;
   defaultPeriod: string;
@@ -13,6 +14,8 @@ export type AppSettings = {
 export declare const applySettings: (settings: Partial<AppSettings>) => AppSettings;
 export declare const getSettings: () => AppSettings;
 export declare const saveSettings: (settings: Partial<AppSettings>) => AppSettings;
+export declare const enablePresentationMode: (settings?: Partial<AppSettings>) => AppSettings;
+export declare const disablePresentationMode: (settings?: Partial<AppSettings>) => AppSettings;
 export declare const resetSettings: () => AppSettings;
 export declare const formatVolume: (liters: number, settings?: Partial<AppSettings>) => string;
 export declare const getDefaultPeriodRoute: (period: string) => string;
