@@ -3,7 +3,7 @@
     <ion-content :fullscreen="true">
       <main class="terms-page">
         <section class="terms-panel" aria-label="Termos de uso Agua+">
-          <router-link class="brand" to="/cadastro" aria-label="Voltar para cadastro">
+          <router-link class="brand" to="/cadastro?preserve=1" aria-label="Voltar para cadastro">
             <span><ion-icon :icon="waterOutline" /></span>
             Agua<b>+</b>
           </router-link>
@@ -91,7 +91,7 @@
           </article>
 
           <div class="terms-actions">
-            <router-link class="back-button" to="/cadastro">
+            <router-link class="back-button" to="/cadastro?preserve=1">
               <ion-icon :icon="arrowBackOutline" />
               Voltar ao cadastro
             </router-link>

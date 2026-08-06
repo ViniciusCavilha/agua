@@ -23,7 +23,15 @@
                 Nome completo
                 <span class="input-shell">
                   <ion-icon :icon="personOutline" />
-                  <input :value="name" type="text" autocomplete="name" placeholder="Seu nome" required @input="updateName" />
+                  <input
+                    :value="name"
+                    type="text"
+                    autocomplete="new-password"
+                    name="agua-register-name-new"
+                    placeholder="Seu nome"
+                    required
+                    @input="updateName"
+                  />
                 </span>
               </label>
 
@@ -50,7 +58,14 @@
               E-mail corporativo
               <span class="input-shell">
                 <ion-icon :icon="mailOutline" />
-                <input v-model="email" type="email" autocomplete="email" placeholder="seuemail@instituicao.com" required />
+                <input
+                  v-model="email"
+                  type="email"
+                  autocomplete="new-password"
+                  name="agua-register-email-new"
+                  placeholder="seuemail@instituicao.com"
+                  required
+                />
               </span>
             </label>
 
@@ -111,7 +126,7 @@
               <input v-model="acceptedTerms" type="checkbox" autocomplete="off" required />
               <span>
                 Aceito os termos de uso e a politica de privacidade.
-                <router-link to="/termos" target="_blank" @click.stop>Clique aqui para ver os termos.</router-link>
+                <router-link to="/termos" @click.stop>Clique aqui para ver os termos.</router-link>
               </span>
             </label>
 
@@ -154,7 +169,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { IonContent, IonIcon, IonPage } from '@ionic/vue';
+import { IonContent, IonIcon, IonPage, onIonViewWillEnter } from '@ionic/vue';
 import {
   arrowForwardOutline,
   briefcaseOutline,
@@ -291,6 +306,17 @@ const clearRegistrationDetails = () => {
   acceptedTerms.value = false;
 };
 
+const clearRegistrationForm = () => {
+  name.value = '';
+  email.value = '';
+  password.value = '';
+  confirmPassword.value = '';
+  googleAvatarImage.value = '';
+  isGoogleRegistration.value = false;
+  errorMessage.value = '';
+  clearRegistrationDetails();
+};
+
 const clearRegistrationDetailsAfterAutofill = () => {
   clearRegistrationDetails();
   window.clearTimeout(cleanupTimer);
@@ -425,6 +451,12 @@ const fillGoogleRegistration = () => {
 
 onMounted(() => {
   clearRegistrationDetailsAfterAutofill();
+});
+
+onIonViewWillEnter(() => {
+  if (route.query.google !== '1' && route.query.preserve !== '1') {
+    clearRegistrationForm();
+  }
 });
 
 fillGoogleRegistration();
