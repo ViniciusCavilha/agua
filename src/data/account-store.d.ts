@@ -1,4 +1,5 @@
-﻿export const SENAC_UNITS: string[];
+export const SENAC_UNITS: string[];
+export const ROLE_OPTIONS: string[];
 export function isSenacInstitution(value: string): boolean;
 export function getAvailableUnits(company: string): string[];
 export function getAccount(): {
@@ -7,8 +8,9 @@ export function getAccount(): {
   email: string;
   company: string;
   unit: string;
+  role: string;
+  emailVerified: boolean;
 };
 export function saveAccount(account: Partial<ReturnType<typeof getAccount>>): ReturnType<typeof getAccount>;
 export function updateAccount(account: Partial<ReturnType<typeof getAccount>>): ReturnType<typeof getAccount>;
 export function deleteAccount(): ReturnType<typeof getAccount>;
-

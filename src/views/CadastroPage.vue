@@ -17,7 +17,7 @@
             <p>Cadastre sua instituicao e acompanhe consumo, metas e economia em um painel simples.</p>
           </div>
 
-          <form @submit.prevent="createAccount">
+          <form autocomplete="off" @submit.prevent="createAccount">
             <div class="field-grid">
               <label>
                 Nome completo
@@ -34,7 +34,8 @@
                   <input
                     :value="phone"
                     type="tel"
-                    autocomplete="tel"
+                    autocomplete="new-password"
+                    name="agua-register-phone-new"
                     inputmode="numeric"
                     maxlength="15"
                     placeholder="(00) 00000-0000"
@@ -61,14 +62,28 @@
                   <input
                     :value="company"
                     type="text"
-                    autocomplete="organization"
+                    autocomplete="new-password"
+                    name="agua-company-new"
                     placeholder="Ex: Senac"
                     required
                     @input="updateCompany"
                   />
                 </span>
               </label>
-              <UnitPicker v-if="unitOptions.length" v-model="unit" :options="unitOptions" locked-light />
+              <label>
+                Cargo
+                <span class="input-shell">
+                  <ion-icon :icon="briefcaseOutline" />
+                  <select v-model="role" required>
+                    <option value="" disabled>Selecione seu cargo</option>
+                    <option v-for="option in roleOptions" :key="option" :value="option">{{ option }}</option>
+                  </select>
+                </span>
+              </label>
+            </div>
+
+            <div v-if="unitOptions.length" class="field-grid">
+              <UnitPicker v-model="unit" :options="unitOptions" locked-light />
             </div>
 
             <div class="field-grid">
@@ -93,7 +108,7 @@
             </div>
 
             <label class="terms">
-              <input v-model="acceptedTerms" type="checkbox" required />
+              <input v-model="acceptedTerms" type="checkbox" autocomplete="off" required />
               <span>Aceito os termos de uso e a politica de privacidade.</span>
             </label>
 
@@ -134,11 +149,12 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IonContent, IonIcon, IonPage } from '@ionic/vue';
 import {
   arrowForwardOutline,
+  briefcaseOutline,
   businessOutline,
   callOutline,
   checkmarkCircleOutline,
@@ -154,8 +170,16 @@ import {
 import PrimaryButton from '../components/PrimaryButton.vue';
 import SecondaryButton from '../components/SecondaryButton.vue';
 import UnitPicker from '../components/UnitPicker.vue';
-import { getAvailableUnits, saveAccount } from '../data/account-store.js';
-import { createFirebaseAccount, getCurrentUser, isFirebaseReady, loginWithGoogle } from '../services/firebase.js';
+import { getAvailableUnits, ROLE_OPTIONS, saveAccount } from '../data/account-store.js';
+import { ensureEmailVerificationNotification } from '../data/notifications-store.js';
+import {
+  createFirebaseAccount,
+  getCurrentUser,
+  isFirebaseReady,
+  loginWithGoogle,
+  sendCurrentEmailVerification,
+  watchAuthUser,
+} from '../services/firebase.js';
 
 const router = useRouter();
 const route = useRoute();
@@ -164,6 +188,7 @@ const phone = ref('');
 const email = ref('');
 const company = ref('');
 const unit = ref('');
+const role = ref('');
 const password = ref('');
 const confirmPassword = ref('');
 const acceptedTerms = ref(false);
@@ -172,6 +197,9 @@ const loading = ref(false);
 const errorMessage = ref('');
 const googleAvatarImage = ref('');
 const isGoogleRegistration = ref(false);
+const roleOptions = ROLE_OPTIONS;
+let stopAuthListener = null;
+let cleanupTimer = null;
 
 const formatPhone = (value) => {
   const digits = String(value || '').replace(/\D/g, '').slice(0, 11);
@@ -205,6 +233,7 @@ const canSubmit = computed(() => {
     phone.value &&
     email.value &&
     company.value &&
+    role.value &&
     (!unitOptions.value.length || unit.value) &&
     (isGoogleRegistration.value || (password.value.length >= 8 && password.value === confirmPassword.value)) &&
     acceptedTerms.value,
@@ -215,12 +244,28 @@ const updatePhone = (event) => {
   phone.value = formatPhone(event.target.value);
 };
 
+const hasInvalidNameChars = (value) => /[^\p{L}\s]/u.test(String(value || ''));
+
+const sanitizeName = (value) => {
+  return String(value || '')
+    .replace(/[^\p{L}\s]/gu, '')
+    .replace(/\s{2,}/g, ' ');
+};
+
 const capitalizeWords = (value) => {
   return String(value || '').replace(/(^|\s)(\S)/g, (match, space, letter) => `${space}${letter.toUpperCase()}`);
 };
 
 const updateName = (event) => {
-  name.value = capitalizeWords(event.target.value);
+  name.value = capitalizeWords(sanitizeName(event.target.value));
+};
+
+const getGoogleDisplayName = (value) => {
+  if (hasInvalidNameChars(value)) {
+    return '';
+  }
+
+  return capitalizeWords(sanitizeName(value));
 };
 
 const capitalizeFirstLetter = (value) => {
@@ -230,6 +275,20 @@ const capitalizeFirstLetter = (value) => {
 
 const updateCompany = (event) => {
   company.value = capitalizeFirstLetter(event.target.value);
+};
+
+const clearRegistrationDetails = () => {
+  phone.value = '';
+  company.value = '';
+  unit.value = '';
+  role.value = '';
+  acceptedTerms.value = false;
+};
+
+const clearRegistrationDetailsAfterAutofill = () => {
+  clearRegistrationDetails();
+  window.clearTimeout(cleanupTimer);
+  cleanupTimer = window.setTimeout(clearRegistrationDetails, 350);
 };
 
 const getAuthMessage = (error) => {
@@ -258,6 +317,7 @@ const createAccount = async () => {
     email: email.value,
     company: company.value,
     unit: unitOptions.value.length ? unit.value : '',
+    role: role.value,
   };
 
   try {
@@ -269,9 +329,16 @@ const createAccount = async () => {
         password: password.value,
         avatarImage: googleAvatarImage.value,
       });
-      saveAccount(firebaseAccount);
+      saveAccount({ ...firebaseAccount, emailVerified: false });
+
+      if (!isGoogleRegistration.value) {
+        sendCurrentEmailVerification().catch(() => {});
+      }
+
+      ensureEmailVerificationNotification();
     } else {
       saveAccount(account);
+      ensureEmailVerificationNotification();
     }
 
     router.push('/dashboard');
@@ -288,16 +355,27 @@ const googleSignup = async () => {
   try {
     loading.value = true;
     const { account, profileComplete } = await loginWithGoogle();
-    saveAccount(account);
 
     if (profileComplete) {
+      saveAccount(account);
       router.push('/dashboard');
       return;
     }
 
-    name.value = account.name;
+    saveAccount({
+      name: account.name,
+      email: account.email,
+      avatarImage: account.avatarImage,
+      phone: '',
+      company: '',
+      unit: '',
+      role: '',
+      emailVerified: false,
+    });
+
+    name.value = getGoogleDisplayName(account.name);
     email.value = account.email;
-    phone.value = formatPhone(account.phone);
+    clearRegistrationDetailsAfterAutofill();
     googleAvatarImage.value = account.avatarImage || '';
     isGoogleRegistration.value = true;
   } catch (error) {
@@ -314,13 +392,29 @@ const fillGoogleRegistration = () => {
     return;
   }
 
-  name.value = currentUser.displayName || name.value;
+  name.value = getGoogleDisplayName(currentUser.displayName);
   email.value = currentUser.email || email.value;
+  clearRegistrationDetailsAfterAutofill();
   googleAvatarImage.value = currentUser.photoURL || '';
   isGoogleRegistration.value = true;
 };
 
+onMounted(() => {
+  clearRegistrationDetailsAfterAutofill();
+});
+
 fillGoogleRegistration();
+
+if (isFirebaseReady()) {
+  stopAuthListener = watchAuthUser(() => {
+    fillGoogleRegistration();
+  });
+}
+
+onUnmounted(() => {
+  window.clearTimeout(cleanupTimer);
+  stopAuthListener?.();
+});
 </script>
 
 <style scoped>

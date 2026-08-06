@@ -40,17 +40,48 @@
             </router-link>
           </div>
         </div>
-        <button class="icon-button" type="button" aria-label="Notificacoes">
-          <ion-icon :icon="notificationsOutline" />
-          <i />
-        </button>
+        <div class="notification-menu">
+          <button
+            class="icon-button"
+            type="button"
+            :aria-expanded="isNotificationsOpen"
+            aria-haspopup="menu"
+            aria-label="Notificacoes"
+            @click="toggleNotifications"
+          >
+            <ion-icon :icon="notificationsOutline" />
+            <i v-if="unreadCount" />
+          </button>
+          <div v-if="isNotificationsOpen" class="notification-card" role="menu">
+            <div class="notification-head">
+              <strong>Notificacoes</strong>
+              <button v-if="unreadCount" type="button" @click="readAllNotifications">Marcar lidas</button>
+            </div>
+            <button
+              v-for="notification in notifications"
+              :key="notification.id"
+              class="notification-item"
+              :class="{ unread: !notification.read, success: notification.type === 'success' }"
+              type="button"
+              role="menuitem"
+              @click="openNotification(notification)"
+            >
+              <span />
+              <div>
+                <strong>{{ notification.title }}</strong>
+                <small>{{ notification.message }}</small>
+              </div>
+            </button>
+            <p v-if="!notifications.length" class="empty-notifications">Nada novo por aqui.</p>
+          </div>
+        </div>
       </header>
 
       <slot />
     </section>
 
     <nav class="bottom-nav" aria-label="Navegacao mobile">
-      <router-link v-for="item in navItems" :key="item.to" :to="item.to" :class="{ active: isActive(item.to) }">
+      <router-link v-for="item in bottomNavItems" :key="item.to" :to="item.to" :class="{ active: isActive(item.to) }">
         <ion-icon :icon="item.icon" />
         <span>{{ item.shortLabel }}</span>
       </router-link>
@@ -59,8 +90,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { IonIcon } from '@ionic/vue';
 import {
   barChartOutline,
@@ -73,6 +104,7 @@ import {
   settingsOutline,
   waterOutline,
 } from 'ionicons/icons';
+import { getNotifications, markAllNotificationsRead, markNotificationRead, onNotificationsChange } from '../data/notifications-store.js';
 
 defineProps({
   title: {
@@ -94,13 +126,22 @@ defineProps({
 });
 
 const route = useRoute();
+const router = useRouter();
 const isPeriodMenuOpen = ref(false);
+const isNotificationsOpen = ref(false);
+const notifications = ref(getNotifications());
+let stopNotificationsListener = null;
 
 const navItems = [
   { label: 'Inicio', shortLabel: 'Inicio', to: '/dashboard', icon: homeOutline },
   { label: 'Consumo', shortLabel: 'Consumo', to: '/consumo', icon: barChartOutline },
   { label: 'Metas', shortLabel: 'Metas', to: '/metas', icon: pieChartOutline },
   { label: 'Perfil', shortLabel: 'Perfil', to: '/perfil', icon: personOutline },
+];
+
+const bottomNavItems = [
+  ...navItems,
+  { label: 'Configuracoes', shortLabel: 'Config.', to: '/configuracoes', icon: settingsOutline },
 ];
 
 const periodOptions = [
@@ -117,7 +158,35 @@ const closePeriodMenu = () => {
   isPeriodMenuOpen.value = false;
 };
 
+const unreadCount = computed(() => notifications.value.filter((notification) => !notification.read).length);
+
+const refreshNotifications = () => {
+  notifications.value = getNotifications();
+};
+
+const toggleNotifications = () => {
+  isNotificationsOpen.value = !isNotificationsOpen.value;
+};
+
+const openNotification = (notification) => {
+  notifications.value = markNotificationRead(notification.id);
+  isNotificationsOpen.value = false;
+  router.push(notification.to || '/perfil');
+};
+
+const readAllNotifications = () => {
+  notifications.value = markAllNotificationsRead();
+};
+
 const isActive = (path) => (path === '/consumo' ? route.path.startsWith('/consumo') : route.path === path);
+
+onMounted(() => {
+  stopNotificationsListener = onNotificationsChange(refreshNotifications);
+});
+
+onUnmounted(() => {
+  stopNotificationsListener?.();
+});
 </script>
 
 <style scoped>
@@ -272,11 +341,13 @@ const isActive = (path) => (path === '/consumo' ? route.path.startsWith('/consum
   padding: 0 14px;
 }
 
-.period-menu {
+.period-menu,
+.notification-menu {
   position: relative;
 }
 
-.period-card {
+.period-card,
+.notification-card {
   background: var(--agua-branco);
   border: 1px solid var(--agua-borda);
   border-radius: 16px;
@@ -289,6 +360,33 @@ const isActive = (path) => (path === '/consumo' ? route.path.startsWith('/consum
   right: 0;
   top: calc(100% + 10px);
   z-index: 5;
+}
+
+.notification-card {
+  gap: 8px;
+  min-width: 310px;
+}
+
+.notification-head {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  padding: 6px 8px 2px;
+}
+
+.notification-head strong {
+  color: var(--agua-petroleo);
+  font-size: 13px;
+}
+
+.notification-head button {
+  background: transparent;
+  border: 0;
+  color: var(--agua-agua);
+  cursor: pointer;
+  font: 700 11px Poppins, sans-serif;
+  padding: 0;
 }
 
 .period-card a {
@@ -314,6 +412,61 @@ const isActive = (path) => (path === '/consumo' ? route.path.startsWith('/consum
   color: var(--agua-suave);
   font-size: 11px;
   line-height: 1.35;
+}
+
+.notification-item {
+  align-items: start;
+  background: transparent;
+  border: 0;
+  border-radius: 12px;
+  color: var(--agua-texto);
+  cursor: pointer;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto 1fr;
+  padding: 11px 12px;
+  text-align: left;
+  width: 100%;
+}
+
+.notification-item:hover,
+.notification-item.unread {
+  background: #f0fbfa;
+}
+
+.notification-item > span {
+  background: var(--agua-erro);
+  border-radius: 999px;
+  height: 10px;
+  margin-top: 4px;
+  width: 10px;
+}
+
+.notification-item.success > span {
+  background: var(--agua-sucesso);
+}
+
+.notification-item:not(.unread) > span {
+  opacity: 0.28;
+}
+
+.notification-item strong {
+  color: var(--agua-petroleo);
+  display: block;
+  font-size: 12px;
+  margin-bottom: 3px;
+}
+
+.notification-item small,
+.empty-notifications {
+  color: var(--agua-suave);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.empty-notifications {
+  margin: 0;
+  padding: 10px 12px;
 }
 
 .mobile-only,
@@ -397,9 +550,20 @@ const isActive = (path) => (path === '/consumo' ? route.path.startsWith('/consum
     justify-self: start;
   }
 
-  .period-card {
+  .period-card,
+  .notification-card {
     left: 0;
     right: auto;
+  }
+
+  .notification-menu {
+    justify-self: end;
+  }
+
+  .notification-card {
+    left: auto;
+    min-width: min(300px, calc(100vw - 28px));
+    right: 0;
   }
 }
 </style>

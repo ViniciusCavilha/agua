@@ -6,6 +6,9 @@ import {
   getAuth,
   GoogleAuthProvider,
   onAuthStateChanged,
+  reauthenticateWithPopup,
+  reload,
+  sendEmailVerification,
   setPersistence,
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -30,6 +33,7 @@ const auth = app ? getAuth(app) : null;
 const db = app ? getFirestore(app) : null;
 
 if (auth) {
+  auth.languageCode = 'pt-BR';
   setPersistence(auth, browserLocalPersistence);
 }
 
@@ -58,16 +62,17 @@ export const buildAccountFromUser = (user, extra = {}) => ({
   email: user.email || extra.email || '',
   company: extra.company || '',
   unit: extra.unit || '',
-  role: extra.role || 'Administrador',
+  role: extra.role || '',
   avatarColor: extra.avatarColor || '#1ca7a0',
   avatarImage: extra.avatarImage || user.photoURL || '',
   emailAlerts: extra.emailAlerts ?? true,
   weeklyReport: extra.weeklyReport ?? true,
   reportFrequency: extra.reportFrequency || 'Semanal',
+  emailVerified: extra.emailVerified ?? false,
 });
 
 export const isProfileComplete = (profile) => {
-  return Boolean(profile?.name && profile?.email && profile?.phone && profile?.company);
+  return Boolean(profile?.name && profile?.email && profile?.phone && profile?.company && profile?.role);
 };
 
 export const getUserProfile = async (uid) => {
@@ -91,6 +96,7 @@ export const saveUserProfile = async (uid, profile) => {
 export const loginWithEmail = async (email, password) => {
   ensureFirebase();
   const credential = await signInWithEmailAndPassword(auth, email, password);
+  await reload(credential.user);
   const profile = await getUserProfile(credential.user.uid);
   return buildAccountFromUser(credential.user, profile || {});
 };
@@ -113,6 +119,7 @@ export const createFirebaseAccount = async ({ name, email, password, phone, comp
     role,
     avatarColor,
     avatarImage,
+    emailVerified: false,
   });
 
   await saveUserProfile(credential.user.uid, {
@@ -129,6 +136,7 @@ export const loginWithGoogle = async () => {
   provider.setCustomParameters({ prompt: 'select_account' });
 
   const credential = await signInWithPopup(auth, provider);
+  await reload(credential.user);
   const storedProfile = await getUserProfile(credential.user.uid);
   const profile = buildAccountFromUser(credential.user, storedProfile || {});
 
@@ -136,6 +144,65 @@ export const loginWithGoogle = async () => {
     account: profile,
     profileComplete: isProfileComplete(storedProfile),
   };
+};
+
+export const sendCurrentEmailVerification = async () => {
+  ensureFirebase();
+  const currentUser = auth.currentUser;
+
+  if (!currentUser) {
+    throw new Error('Entre na conta antes de solicitar a verificacao.');
+  }
+
+  if (currentUser.emailVerified) {
+    return {
+      alreadyVerifiedByFirebase: true,
+      sent: false,
+      providers: currentUser.providerData.map((provider) => provider.providerId),
+    };
+  }
+
+  await sendEmailVerification(currentUser, {
+    handleCodeInApp: false,
+    url: `${window.location.origin}${window.location.pathname}`,
+  });
+
+  return {
+    alreadyVerifiedByFirebase: false,
+    sent: true,
+    providers: currentUser.providerData.map((provider) => provider.providerId),
+  };
+};
+
+export const refreshCurrentUser = async () => {
+  ensureFirebase();
+  const currentUser = auth.currentUser;
+
+  if (!currentUser) {
+    return false;
+  }
+
+  await reload(currentUser);
+  return currentUser.emailVerified;
+};
+
+export const getCurrentProviderIds = () => {
+  return auth?.currentUser?.providerData.map((provider) => provider.providerId) || [];
+};
+
+export const confirmCurrentGoogleAccount = async () => {
+  ensureFirebase();
+  const currentUser = auth.currentUser;
+
+  if (!currentUser) {
+    throw new Error('Entre na conta antes de confirmar o Google.');
+  }
+
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+  const credential = await reauthenticateWithPopup(currentUser, provider);
+
+  return credential.user.uid === currentUser.uid && credential.user.email === currentUser.email;
 };
 
 export const logoutFirebase = async () => {

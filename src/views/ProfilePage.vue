@@ -9,7 +9,7 @@
               <span v-else>{{ initials }}</span>
             </div>
             <div class="identity-copy">
-              <span>{{ role }}</span>
+              <span>{{ role || 'Cargo nao informado' }}</span>
               <h2>{{ name || 'Usuario Agua+' }}</h2>
               <p>{{ accountSummary }}</p>
             </div>
@@ -27,6 +27,31 @@
               <i />
             </div>
           </article>
+        </section>
+
+        <section v-if="showVerificationCard" class="verification-card">
+          <span class="verification-icon"><ion-icon :icon="mailUnreadOutline" /></span>
+          <div>
+            <strong>Verificacao de e-mail pendente</strong>
+            <p>Confirme o e-mail cadastrado para deixar sua conta ativa e pronta para receber alertas importantes.</p>
+            <p v-if="verificationMessage" class="verification-message">{{ verificationMessage }}</p>
+          </div>
+          <div class="verification-actions">
+            <button
+              v-if="!isGoogleVerification"
+              class="secondary-action"
+              type="button"
+              :disabled="verificationLoading"
+              @click="requestEmailVerification"
+            >
+              <ion-icon :icon="mailUnreadOutline" />
+              Enviar verificacao
+            </button>
+            <button class="secondary-action confirm" type="button" :disabled="verificationLoading" @click="confirmEmailVerification">
+              <ion-icon :icon="shieldCheckmarkOutline" />
+              {{ isGoogleVerification ? 'Confirmar com Google' : 'Ja verifiquei' }}
+            </button>
+          </div>
         </section>
 
         <section class="profile-layout">
@@ -52,7 +77,10 @@
                   </label>
                   <label>
                     Cargo
-                    <input v-model="role" type="text" :disabled="!isEditing" placeholder="Ex: Administrador" />
+                    <select v-model="role" :disabled="!isEditing">
+                      <option value="" disabled>Selecione seu cargo</option>
+                      <option v-for="option in roleOptions" :key="option" :value="option">{{ option }}</option>
+                    </select>
                   </label>
                   <label>
                     E-mail
@@ -220,6 +248,21 @@
             </div>
           </aside>
 
+          <div v-if="showLogoutModal" class="modal-backdrop" role="presentation" @click.self="closeLogoutModal">
+            <section class="delete-modal logout-modal" role="dialog" aria-modal="true" aria-labelledby="logout-title">
+              <span class="modal-icon logout-icon"><ion-icon :icon="logOutOutline" /></span>
+              <h2 id="logout-title">Sair da conta?</h2>
+              <p>Voce sera levado para a tela de login e podera entrar novamente quando quiser.</p>
+              <div class="modal-actions">
+                <button class="cancel-delete" type="button" @click="closeLogoutModal">Cancelar</button>
+                <button class="confirm-logout" type="button" @click="confirmLogout">
+                  <ion-icon :icon="logOutOutline" />
+                  Sair
+                </button>
+              </div>
+            </section>
+          </div>
+
           <div v-if="showDeleteModal" class="modal-backdrop" role="presentation" @click.self="closeDeleteModal">
             <section class="delete-modal" role="dialog" aria-modal="true" aria-labelledby="delete-title">
               <span class="modal-icon"><ion-icon :icon="trashOutline" /></span>
@@ -251,17 +294,35 @@ import {
   createOutline,
   imageOutline,
   logOutOutline,
+  mailUnreadOutline,
   moonOutline,
   refreshOutline,
+  shieldCheckmarkOutline,
   sunnyOutline,
   trashOutline,
 } from 'ionicons/icons';
 import AppShell from '../components/AppShell.vue';
 import PrimaryButton from '../components/PrimaryButton.vue';
 import UnitPicker from '../components/UnitPicker.vue';
-import { deleteAccount, getAccount, getAvailableUnits, updateAccount } from '../data/account-store.js';
+import { deleteAccount, getAccount, getAvailableUnits, ROLE_OPTIONS, updateAccount } from '../data/account-store.js';
+import {
+  ensureEmailVerificationNotification,
+  ensureEmailVerifiedNotification,
+  getNotifications,
+  removeNotification,
+} from '../data/notifications-store.js';
 import { getSavedTheme, toggleTheme } from '../data/theme-store.js';
-import { deleteFirebaseAccount, getCurrentUser, getUserProfile, logoutFirebase, saveUserProfile } from '../services/firebase.js';
+import {
+  confirmCurrentGoogleAccount,
+  deleteFirebaseAccount,
+  getCurrentProviderIds,
+  getCurrentUser,
+  getUserProfile,
+  logoutFirebase,
+  refreshCurrentUser,
+  saveUserProfile,
+  sendCurrentEmailVerification,
+} from '../services/firebase.js';
 
 const router = useRouter();
 const account = getAccount();
@@ -270,7 +331,7 @@ const email = ref(account.email);
 const phone = ref('');
 const company = ref(account.company);
 const unit = ref(account.unit);
-const role = ref(account.role || 'Administrador');
+const role = ref(account.role || '');
 const avatarColor = ref(account.avatarColor || '#1ca7a0');
 const avatarImage = ref(account.avatarImage || '');
 const emailAlerts = ref(account.emailAlerts ?? true);
@@ -281,8 +342,14 @@ const isEditing = ref(false);
 const isDark = ref(getSavedTheme() === 'dark');
 const connectedMeters = ref(12);
 const showDeleteModal = ref(false);
+const showLogoutModal = ref(false);
 const profilePhotoInput = ref(null);
 const deleteError = ref('');
+const emailVerified = ref(account.emailVerified ?? false);
+const verificationLoading = ref(false);
+const verificationMessage = ref('');
+const providerIds = ref([]);
+const roleOptions = ROLE_OPTIONS;
 
 const avatarColors = [
   { label: 'Azul agua', value: '#1ca7a0' },
@@ -320,12 +387,13 @@ const applyAccount = (nextAccount) => {
   phone.value = formatPhone(nextAccount.phone || '');
   company.value = nextAccount.company || '';
   unit.value = nextAccount.unit || '';
-  role.value = nextAccount.role || 'Administrador';
+  role.value = nextAccount.role || '';
   avatarColor.value = nextAccount.avatarColor || '#1ca7a0';
   avatarImage.value = nextAccount.avatarImage || '';
   emailAlerts.value = nextAccount.emailAlerts ?? true;
   weeklyReport.value = nextAccount.weeklyReport ?? true;
   reportFrequency.value = nextAccount.reportFrequency || 'Semanal';
+  emailVerified.value = nextAccount.emailVerified ?? false;
 };
 
 const unitOptions = computed(() => getAvailableUnits(company.value));
@@ -356,8 +424,17 @@ const accountSummary = computed(() => {
   return `${companyLabel} - ${unitLabel}`;
 });
 
+const hasVerificationNotification = () => {
+  return getNotifications().some((notification) => notification.id === 'verify-email');
+};
+
+const showVerificationCard = computed(() => Boolean(email.value && !emailVerified.value));
+const isGoogleVerification = computed(() => providerIds.value.includes('google.com'));
+
 const preferenceRows = computed(() => [
   { label: 'E-mail cadastrado', value: email.value || 'Nao informado' },
+  { label: 'Verificacao', value: emailVerified.value ? 'Confirmado' : 'Pendente' },
+  { label: 'Cargo', value: role.value || 'Nao informado' },
   { label: 'Telefone', value: phone.value || 'Nao informado' },
   { label: 'Instituicao', value: company.value || 'Nao informada' },
   { label: 'Unidade principal', value: unit.value || 'Nao selecionada' },
@@ -457,6 +534,7 @@ const saveProfile = () => {
     emailAlerts: emailAlerts.value,
     weeklyReport: weeklyReport.value,
     reportFrequency: reportFrequency.value,
+    emailVerified: emailVerified.value,
   });
 
   phone.value = savedAccount.phone;
@@ -496,9 +574,18 @@ const changeTheme = () => {
   isDark.value = toggleTheme() === 'dark';
 };
 
-const logout = async () => {
+const logout = () => {
+  showLogoutModal.value = true;
+};
+
+const closeLogoutModal = () => {
+  showLogoutModal.value = false;
+};
+
+const confirmLogout = async () => {
   await logoutFirebase();
-  router.push('/login');
+  showLogoutModal.value = false;
+  router.replace('/login');
 };
 
 const removeAccount = () => {
@@ -509,6 +596,102 @@ const removeAccount = () => {
 const closeDeleteModal = () => {
   showDeleteModal.value = false;
   deleteError.value = '';
+};
+
+const getVerificationErrorMessage = (error) => {
+  const code = error?.code || '';
+
+  if (code.includes('too-many-requests')) {
+    return 'O Firebase bloqueou temporariamente muitos envios. Aguarde alguns minutos e tente de novo.';
+  }
+
+  if (code.includes('unauthorized-continue-uri') || code.includes('invalid-continue-uri')) {
+    return 'O dominio atual nao esta autorizado no Firebase para links de verificacao.';
+  }
+
+  if (code.includes('requires-recent-login')) {
+    return 'Entre na conta novamente e tente enviar a verificacao logo em seguida.';
+  }
+
+  return error?.message || 'Nao foi possivel enviar a verificacao agora.';
+};
+
+const markEmailAsVerified = async () => {
+  emailVerified.value = true;
+  verificationMessage.value = '';
+  const savedAccount = updateAccount({ emailVerified: true });
+  const currentUser = getCurrentUser();
+
+  if (currentUser) {
+    await saveUserProfile(currentUser.uid, { emailVerified: true });
+  }
+
+  applyAccount(savedAccount);
+  removeNotification('verify-email');
+  ensureEmailVerifiedNotification();
+};
+
+const requestEmailVerification = async () => {
+  verificationMessage.value = '';
+
+  try {
+    verificationLoading.value = true;
+    if (isGoogleVerification.value) {
+      verificationMessage.value = 'Esta conta usa Google. Confirme pelo popup do Google para ativar a verificacao no Agua+.';
+      return;
+    }
+
+    const verification = await sendCurrentEmailVerification();
+
+    if (verification.alreadyVerifiedByFirebase) {
+      verificationMessage.value =
+        'Este e-mail ja aparece como verificado no Firebase. Use "Ja verifiquei" para sincronizar com o Agua+.';
+      return;
+    }
+
+    ensureEmailVerificationNotification();
+    verificationMessage.value = 'Enviamos um link de verificacao para o seu e-mail. Depois de confirmar, volte aqui e clique em "Ja verifiquei".';
+  } catch (error) {
+    verificationMessage.value = getVerificationErrorMessage(error);
+  } finally {
+    verificationLoading.value = false;
+  }
+};
+
+const confirmEmailVerification = async () => {
+  verificationMessage.value = '';
+
+  try {
+    verificationLoading.value = true;
+
+    if (isGoogleVerification.value) {
+      const confirmed = await confirmCurrentGoogleAccount();
+
+      if (!confirmed) {
+        verificationMessage.value = 'A conta Google selecionada nao corresponde ao e-mail cadastrado.';
+        return;
+      }
+
+      await markEmailAsVerified();
+      verificationMessage.value = 'Conta Google confirmada com sucesso.';
+      return;
+    }
+
+    const isVerified = await refreshCurrentUser();
+
+    if (!isVerified) {
+      ensureEmailVerificationNotification();
+      verificationMessage.value = 'Ainda nao consta como verificado. Abra o link enviado no e-mail e tente novamente.';
+      return;
+    }
+
+    await markEmailAsVerified();
+    verificationMessage.value = 'Conta verificada com sucesso.';
+  } catch (error) {
+    verificationMessage.value = error?.message || 'Nao foi possivel conferir a verificacao agora.';
+  } finally {
+    verificationLoading.value = false;
+  }
 };
 
 const confirmDeleteAccount = async () => {
@@ -535,15 +718,26 @@ onMounted(async () => {
       return;
     }
 
+    providerIds.value = getCurrentProviderIds();
     const remoteProfile = await getUserProfile(currentUser.uid);
+    const hasPendingVerification = hasVerificationNotification();
+    const storedVerified = hasPendingVerification ? false : remoteProfile?.emailVerified ?? account.emailVerified ?? false;
     const mergedAccount = updateAccount({
       ...remoteProfile,
       email: currentUser.email || remoteProfile?.email || email.value,
       name: remoteProfile?.name || currentUser.displayName || name.value,
       avatarImage: remoteProfile?.avatarImage || currentUser.photoURL || avatarImage.value,
+      emailVerified: storedVerified,
     });
 
     applyAccount(mergedAccount);
+
+    if (storedVerified) {
+      removeNotification('verify-email');
+      ensureEmailVerifiedNotification();
+    } else {
+      ensureEmailVerificationNotification();
+    }
   } catch (error) {
     applyAccount(getAccount());
   }
@@ -560,6 +754,7 @@ onMounted(async () => {
 
 .identity-card,
 .plan-card,
+.verification-card,
 .form-card,
 .prefs-card {
   background: var(--agua-branco);
@@ -685,6 +880,67 @@ onMounted(async () => {
   display: block;
   height: 100%;
   width: 64%;
+}
+
+.verification-card {
+  align-items: center;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  margin-bottom: 20px;
+}
+
+.verification-icon {
+  background: rgba(28, 167, 160, 0.14);
+  border-radius: 18px;
+  color: var(--agua-petroleo);
+  display: grid;
+  font-size: 27px;
+  height: 58px;
+  place-items: center;
+  width: 58px;
+}
+
+.verification-card strong {
+  color: var(--agua-petroleo);
+  display: block;
+  font-size: 16px;
+  margin-bottom: 5px;
+}
+
+.verification-card p {
+  color: var(--agua-suave);
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.verification-message {
+  background: var(--agua-muted);
+  border: 1px solid var(--agua-borda);
+  border-radius: 12px;
+  color: var(--agua-petroleo) !important;
+  font-weight: 700;
+  margin-top: 10px !important;
+  padding: 10px 12px;
+}
+
+.verification-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.verification-actions .confirm {
+  background: var(--agua-petroleo);
+  border-color: var(--agua-petroleo);
+  color: #ffffff;
+}
+
+.secondary-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
 }
 
 .profile-layout {
@@ -1090,6 +1346,26 @@ select:focus {
   color: #ffffff;
 }
 
+.logout-icon {
+  background: rgba(28, 167, 160, 0.14);
+  border-color: rgba(28, 167, 160, 0.24);
+  color: var(--agua-petroleo);
+}
+
+.confirm-logout {
+  align-items: center;
+  background: var(--agua-petroleo);
+  border: 1px solid var(--agua-petroleo);
+  border-radius: 14px;
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  font: 700 13px Poppins, sans-serif;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 16px;
+}
+
 @media (max-width: 980px) {
   .profile-hero,
   .profile-layout {
@@ -1101,6 +1377,21 @@ select:focus {
   .identity-card {
     align-items: flex-start;
     grid-template-columns: auto 1fr;
+  }
+
+  .verification-card {
+    align-items: flex-start;
+    grid-template-columns: auto 1fr;
+  }
+
+  .verification-actions {
+    grid-column: 1 / -1;
+    justify-content: stretch;
+  }
+
+  .verification-actions .secondary-action {
+    justify-content: center;
+    width: 100%;
   }
 
   .edit-toggle {

@@ -159,9 +159,17 @@ const googleLogin = async () => {
   try {
     loading.value = true;
     const { account, profileComplete } = await loginWithGoogle();
-    saveAccount(account);
 
     if (!profileComplete) {
+      saveAccount({
+        name: account.name,
+        email: account.email,
+        avatarImage: account.avatarImage,
+        phone: '',
+        company: '',
+        unit: '',
+        emailVerified: false,
+      });
       router.push('/cadastro?google=1');
       return;
     }

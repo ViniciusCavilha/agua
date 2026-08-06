@@ -29,14 +29,29 @@
   'Senac TO',
 ];
 
+export const ROLE_OPTIONS = [
+  'Administrador',
+  'Gestor',
+  'Coordenador',
+  'Supervisor',
+  'Tecnico de manutencao',
+  'Analista',
+  'Professor',
+  'Aluno',
+  'Responsavel pela unidade',
+  'Outro',
+];
+
 const ACCOUNT_KEY = 'agua-plus-account';
 
 const fallbackAccount = {
-  name: 'Vinicius Souza',
+  name: '',
   phone: '',
-  email: 'vinicius@instituicao.com',
-  company: 'Instituicao Agua+',
-  unit: 'Campus Centro',
+  email: '',
+  company: '',
+  unit: '',
+  role: '',
+  emailVerified: false,
 };
 
 export const isSenacInstitution = (value) => {
@@ -78,6 +93,7 @@ export const updateAccount = (account) => {
 export const deleteAccount = () => {
   localStorage.removeItem(ACCOUNT_KEY);
   localStorage.removeItem('agua-plus-goals');
+  localStorage.removeItem('agua-plus-notifications');
   return { ...fallbackAccount };
 };
 

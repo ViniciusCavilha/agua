@@ -29,7 +29,14 @@
 
     <div class="search-box">
       <ion-icon :icon="searchOutline" />
-      <input v-model="search" type="search" :disabled="disabled" placeholder="Buscar por estado ou sigla, ex: SC" />
+      <input
+        v-model="search"
+        type="search"
+        autocomplete="off"
+        name="agua-unit-search"
+        :disabled="disabled"
+        placeholder="Buscar por estado ou sigla, ex: SC"
+      />
     </div>
 
     <div class="unit-list" role="listbox" aria-label="Unidades Senac">
