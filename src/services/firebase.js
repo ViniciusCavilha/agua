@@ -37,6 +37,10 @@ if (auth) {
   setPersistence(auth, browserLocalPersistence);
 }
 
+const removeLocalOnlyFields = (profile = {}) => {
+  const { uid, ...firestoreProfile } = profile;
+  return firestoreProfile;
+};
 const ensureFirebase = () => {
   if (!auth || !db) {
     throw new Error('Firebase ainda nao configurado. Preencha o arquivo .env com as chaves do seu projeto.');
@@ -79,6 +83,7 @@ export const buildAccountFromUser = (user, extra = {}) => {
 
   return {
     ...profile,
+    uid: user.uid || profile.uid || '',
     name: profile.name || user.displayName || '',
     phone: profile.phone || user.phoneNumber || '',
     email: user.email || profile.email || '',
@@ -101,7 +106,7 @@ export const saveUserProfile = async (uid, profile) => {
   await setDoc(
     doc(db, 'users', uid),
     {
-      ...profile,
+      ...removeLocalOnlyFields(profile),
       updatedAt: serverTimestamp(),
     },
     { merge: true },
@@ -263,3 +268,4 @@ export const deleteFirebaseAccount = async () => {
   await deleteDoc(doc(db, 'users', currentUser.uid));
   await deleteUser(currentUser);
 };
+

@@ -2,7 +2,8 @@ export const SENAC_UNITS: string[];
 export const ROLE_OPTIONS: string[];
 export function isSenacInstitution(value: string): boolean;
 export function getAvailableUnits(company: string): string[];
-export function getAccount(): {
+export function getAccount(owner?: { uid?: string; email?: string } | null): {
+  uid: string;
   name: string;
   phone: string;
   email: string;
@@ -20,3 +21,4 @@ export function getAccount(): {
 export function saveAccount(account: Partial<ReturnType<typeof getAccount>>): ReturnType<typeof getAccount>;
 export function updateAccount(account: Partial<ReturnType<typeof getAccount>>): ReturnType<typeof getAccount>;
 export function deleteAccount(): ReturnType<typeof getAccount>;
+export function clearActiveAccount(): void;

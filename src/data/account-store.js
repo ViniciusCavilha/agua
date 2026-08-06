@@ -1,4 +1,4 @@
-﻿export const SENAC_UNITS = [
+export const SENAC_UNITS = [
   'Senac Nacional',
   'Senac AC',
   'Senac AL',
@@ -43,8 +43,10 @@ export const ROLE_OPTIONS = [
 ];
 
 const ACCOUNT_KEY = 'agua-plus-account';
+const ACTIVE_ACCOUNT_KEY = 'agua-plus-active-account-key';
 
 const fallbackAccount = {
+  uid: '',
   name: '',
   phone: '',
   email: '',
@@ -60,6 +62,40 @@ const fallbackAccount = {
   settings: null,
 };
 
+const normalizeOwner = (value) => {
+  return String(value || '')
+    .trim()
+    .toLowerCase();
+};
+
+const getScopedAccountKey = (account = {}) => {
+  if (account.uid) {
+    return `${ACCOUNT_KEY}:uid:${account.uid}`;
+  }
+
+  if (account.email) {
+    return `${ACCOUNT_KEY}:email:${normalizeOwner(account.email)}`;
+  }
+
+  return ACCOUNT_KEY;
+};
+
+const getActiveAccountKey = () => {
+  try {
+    return localStorage.getItem(ACTIVE_ACCOUNT_KEY) || '';
+  } catch (error) {
+    return '';
+  }
+};
+
+const setActiveAccountKey = (key) => {
+  try {
+    localStorage.setItem(ACTIVE_ACCOUNT_KEY, key);
+  } catch (error) {
+    // localStorage indisponivel; segue apenas em memoria da pagina.
+  }
+};
+
 export const isSenacInstitution = (value) => {
   return String(value || '').trim().toLowerCase().includes('senac');
 };
@@ -72,9 +108,15 @@ export const getAvailableUnits = (company) => {
   return [];
 };
 
-export const getAccount = () => {
+export const getAccount = (owner = null) => {
   try {
-    const raw = localStorage.getItem(ACCOUNT_KEY);
+    const key = owner ? getScopedAccountKey(owner) : getActiveAccountKey();
+
+    if (!key) {
+      return { ...fallbackAccount };
+    }
+
+    const raw = localStorage.getItem(key);
 
     if (!raw) {
       return { ...fallbackAccount };
@@ -88,7 +130,9 @@ export const getAccount = () => {
 
 export const saveAccount = (account) => {
   const nextAccount = { ...fallbackAccount, ...account };
-  localStorage.setItem(ACCOUNT_KEY, JSON.stringify(nextAccount));
+  const key = getScopedAccountKey(nextAccount);
+  localStorage.setItem(key, JSON.stringify(nextAccount));
+  setActiveAccountKey(key);
   return nextAccount;
 };
 
@@ -97,9 +141,19 @@ export const updateAccount = (account) => {
 };
 
 export const deleteAccount = () => {
+  const activeKey = getActiveAccountKey();
+
+  if (activeKey) {
+    localStorage.removeItem(activeKey);
+  }
+
+  localStorage.removeItem(ACTIVE_ACCOUNT_KEY);
   localStorage.removeItem(ACCOUNT_KEY);
   localStorage.removeItem('agua-plus-goals');
   localStorage.removeItem('agua-plus-notifications');
   return { ...fallbackAccount };
 };
 
+export const clearActiveAccount = () => {
+  localStorage.removeItem(ACTIVE_ACCOUNT_KEY);
+};

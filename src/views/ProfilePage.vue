@@ -285,7 +285,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { IonContent, IonIcon, IonPage } from '@ionic/vue';
 import {
@@ -304,7 +304,7 @@ import {
 import AppShell from '../components/AppShell.vue';
 import PrimaryButton from '../components/PrimaryButton.vue';
 import UnitPicker from '../components/UnitPicker.vue';
-import { deleteAccount, getAccount, getAvailableUnits, ROLE_OPTIONS, updateAccount } from '../data/account-store.js';
+import { clearActiveAccount, deleteAccount, getAccount, getAvailableUnits, ROLE_OPTIONS, updateAccount } from '../data/account-store.js';
 import {
   ensureEmailVerificationNotification,
   ensureEmailVerifiedNotification,
@@ -322,11 +322,13 @@ import {
   refreshCurrentUser,
   saveUserProfile,
   sendCurrentEmailVerification,
+  watchAuthUser,
 } from '../services/firebase.js';
 import { saveSettings } from '../data/settings-store.js';
 
 const router = useRouter();
-const account = getAccount();
+const initialUser = getCurrentUser();
+const account = getAccount(initialUser ? { uid: initialUser.uid, email: initialUser.email } : null);
 const name = ref(account.name);
 const email = ref(account.email);
 const phone = ref('');
@@ -351,6 +353,7 @@ const verificationLoading = ref(false);
 const verificationMessage = ref('');
 const providerIds = ref([]);
 const roleOptions = ROLE_OPTIONS;
+let stopProfileAuthListener = null;
 
 const avatarColors = [
   { label: 'Azul agua', value: '#1ca7a0' },
@@ -528,6 +531,7 @@ const clearAvatarImage = () => {
 };
 
 const saveProfile = () => {
+  const currentUser = getCurrentUser();
   const savedAccount = updateAccount({
     name: name.value,
     email: email.value,
@@ -540,11 +544,11 @@ const saveProfile = () => {
     emailAlerts: emailAlerts.value,
     weeklyReport: weeklyReport.value,
     reportFrequency: reportFrequency.value,
+    uid: currentUser?.uid || account.uid || '',
     emailVerified: emailVerified.value,
   });
 
   phone.value = savedAccount.phone;
-  const currentUser = getCurrentUser();
 
   if (currentUser) {
     saveUserProfile(currentUser.uid, savedAccount).catch(() => {});
@@ -556,7 +560,6 @@ const saveProfile = () => {
     saved.value = false;
   }, 1800);
 };
-
 const resetChanges = () => {
   const currentAccount = getAccount();
   applyAccount(currentAccount);
@@ -590,6 +593,7 @@ const closeLogoutModal = () => {
 
 const confirmLogout = async () => {
   await logoutFirebase();
+  clearActiveAccount();
   showLogoutModal.value = false;
   router.replace('/login');
 };
@@ -716,10 +720,8 @@ const confirmDeleteAccount = async () => {
   }
 };
 
-onMounted(async () => {
+const syncProfileFromFirebase = async (currentUser) => {
   try {
-    const currentUser = getCurrentUser();
-
     if (!currentUser) {
       return;
     }
@@ -733,7 +735,8 @@ onMounted(async () => {
     const hasPendingVerification = hasVerificationNotification();
     const storedVerified = hasPendingVerification ? false : remoteProfile?.emailVerified ?? account.emailVerified ?? false;
     const mergedAccount = updateAccount({
-      ...remoteProfile,
+      ...(remoteProfile || {}),
+      uid: currentUser.uid,
       email: currentUser.email || remoteProfile?.email || email.value,
       name: remoteProfile?.name || currentUser.displayName || name.value,
       avatarImage: remoteProfile?.avatarImage || currentUser.photoURL || avatarImage.value,
@@ -749,8 +752,20 @@ onMounted(async () => {
       ensureEmailVerificationNotification();
     }
   } catch (error) {
-    applyAccount(getAccount());
+    const currentUser = getCurrentUser();
+    applyAccount(getAccount(currentUser ? { uid: currentUser.uid, email: currentUser.email } : null));
   }
+};
+
+onMounted(() => {
+  syncProfileFromFirebase(getCurrentUser());
+  stopProfileAuthListener = watchAuthUser((user) => {
+    syncProfileFromFirebase(user);
+  });
+});
+
+onUnmounted(() => {
+  stopProfileAuthListener?.();
 });
 </script>
 
@@ -1415,3 +1430,5 @@ select:focus {
   }
 }
 </style>
+
+

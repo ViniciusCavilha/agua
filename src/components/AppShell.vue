@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <main class="app-shell" :class="{ 'mobile-nav-open': isMobileNavOpen }">
     <aside class="sidebar" aria-label="Navegacao principal">
       <router-link class="brand" to="/dashboard" aria-label="Agua+ dashboard">
@@ -32,7 +32,7 @@
           <ion-icon :icon="menuOutline" />
         </button>
         <div>
-          <p>{{ eyebrow }}</p>
+          <p>{{ displayedEyebrow }}</p>
           <h1>{{ title }}</h1>
         </div>
         <div v-if="showPeriod" class="period-menu">
@@ -112,16 +112,18 @@ import {
   settingsOutline,
   waterOutline,
 } from 'ionicons/icons';
+import { getAccount, saveAccount } from '../data/account-store.js';
+import { getCurrentUser, getUserProfile, watchAuthUser } from '../services/firebase.js';
 import { getNotifications, markAllNotificationsRead, markNotificationRead, onNotificationsChange } from '../data/notifications-store.js';
 
-defineProps({
+const props = defineProps({
   title: {
     type: String,
     required: true,
   },
   eyebrow: {
     type: String,
-    default: 'Ola, Vinicius',
+    default: '',
   },
   periodLabel: {
     type: String,
@@ -139,7 +141,9 @@ const isPeriodMenuOpen = ref(false);
 const isNotificationsOpen = ref(false);
 const isMobileNavOpen = ref(false);
 const notifications = ref(getNotifications());
+const accountName = ref(getAccount().name);
 let stopNotificationsListener = null;
+let stopAuthListener = null;
 
 const navItems = [
   { label: 'Inicio', shortLabel: 'Inicio', to: '/dashboard', icon: homeOutline },
@@ -160,6 +164,30 @@ const periodOptions = [
   { label: 'Mes passado', detail: 'Resumo do ciclo mensal anterior', to: '/consumo/mes-passado' },
 ];
 
+const firstName = computed(() => String(accountName.value || '').trim().split(' ').filter(Boolean)[0] || '');
+const displayedEyebrow = computed(() => props.eyebrow || (firstName.value ? `Ola, ${firstName.value}` : 'Ola'));
+
+const refreshAccountName = async (user = getCurrentUser()) => {
+  if (!user) {
+    accountName.value = '';
+    return;
+  }
+
+  try {
+    const remoteProfile = await getUserProfile(user.uid);
+    const account = saveAccount({
+      ...(remoteProfile || {}),
+      uid: user.uid,
+      email: user.email || remoteProfile?.email || '',
+      name: remoteProfile?.name || user.displayName || '',
+      avatarImage: remoteProfile?.avatarImage || user.photoURL || '',
+    });
+    accountName.value = account.name;
+  } catch (error) {
+    const account = getAccount({ uid: user.uid, email: user.email });
+    accountName.value = account.name || user.displayName || '';
+  }
+};
 const togglePeriodMenu = () => {
   isPeriodMenuOpen.value = !isPeriodMenuOpen.value;
 };
@@ -205,10 +233,15 @@ const isActive = (path) => (path === '/consumo' ? route.path.startsWith('/consum
 
 onMounted(() => {
   stopNotificationsListener = onNotificationsChange(refreshNotifications);
+  refreshAccountName();
+  stopAuthListener = watchAuthUser((user) => {
+    refreshAccountName(user);
+  });
 });
 
 onUnmounted(() => {
   stopNotificationsListener?.();
+  stopAuthListener?.();
 });
 </script>
 
@@ -632,4 +665,6 @@ onUnmounted(() => {
   }
 }
 </style>
+
+
 
