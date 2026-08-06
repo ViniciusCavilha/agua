@@ -1,5 +1,5 @@
 ﻿<template>
-  <main class="app-shell">
+  <main class="app-shell" :class="{ 'mobile-nav-open': isMobileNavOpen }">
     <aside class="sidebar" aria-label="Navegacao principal">
       <router-link class="brand" to="/dashboard" aria-label="Agua+ dashboard">
         <span><ion-icon :icon="waterOutline" /></span>
@@ -21,7 +21,14 @@
 
     <section class="workspace">
       <header class="topbar">
-        <button class="icon-button mobile-only" type="button" aria-label="Abrir menu">
+        <button
+          class="icon-button mobile-only"
+          type="button"
+          :aria-expanded="isMobileNavOpen"
+          aria-controls="mobile-navigation"
+          aria-label="Abrir menu"
+          @click="toggleMobileNav"
+        >
           <ion-icon :icon="menuOutline" />
         </button>
         <div>
@@ -80,8 +87,8 @@
       <slot />
     </section>
 
-    <nav class="bottom-nav" aria-label="Navegacao mobile">
-      <router-link v-for="item in bottomNavItems" :key="item.to" :to="item.to" :class="{ active: isActive(item.to) }">
+    <nav id="mobile-navigation" class="bottom-nav" :class="{ open: isMobileNavOpen }" aria-label="Navegacao mobile">
+      <router-link v-for="item in bottomNavItems" :key="item.to" :to="item.to" :class="{ active: isActive(item.to) }" @click="closeMobileNav">
         <ion-icon :icon="item.icon" />
         <span>{{ item.shortLabel }}</span>
       </router-link>
@@ -130,6 +137,7 @@ const route = useRoute();
 const router = useRouter();
 const isPeriodMenuOpen = ref(false);
 const isNotificationsOpen = ref(false);
+const isMobileNavOpen = ref(false);
 const notifications = ref(getNotifications());
 let stopNotificationsListener = null;
 
@@ -167,12 +175,25 @@ const refreshNotifications = () => {
 };
 
 const toggleNotifications = () => {
+  closeMobileNav();
+  closePeriodMenu();
   isNotificationsOpen.value = !isNotificationsOpen.value;
+};
+
+const toggleMobileNav = () => {
+  isNotificationsOpen.value = false;
+  closePeriodMenu();
+  isMobileNavOpen.value = !isMobileNavOpen.value;
+};
+
+const closeMobileNav = () => {
+  isMobileNavOpen.value = false;
 };
 
 const openNotification = (notification) => {
   notifications.value = markNotificationRead(notification.id);
   isNotificationsOpen.value = false;
+  closeMobileNav();
   router.push(notification.to || '/perfil');
 };
 
@@ -482,7 +503,7 @@ onUnmounted(() => {
 @media (max-width: 980px) {
   .app-shell {
     display: block;
-    padding-bottom: 84px;
+    padding-bottom: 18px;
     padding-left: 0;
   }
 
@@ -495,43 +516,89 @@ onUnmounted(() => {
   }
 
   .topbar {
-    grid-template-columns: auto 1fr auto auto;
+    align-items: start;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    position: relative;
+    z-index: 7;
   }
 
   .mobile-only {
     display: grid;
+    grid-column: 1;
+    grid-row: 1;
+    position: relative;
+    z-index: 8;
+  }
+
+  .topbar > div:first-of-type {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+  }
+
+  .period-menu {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: start;
+  }
+
+  .app-shell.mobile-nav-open .period-menu {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  .notification-menu {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
   }
 
   .bottom-nav {
-    background: var(--agua-branco);
-    border-top: 1px solid #e3e9e9;
+    background: color-mix(in srgb, var(--agua-branco) 94%, var(--agua-agua));
+    border-right: 1px solid var(--agua-borda);
     bottom: 0;
+    box-shadow: 18px 0 42px rgba(13, 75, 94, 0.16);
     display: flex;
-    height: 74px;
-    justify-content: space-around;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: flex-start;
     left: 0;
+    padding: 88px 16px 22px;
     position: fixed;
-    right: 0;
-    z-index: 2;
+    top: 0;
+    transform: translateX(-104%);
+    pointer-events: none;
+    transition: transform 220ms ease, visibility 220ms ease;
+    visibility: hidden;
+    width: min(72vw, 252px);
+    z-index: 6;
+  }
+
+  .bottom-nav.open {
+    pointer-events: auto;
+    transform: translateX(0);
+    visibility: visible;
   }
 
   .bottom-nav a {
     align-items: center;
-    color: #8c9a9e;
+    border-radius: 12px;
+    color: var(--agua-suave);
     display: flex;
-    flex: 1;
-    flex-direction: column;
-    font: 500 10px Poppins, sans-serif;
-    gap: 4px;
-    justify-content: center;
+    font: 600 13px Poppins, sans-serif;
+    gap: 10px;
+    min-height: 44px;
+    padding: 0 12px;
     text-decoration: none;
   }
 
   .bottom-nav ion-icon {
-    font-size: 21px;
+    font-size: 19px;
   }
 
   .bottom-nav .active {
+    background: color-mix(in srgb, var(--agua-agua) 14%, transparent);
     color: var(--agua-petroleo);
     font-weight: 700;
   }
@@ -546,16 +613,6 @@ onUnmounted(() => {
     gap: 10px;
   }
 
-  .topbar {
-    align-items: start;
-    grid-template-columns: auto 1fr auto;
-  }
-
-  .period-menu {
-    grid-column: 2 / 4;
-    justify-self: start;
-  }
-
   .period-card,
   .notification-card {
     left: 0;
@@ -563,6 +620,8 @@ onUnmounted(() => {
   }
 
   .notification-menu {
+    grid-column: 3;
+    grid-row: 1;
     justify-self: end;
   }
 

@@ -21,6 +21,7 @@ npm-debug.log*
 .env.*.local
 
 /.idea
+/.firebase
 /.ionic
 /.sass-cache
 /.sourcemaps
