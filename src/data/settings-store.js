@@ -1,4 +1,5 @@
 const SETTINGS_KEY = 'agua-plus-app-settings';
+const SETTINGS_EVENT = 'agua-plus-settings-updated';
 
 const fallbackSettings = {
   compactMode: false,
@@ -22,6 +23,10 @@ export const applySettings = (settings) => {
   return nextSettings;
 };
 
+const dispatchSettingsUpdate = (settings) => {
+  window.dispatchEvent(new CustomEvent(SETTINGS_EVENT, { detail: settings }));
+};
+
 export const getSettings = () => {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
@@ -38,8 +43,16 @@ export const getSettings = () => {
 
 export const saveSettings = (settings) => {
   const nextSettings = { ...fallbackSettings, ...settings };
+
+  if (!nextSettings.simulationMode) {
+    nextSettings.presentationMode = false;
+    nextSettings.anomalyDemo = false;
+  }
+
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(nextSettings));
-  return applySettings(nextSettings);
+  const appliedSettings = applySettings(nextSettings);
+  dispatchSettingsUpdate(appliedSettings);
+  return appliedSettings;
 };
 
 export const enablePresentationMode = (settings = getSettings()) => {
@@ -65,7 +78,20 @@ export const disablePresentationMode = (settings = getSettings()) => {
 
 export const resetSettings = () => {
   localStorage.removeItem(SETTINGS_KEY);
-  return applySettings(fallbackSettings);
+  const appliedSettings = applySettings(fallbackSettings);
+  dispatchSettingsUpdate(appliedSettings);
+  return appliedSettings;
+};
+
+export const onSettingsChange = (callback) => {
+  const listener = (event) => callback(event.detail || getSettings());
+  window.addEventListener(SETTINGS_EVENT, listener);
+  window.addEventListener('storage', listener);
+
+  return () => {
+    window.removeEventListener(SETTINGS_EVENT, listener);
+    window.removeEventListener('storage', listener);
+  };
 };
 
 export const formatVolume = (liters, settings = getSettings()) => {

@@ -197,7 +197,7 @@ import ListItem from '../components/ListItem.vue';
 import MetricCard from '../components/MetricCard.vue';
 import { userGoals } from '../data/goals-store.js';
 import { dashboardData } from '../data/mock-data.js';
-import { formatVolume, getSettings } from '../data/settings-store.js';
+import { formatVolume, getSettings, onSettingsChange } from '../data/settings-store.js';
 import { getCurrentUser, watchAuthUser } from '../services/firebase.js';
 import { listDevices } from '../services/device-service.js';
 import { getConsumptionReadings } from '../services/reading-service.js';
@@ -208,10 +208,11 @@ const route = useRoute();
 const devices = ref([]);
 const devicesError = ref('');
 let stopAuthListener = null;
-const settings = getSettings();
-const consumptionData = getConsumptionReadings(settings);
+let stopSettingsListener = null;
+const settings = ref(getSettings());
+const consumptionData = ref(getConsumptionReadings(settings.value));
 const dashboardGoal = computed(() => userGoals.value[0] || null);
-const todayTotalLiters = computed(() => consumptionData.rawReadings.reduce((total, reading) => {
+const todayTotalLiters = computed(() => consumptionData.value.rawReadings.reduce((total, reading) => {
   const readingDate = new Date(reading.timestamp);
   const today = new Date();
   const isToday =
@@ -221,7 +222,7 @@ const todayTotalLiters = computed(() => consumptionData.rawReadings.reduce((tota
 
   return isToday ? total + reading.liters : total;
 }, 0));
-const currentConsumption = computed(() => formatVolume(todayTotalLiters.value, settings));
+const currentConsumption = computed(() => formatVolume(todayTotalLiters.value, settings.value));
 const activeDevice = computed(() => {
   return devices.value.find((device) => device.status === 'Ativo') || null;
 });
@@ -230,13 +231,13 @@ const deviceCount = computed(() => devices.value.length);
 const technicalAlerts = computed(() =>
   generateTechnicalAlerts({
     devices: devices.value,
-    readings: consumptionData.rawReadings,
-    settings,
+    readings: consumptionData.value.rawReadings,
+    settings: settings.value,
   }),
 );
 const visibleTechnicalAlerts = computed(() => technicalAlerts.value.slice(0, 3));
 const lastSimulatedReading = computed(() => {
-  return consumptionData.rawReadings
+  return consumptionData.value.rawReadings
     .slice()
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0] || null;
 });
@@ -282,15 +283,15 @@ const dashboardStatus = computed(() => {
     return `${activeDevice.value.status} - ${activeDevice.value.deviceCode}`;
   }
 
-  if (settings.anomalyDemo) {
+  if (settings.value.anomalyDemo) {
     return 'Cenario de anomalia ativo';
   }
 
-  if (settings.presentationMode) {
+  if (settings.value.presentationMode) {
     return 'Modo apresentacao ativo';
   }
 
-  return settings.simulationMode ? `Simulando a cada ${settings.readingInterval}s` : dashboardData.variation;
+  return settings.value.simulationMode ? `Simulando a cada ${settings.value.readingInterval}s` : dashboardData.variation;
 });
 const deviceSummaryText = computed(() => {
   if (devicesError.value) {
@@ -305,18 +306,18 @@ const deviceSummaryText = computed(() => {
 });
 const lastReadingLabel = computed(() => {
   if (!activeDevice.value) {
-    return formatVolume(0, settings);
+    return formatVolume(0, settings.value);
   }
 
   if (activeDevice.value.lastReadingAt) {
-    return formatVolume(activeDevice.value.lastReadingLiters, settings);
+    return formatVolume(activeDevice.value.lastReadingLiters, settings.value);
   }
 
-  return formatVolume(lastSimulatedReading.value?.liters || activeDevice.value.lastReadingLiters || 0, settings);
+  return formatVolume(lastSimulatedReading.value?.liters || activeDevice.value.lastReadingLiters || 0, settings.value);
 });
 const visibleMonthlyMetrics = computed(() => dashboardData.monthly.map((metric) => {
   if (metric.value === '0 L') {
-    return { ...metric, value: formatVolume(0, settings) };
+    return { ...metric, value: formatVolume(0, settings.value) };
   }
 
   return metric;
@@ -352,6 +353,12 @@ const refreshDashboardDevices = () => {
   loadDashboardDevices();
 };
 
+const refreshDashboardSettings = (nextSettings = getSettings()) => {
+  settings.value = nextSettings;
+  consumptionData.value = getConsumptionReadings(nextSettings);
+  syncTechnicalAlertNotifications(technicalAlerts.value);
+};
+
 onIonViewWillEnter(loadDashboardDevices);
 
 onMounted(() => {
@@ -364,6 +371,7 @@ onMounted(() => {
   }
 
   window.addEventListener('focus', refreshDashboardDevices);
+  stopSettingsListener = onSettingsChange(refreshDashboardSettings);
 });
 
 watch(
@@ -377,6 +385,7 @@ watch(
 
 onUnmounted(() => {
   stopAuthListener?.();
+  stopSettingsListener?.();
   window.removeEventListener('focus', refreshDashboardDevices);
 });
 </script>

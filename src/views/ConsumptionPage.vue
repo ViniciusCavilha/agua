@@ -68,28 +68,51 @@
 </template>
 
 <script setup>
-import { IonContent, IonIcon, IonPage } from '@ionic/vue';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
+import { IonContent, IonIcon, IonPage, onIonViewWillEnter } from '@ionic/vue';
 import { alertCircleOutline, calendarOutline } from 'ionicons/icons';
 import AppShell from '../components/AppShell.vue';
-import { getSettings } from '../data/settings-store.js';
+import { getSettings, onSettingsChange } from '../data/settings-store.js';
 import { getConsumptionReadings } from '../services/reading-service.js';
 
-const settings = getSettings();
-const consumptionData = getConsumptionReadings(settings);
+const settings = reactive(getSettings());
+const consumptionData = ref(getConsumptionReadings(settings));
+let stopSettingsListener = null;
 
-const volumeUnitLabel = settings.measurementUnit === 'Metros cubicos' ? 'm3' : 'litros';
+const refreshConsumptionData = (nextSettings = getSettings()) => {
+  Object.assign(settings, nextSettings);
+  consumptionData.value = getConsumptionReadings(settings);
+};
 
-const visibleConsumptionStats = consumptionData.stats;
-const visibleWeeklyBars = consumptionData.weeklyBars;
-const readings = consumptionData.readings;
+const volumeUnitLabel = computed(() => (settings.measurementUnit === 'Metros cubicos' ? 'm3' : 'litros'));
 
-const chartBadge = settings.presentationMode ? 'Modo apresentacao' : settings.simulationMode ? 'Semana simulada' : 'Semana atual';
-const alertTitle = settings.anomalyDemo ? 'Anomalia simulada' : settings.presentationMode ? 'Demo operacional' : 'Aguardando leituras';
-const alertMessage = settings.anomalyDemo
-  ? 'Cenario de demonstracao ativo: o sistema simula consumo fora do padrao para testar alertas.'
-  : settings.presentationMode
-    ? 'Modo apresentacao ativo: as leituras simuladas representam um dia comum de operacao.'
-  : 'Assim que os medidores enviarem informacoes, os alertas e variacoes aparecem aqui.';
+const visibleConsumptionStats = computed(() => consumptionData.value.stats);
+const visibleWeeklyBars = computed(() => consumptionData.value.weeklyBars);
+const readings = computed(() => consumptionData.value.readings);
+
+const chartBadge = computed(() => (settings.presentationMode ? 'Modo apresentacao' : settings.simulationMode ? 'Semana simulada' : 'Semana atual'));
+const alertTitle = computed(() => (settings.anomalyDemo ? 'Anomalia simulada' : settings.presentationMode ? 'Demo operacional' : 'Aguardando leituras'));
+const alertMessage = computed(() => {
+  if (settings.anomalyDemo) {
+    return 'Cenario de demonstracao ativo: o sistema simula consumo fora do padrao para testar alertas.';
+  }
+
+  if (settings.presentationMode) {
+    return 'Modo apresentacao ativo: as leituras simuladas representam um dia comum de operacao.';
+  }
+
+  return 'Assim que os medidores enviarem informacoes, os alertas e variacoes aparecem aqui.';
+});
+
+onIonViewWillEnter(refreshConsumptionData);
+
+onMounted(() => {
+  stopSettingsListener = onSettingsChange(refreshConsumptionData);
+});
+
+onUnmounted(() => {
+  stopSettingsListener?.();
+});
 </script>
 
 <style scoped>
@@ -267,8 +290,8 @@ const alertMessage = settings.anomalyDemo
 }
 
 .empty-readings {
-  background: #f7fbfb;
-  border: 1px dashed #cfe2e5;
+  background: var(--agua-muted);
+  border: 1px dashed var(--agua-borda);
   border-radius: 16px;
   display: grid;
   gap: 6px;
@@ -290,8 +313,8 @@ const alertMessage = settings.anomalyDemo
 
 .reading-row {
   align-items: center;
-  background: #f7fbfb;
-  border: 1px solid #edf2f2;
+  background: color-mix(in srgb, var(--agua-branco) 82%, var(--agua-agua));
+  border: 1px solid var(--agua-borda);
   border-radius: 14px;
   display: grid;
   gap: 10px;
@@ -301,13 +324,13 @@ const alertMessage = settings.anomalyDemo
 
 .reading-row span,
 .reading-row small {
-  color: var(--agua-suave);
+  color: var(--agua-texto);
   font-size: 12px;
   font-style: normal;
 }
 
 .reading-row strong {
-  color: var(--agua-texto);
+  color: var(--agua-petroleo);
   font-size: 13px;
 }
 

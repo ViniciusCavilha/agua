@@ -118,7 +118,7 @@
                   Modo simulacao
                   <small>Usar leituras simuladas enquanto nao houver hardware conectado.</small>
                 </span>
-                <input v-model="settings.simulationMode" type="checkbox" />
+                <input v-model="settings.simulationMode" type="checkbox" @change="syncSimulationMode" />
               </label>
 
               <label class="switch-row">
@@ -280,6 +280,13 @@ const togglePresentationMode = () => {
   const nextSettings = settings.presentationMode ? disablePresentationMode(settings) : enablePresentationMode(settings);
   Object.assign(settings, nextSettings);
   saveAppSettings();
+};
+
+const syncSimulationMode = () => {
+  if (!settings.simulationMode) {
+    settings.presentationMode = false;
+    settings.anomalyDemo = false;
+  }
 };
 
 const openDefaultPeriod = () => {

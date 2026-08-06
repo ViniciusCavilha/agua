@@ -17,5 +17,6 @@ export declare const saveSettings: (settings: Partial<AppSettings>) => AppSettin
 export declare const enablePresentationMode: (settings?: Partial<AppSettings>) => AppSettings;
 export declare const disablePresentationMode: (settings?: Partial<AppSettings>) => AppSettings;
 export declare const resetSettings: () => AppSettings;
+export declare const onSettingsChange: (callback: (settings: AppSettings) => void) => () => void;
 export declare const formatVolume: (liters: number, settings?: Partial<AppSettings>) => string;
 export declare const getDefaultPeriodRoute: (period: string) => string;

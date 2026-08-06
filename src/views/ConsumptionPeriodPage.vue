@@ -257,8 +257,8 @@ const totalRegistered = computed(() => stats.value[0]?.value ?? '0 L');
 }
 
 .empty-readings {
-  background: #f7fbfb;
-  border: 1px dashed #cfe2e5;
+  background: var(--agua-muted);
+  border: 1px dashed var(--agua-borda);
   border-radius: 16px;
   display: grid;
   gap: 6px;
