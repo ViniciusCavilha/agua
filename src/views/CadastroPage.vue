@@ -191,6 +191,7 @@ import UnitPicker from '../components/UnitPicker.vue';
 import { deleteAccount, getAvailableUnits, getDetectedInstitution, ROLE_OPTIONS, saveAccount } from '../data/account-store.js';
 import { ensureEmailVerificationNotification } from '../data/notifications-store.js';
 import { getSettings, saveSettings } from '../data/settings-store.js';
+import { applyTheme } from '../data/theme-store.js';
 import {
   createFirebaseAccount,
   getCurrentUser,
@@ -379,6 +380,7 @@ const createAccount = async () => {
       ensureEmailVerificationNotification();
     }
 
+    applyTheme('light');
     router.push('/dashboard');
   } catch (error) {
     if ((error?.code || '').includes('permission-denied') || String(error?.message || '').includes('Missing or insufficient permissions')) {
