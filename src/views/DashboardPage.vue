@@ -415,9 +415,9 @@ onUnmounted(() => {
   align-items: center;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 34%),
-    var(--agua-petroleo);
+    var(--agua-feature-bg);
   border-radius: 22px;
-  color: var(--agua-branco);
+  color: var(--agua-feature-text);
   display: grid;
   gap: 18px;
   grid-template-columns: 1fr auto;
@@ -444,7 +444,7 @@ onUnmounted(() => {
 }
 
 .hero-strip span {
-  color: rgba(255, 255, 255, 0.78) !important;
+  color: var(--agua-feature-muted) !important;
   display: block;
   font-size: 12px;
   font-weight: 700;
@@ -452,7 +452,7 @@ onUnmounted(() => {
 }
 
 .hero-strip h2 {
-  color: #ffffff !important;
+  color: var(--agua-feature-text) !important;
   font-size: clamp(22px, 4vw, 34px);
   font-weight: 700;
   letter-spacing: 0;
@@ -462,7 +462,7 @@ onUnmounted(() => {
 }
 
 .hero-strip p {
-  color: rgba(255, 255, 255, 0.82) !important;
+  color: var(--agua-feature-muted) !important;
   font-size: 13px;
   margin: 12px 0 0;
 }
@@ -472,7 +472,7 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.14);
   border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 12px;
-  color: #ffffff !important;
+  color: var(--agua-feature-text) !important;
   display: inline-flex;
   font-size: 12px;
   font-weight: 800;
@@ -483,7 +483,7 @@ onUnmounted(() => {
 }
 
 .hero-strip strong {
-  color: #ffffff !important;
+  color: var(--agua-feature-text) !important;
   font-size: clamp(28px, 5vw, 44px);
   line-height: 1;
   position: relative;

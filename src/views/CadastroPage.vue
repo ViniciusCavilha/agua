@@ -367,9 +367,10 @@ const createAccount = async () => {
         avatarImage: googleAvatarImage.value,
         settings: getSettings(),
         theme: 'light',
+        themeConfigured: true,
         useCurrentUser: isGoogleRegistration.value,
       });
-      saveAccount({ ...firebaseAccount, emailVerified: false, theme: 'light' });
+      saveAccount({ ...firebaseAccount, emailVerified: false, theme: 'light', themeConfigured: true });
 
       if (!isGoogleRegistration.value) {
         sendCurrentEmailVerification().catch(() => {});
@@ -377,7 +378,7 @@ const createAccount = async () => {
 
       ensureEmailVerificationNotification();
     } else {
-      saveAccount({ ...account, settings: getSettings(), theme: 'light' });
+      saveAccount({ ...account, settings: getSettings(), theme: 'light', themeConfigured: true });
       ensureEmailVerificationNotification();
     }
 

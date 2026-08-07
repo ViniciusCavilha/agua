@@ -37,6 +37,14 @@ export const applySavedTheme = () => {
   return applyTheme(getSavedTheme());
 };
 
+export const resolveAccountTheme = ({ remoteTheme, themeConfigured, localTheme } = {}) => {
+  if (themeConfigured) {
+    return remoteTheme === 'dark' ? 'dark' : 'light';
+  }
+
+  return remoteTheme === 'dark' || localTheme === 'dark' || getSavedTheme() === 'dark' ? 'dark' : 'light';
+};
+
 export const toggleTheme = () => {
   return applyTheme(getSavedTheme() === 'dark' ? 'light' : 'dark', { animate: true });
 };

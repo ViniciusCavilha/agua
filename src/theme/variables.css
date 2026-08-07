@@ -22,6 +22,9 @@
   --agua-danger-border: #ffd8d8;
   --agua-auth-bg: linear-gradient(120deg, #ffffff, #f7fbfb 48%, #eaf4f4);
   --agua-shadow: 0 20px 60px rgba(13, 75, 94, 0.1);
+  --agua-feature-bg: #0d4b5e;
+  --agua-feature-text: #ffffff;
+  --agua-feature-muted: #d6eef2;
 }
 
 :root[data-theme='dark'] {
@@ -42,6 +45,9 @@
   --agua-danger-border: rgba(239, 68, 68, 0.3);
   --agua-auth-bg: linear-gradient(120deg, #08191f, #0d2028 48%, #0a2f34);
   --agua-shadow: 0 20px 60px rgba(0, 0, 0, 0.24);
+  --agua-feature-bg: #123944;
+  --agua-feature-text: #f4ffff;
+  --agua-feature-muted: #b9dfe3;
 }
 
 * {

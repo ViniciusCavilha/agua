@@ -101,10 +101,10 @@ import {
 } from 'ionicons/icons';
 import PrimaryButton from '../components/PrimaryButton.vue';
 import SecondaryButton from '../components/SecondaryButton.vue';
-import { isFirebaseReady, loginWithEmail, loginWithGoogle } from '../services/firebase.js';
-import { saveAccount } from '../data/account-store.js';
+import { isFirebaseReady, loginWithEmail, loginWithGoogle, saveUserProfile } from '../services/firebase.js';
+import { getAccount, saveAccount } from '../data/account-store.js';
 import { saveSettings } from '../data/settings-store.js';
-import { applyTheme } from '../data/theme-store.js';
+import { applyTheme, resolveAccountTheme } from '../data/theme-store.js';
 
 const router = useRouter();
 const email = ref('');
@@ -114,15 +114,34 @@ const showPassword = ref(false);
 const loading = ref(false);
 const errorMessage = ref('');
 
-const finishLogin = (account) => {
+const finishLogin = async (account) => {
   if (account) {
-    saveAccount(account);
+    const localAccount = getAccount({ uid: account.uid, email: account.email });
+    const hasMatchingLocalAccount = Boolean(localAccount.uid && localAccount.uid === account.uid);
+    const resolvedTheme = resolveAccountTheme({
+      remoteTheme: account.theme,
+      themeConfigured: account.themeConfigured,
+      localTheme: hasMatchingLocalAccount ? localAccount.theme : '',
+    });
+    const resolvedAccount = saveAccount({
+      ...(hasMatchingLocalAccount ? localAccount : {}),
+      ...account,
+      theme: resolvedTheme || 'light',
+    });
 
-    if (account.settings) {
-      saveSettings(account.settings);
+    if (resolvedAccount.settings) {
+      saveSettings(resolvedAccount.settings);
     }
 
-    applyTheme(account.theme || 'light');
+    applyTheme(resolvedAccount.theme);
+
+    if (account.uid && !account.themeConfigured) {
+      await saveUserProfile(account.uid, {
+        theme: resolvedAccount.theme,
+        themeConfigured: true,
+      });
+      saveAccount({ ...resolvedAccount, themeConfigured: true });
+    }
   }
 
   router.push('/dashboard');
@@ -153,7 +172,7 @@ const login = async () => {
   try {
     loading.value = true;
     const account = await loginWithEmail(email.value, password.value);
-    finishLogin(account);
+    await finishLogin(account);
   } catch (error) {
     errorMessage.value = getAuthMessage(error);
   } finally {
@@ -185,7 +204,7 @@ const googleLogin = async () => {
       return;
     }
 
-    finishLogin(account);
+    await finishLogin(account);
   } catch (error) {
     errorMessage.value = getAuthMessage(error);
   } finally {

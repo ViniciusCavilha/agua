@@ -543,9 +543,9 @@ onMounted(loadDevices);
   align-items: center;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 34%),
-    var(--agua-petroleo);
+    var(--agua-feature-bg);
   border-radius: 22px;
-  color: var(--agua-branco);
+  color: var(--agua-feature-text);
   display: grid;
   gap: 18px;
   grid-template-columns: 1fr auto;
@@ -559,7 +559,7 @@ onMounted(loadDevices);
 }
 
 .devices-toolbar span {
-  color: rgba(255, 255, 255, 0.78) !important;
+  color: var(--agua-feature-muted) !important;
   display: block;
   font-size: 12px;
   font-weight: 700;
@@ -567,7 +567,7 @@ onMounted(loadDevices);
 }
 
 .devices-toolbar h2 {
-  color: #ffffff !important;
+  color: var(--agua-feature-text) !important;
   font-size: clamp(22px, 4vw, 34px);
   line-height: 1.14;
   margin: 0;
@@ -575,7 +575,7 @@ onMounted(loadDevices);
 }
 
 .devices-toolbar p {
-  color: rgba(255, 255, 255, 0.82) !important;
+  color: var(--agua-feature-muted) !important;
   font-size: 13px;
   line-height: 1.7;
   margin: 12px 0 0;
@@ -611,7 +611,7 @@ onMounted(loadDevices);
 .devices-toolbar .link-device-button {
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.26);
-  color: var(--agua-branco);
+  color: var(--agua-feature-text);
 }
 
 .architecture-grid,

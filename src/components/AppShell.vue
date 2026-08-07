@@ -113,6 +113,7 @@ import {
   waterOutline,
 } from 'ionicons/icons';
 import { getAccount, onAccountChange, saveAccount } from '../data/account-store.js';
+import { resolveAccountTheme } from '../data/theme-store.js';
 import { getCurrentUser, getUserProfile, watchAuthUser } from '../services/firebase.js';
 import { getNotifications, markAllNotificationsRead, markNotificationRead, onNotificationsChange } from '../data/notifications-store.js';
 
@@ -176,12 +177,21 @@ const refreshAccountName = async (user = getCurrentUser()) => {
 
   try {
     const remoteProfile = await getUserProfile(user.uid);
+    const localAccount = getAccount({ uid: user.uid, email: user.email });
+    const hasMatchingLocalAccount = Boolean(localAccount.uid && localAccount.uid === user.uid);
+    const resolvedTheme = resolveAccountTheme({
+      remoteTheme: remoteProfile?.theme,
+      themeConfigured: remoteProfile?.themeConfigured,
+      localTheme: hasMatchingLocalAccount ? localAccount.theme : '',
+    });
     account.value = saveAccount({
+      ...(hasMatchingLocalAccount ? localAccount : {}),
       ...(remoteProfile || {}),
       uid: user.uid,
       email: user.email || remoteProfile?.email || '',
       name: remoteProfile?.name || user.displayName || '',
       avatarImage: remoteProfile?.avatarImage || user.photoURL || '',
+      theme: resolvedTheme || 'light',
     });
   } catch (error) {
     account.value = {

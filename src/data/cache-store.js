@@ -1,8 +1,8 @@
 const CACHE_VERSION_KEY = 'agua-plus-cache-version';
-const CURRENT_CACHE_VERSION = '2026-08-06-auth-cache-v2';
+const CURRENT_CACHE_VERSION = '2026-08-06-account-preferences-v3';
 
 const shouldRemoveKey = (key) => {
-  return key === 'agua-plus-account' || key === 'agua-plus-active-account-key' || key.startsWith('agua-plus-account:');
+  return key === 'agua-plus-account';
 };
 
 export const clearStaleLocalCache = () => {

@@ -23,6 +23,8 @@ export function getAccount(owner?: { uid?: string; email?: string } | null): {
   emailAlerts: boolean;
   weeklyReport: boolean;
   reportFrequency: string;
+  theme: 'light' | 'dark';
+  themeConfigured: boolean;
   emailVerified: boolean;
   settings: Record<string, unknown> | null;
 };

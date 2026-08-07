@@ -114,9 +114,9 @@ const deleteGoal = (goalId) => {
   align-items: center;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 34%),
-    var(--agua-petroleo);
+    var(--agua-feature-bg);
   border-radius: 22px;
-  color: var(--agua-branco);
+  color: var(--agua-feature-text);
   display: grid;
   gap: 18px;
   grid-template-columns: 1fr auto;
@@ -130,7 +130,7 @@ const deleteGoal = (goalId) => {
 }
 
 .goals-hero span {
-  color: rgba(255, 255, 255, 0.78) !important;
+  color: var(--agua-feature-muted) !important;
   display: block;
   font-size: 12px;
   font-weight: 700;
@@ -138,7 +138,7 @@ const deleteGoal = (goalId) => {
 }
 
 .goals-hero h2 {
-  color: #ffffff !important;
+  color: var(--agua-feature-text) !important;
   font-size: clamp(22px, 4vw, 34px);
   line-height: 1.14;
   margin: 0;
@@ -146,13 +146,13 @@ const deleteGoal = (goalId) => {
 }
 
 .goals-hero p {
-  color: rgba(255, 255, 255, 0.82) !important;
+  color: var(--agua-feature-muted) !important;
   font-size: 13px;
   margin: 12px 0 0;
 }
 
 .goals-hero strong {
-  color: #ffffff !important;
+  color: var(--agua-feature-text) !important;
   font-size: clamp(34px, 7vw, 58px);
   line-height: 1;
 }

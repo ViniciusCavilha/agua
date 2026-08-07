@@ -140,6 +140,7 @@ const fallbackAccount = {
   weeklyReport: true,
   reportFrequency: 'Semanal',
   theme: 'light',
+  themeConfigured: false,
   emailVerified: false,
   settings: null,
 };

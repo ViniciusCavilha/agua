@@ -564,6 +564,7 @@ const saveProfile = () => {
     weeklyReport: weeklyReport.value,
     reportFrequency: reportFrequency.value,
     theme: isDark.value ? 'dark' : 'light',
+    themeConfigured: true,
     uid: currentUser?.uid || account.uid || '',
     emailVerified: emailVerified.value,
   });
@@ -599,13 +600,19 @@ watch([emailAlerts, weeklyReport, reportFrequency], () => {
   }
 });
 
-const changeTheme = () => {
+const changeTheme = async () => {
   isDark.value = toggleTheme() === 'dark';
-  const savedAccount = updateAccount({ theme: isDark.value ? 'dark' : 'light' });
+  const savedAccount = updateAccount({
+    theme: isDark.value ? 'dark' : 'light',
+    themeConfigured: true,
+  });
   const currentUser = getCurrentUser();
 
   if (currentUser) {
-    saveUserProfile(currentUser.uid, { theme: savedAccount.theme }).catch(() => {});
+    await saveUserProfile(currentUser.uid, {
+      theme: savedAccount.theme,
+      themeConfigured: true,
+    }).catch(() => {});
   }
 };
 

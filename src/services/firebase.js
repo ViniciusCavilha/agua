@@ -38,7 +38,8 @@ if (auth) {
 }
 
 const removeLocalOnlyFields = (profile = {}) => {
-  const { uid, ...firestoreProfile } = profile;
+  const firestoreProfile = { ...profile };
+  delete firestoreProfile.uid;
   return firestoreProfile;
 };
 const ensureFirebase = () => {
@@ -59,7 +60,8 @@ const normalizeProfile = (profile = {}) => ({
   emailAlerts: profile.emailAlerts ?? true,
   weeklyReport: profile.weeklyReport ?? true,
   reportFrequency: profile.reportFrequency || 'Semanal',
-  theme: profile.theme === 'dark' ? 'dark' : 'light',
+  theme: profile.theme === 'dark' || profile.theme === 'light' ? profile.theme : '',
+  themeConfigured: profile.themeConfigured === true,
   emailVerified: profile.emailVerified ?? false,
   settings: profile.settings || null,
 });
@@ -147,7 +149,7 @@ export const loginWithEmail = async (email, password) => {
   return buildAccountFromUser(credential.user, profile || {});
 };
 
-export const createFirebaseAccount = async ({ name, email, password, phone, company, unit, role, avatarColor, avatarImage, settings, theme, useCurrentUser = false }) => {
+export const createFirebaseAccount = async ({ name, email, password, phone, company, unit, role, avatarColor, avatarImage, settings, theme, themeConfigured = true, useCurrentUser = false }) => {
   ensureFirebase();
   const currentUser = auth.currentUser;
   const isGoogleUser = currentUser?.providerData.some((provider) => provider.providerId === 'google.com');
@@ -169,6 +171,7 @@ export const createFirebaseAccount = async ({ name, email, password, phone, comp
     avatarColor,
     avatarImage,
     theme,
+    themeConfigured,
     emailVerified: false,
     settings,
   });
