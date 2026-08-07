@@ -49,7 +49,7 @@
         </section>
 
         <section v-if="devices.length" class="device-grid">
-          <article v-for="device in devices" :key="device.id" class="device-card">
+          <article v-for="device in displayedDevices" :key="device.id" class="device-card">
             <div class="device-head">
               <span class="device-icon"><ion-icon :icon="hardwareChipOutline" /></span>
               <div>
@@ -333,12 +333,30 @@ const linkForm = ref({
 const statuses = DEVICE_STATUSES;
 const sensorModels = SENSOR_MODELS;
 const settings = getSettings();
-const consumptionData = getConsumptionReadings(settings);
+const consumptionData = computed(() => getConsumptionReadings(settings, devices.value));
 const technicalAlerts = computed(() =>
   generateTechnicalAlerts({
     devices: devices.value,
-    readings: consumptionData.rawReadings,
+    readings: consumptionData.value.rawReadings,
     settings,
+  }),
+);
+const displayedDevices = computed(() =>
+  devices.value.map((device) => {
+    const deviceReadings = consumptionData.value.rawReadings.filter((reading) => reading.deviceId === device.id);
+    const latestReading = deviceReadings
+      .slice()
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+    const totalConsumption = deviceReadings.reduce((sum, reading) => sum + Number(reading.liters || 0), 0);
+
+    return {
+      ...device,
+      totalConsumption: totalConsumption || device.totalConsumption,
+      lastReadingLiters: latestReading?.liters ?? device.lastReadingLiters,
+      lastFlowRate: latestReading?.flowRate ?? device.lastFlowRate,
+      lastPulseCount: latestReading?.pulseCount ?? device.lastPulseCount,
+      lastReadingAt: latestReading?.timestamp ?? device.lastReadingAt,
+    };
   }),
 );
 

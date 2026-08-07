@@ -62,7 +62,16 @@
             </div>
           </div>
 
-          <div class="empty-readings">
+          <div v-if="readings.length" class="readings-list">
+            <div v-for="reading in readings" :key="reading.id" class="reading-row">
+              <span>{{ reading.time }}</span>
+              <strong>{{ reading.area }}</strong>
+              <em>{{ reading.liters }}</em>
+              <small>{{ reading.status }}</small>
+            </div>
+          </div>
+
+          <div v-else class="empty-readings">
             <strong>Nenhuma leitura registrada</strong>
             <p>Os registros deste periodo aparecerao aqui automaticamente quando houver historico disponivel.</p>
           </div>
@@ -73,11 +82,12 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
-import { IonContent, IonIcon, IonPage } from '@ionic/vue';
+import { computed, onMounted, ref } from 'vue';
+import { IonContent, IonIcon, IonPage, onIonViewWillEnter } from '@ionic/vue';
 import { alertCircleOutline, calendarOutline } from 'ionicons/icons';
 import AppShell from '../components/AppShell.vue';
 import { getSettings } from '../data/settings-store.js';
+import { listDevices } from '../services/device-service.js';
 import { getPeriodConsumptionReadings } from '../services/reading-service.js';
 
 const props = defineProps({
@@ -100,16 +110,29 @@ const props = defineProps({
 });
 
 const settings = getSettings();
+const devices = ref([]);
 const activeBar = ref('');
-const periodData = computed(() => getPeriodConsumptionReadings({ periodLabel: props.periodLabel, days: props.days }, settings));
+const periodData = computed(() => getPeriodConsumptionReadings({ periodLabel: props.periodLabel, days: props.days }, settings, devices.value));
 const stats = computed(() => periodData.value.stats);
 const bars = computed(() => periodData.value.bars);
+const readings = computed(() => periodData.value.readings);
 const volumeUnitLabel = settings.measurementUnit === 'Metros cubicos' ? 'm3' : 'litros';
 const totalRegistered = computed(() => stats.value[0]?.value ?? '0 L');
 
 const toggleActiveBar = (day) => {
   activeBar.value = activeBar.value === day ? '' : day;
 };
+
+const loadDevices = async () => {
+  try {
+    devices.value = await listDevices();
+  } catch (error) {
+    devices.value = [];
+  }
+};
+
+onIonViewWillEnter(loadDevices);
+onMounted(loadDevices);
 </script>
 
 <style scoped>
@@ -351,6 +374,12 @@ const toggleActiveBar = (day) => {
   margin-top: 20px;
 }
 
+.readings-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
 .empty-readings {
   background: var(--agua-muted);
   border: 1px dashed var(--agua-borda);
@@ -373,6 +402,32 @@ const toggleActiveBar = (day) => {
   margin: 0;
 }
 
+.reading-row {
+  align-items: center;
+  background: color-mix(in srgb, var(--agua-branco) 82%, var(--agua-agua));
+  border: 1px solid var(--agua-borda);
+  border-radius: 14px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 70px 1fr 90px 150px;
+  padding: 13px 14px;
+}
+
+.reading-row span,
+.reading-row small {
+  color: var(--agua-texto);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.reading-row strong,
+.reading-row em {
+  color: var(--agua-petroleo);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 700;
+}
+
 @media (max-width: 980px) {
   .summary-grid,
   .content-grid {
@@ -387,6 +442,11 @@ const toggleActiveBar = (day) => {
 @media (max-width: 620px) {
   .summary-grid,
   .content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reading-row {
+    align-items: start;
     grid-template-columns: 1fr;
   }
 }

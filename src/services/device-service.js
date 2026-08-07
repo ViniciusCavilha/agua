@@ -11,7 +11,7 @@ import {
   setDoc,
 } from 'firebase/firestore';
 import { getCurrentUser, getFirestoreDb, isFirebaseReady } from './firebase.js';
-import { normalizeReadingPayload, READING_PAYLOAD_VERSION } from './reading-service.js';
+import { getSimulatedReadingsForDevice, normalizeReadingPayload, READING_PAYLOAD_VERSION } from './reading-service.js';
 import { getSettings } from '../data/settings-store.js';
 
 const DEVICES_KEY = 'agua-plus-devices';
@@ -131,42 +131,9 @@ const buildLocalDeviceReadings = (device) => {
     return [];
   }
 
-  const now = new Date();
-  const values = settings.presentationMode
-    ? [
-        { liters: settings.anomalyDemo ? 920 : 420, flowRate: settings.anomalyDemo ? 18.5 : 7.8, minutesAgo: 8, status: settings.anomalyDemo ? 'anomaly' : 'normal' },
-        { liters: 380, flowRate: 6.2, minutesAgo: 52, status: 'normal' },
-        { liters: 540, flowRate: 8.9, minutesAgo: 145, status: 'normal' },
-        { liters: 590, flowRate: 9.4, minutesAgo: 260, status: 'normal' },
-        { liters: 465, flowRate: 7.1, minutesAgo: 410, status: 'normal' },
-      ]
-    : [
-        { liters: device.lastReadingLiters || 0, flowRate: device.lastFlowRate || 0, minutesAgo: 12, status: 'normal' },
-      ];
-
-  return values
-    .filter((reading) => reading.liters > 0 || reading.flowRate > 0 || settings.presentationMode)
-    .map((reading, index) => {
-      const timestamp = new Date(now);
-      timestamp.setMinutes(timestamp.getMinutes() - reading.minutesAgo);
-
-      return normalizeReadingPayload({
-        id: `${device.id}-local-reading-${index}`,
-        deviceId: device.id,
-        deviceCode: device.deviceCode,
-        sensorId: device.sensor.sensorCode,
-        sensorCode: device.sensor.sensorCode,
-        liters: reading.liters,
-        flowRate: reading.flowRate,
-        pulseCount: Math.round(Number(reading.liters || 0) * Number(device.sensor.calibrationFactor || 7.5) * 60),
-        calibrationFactor: device.sensor.calibrationFactor,
-        intervalSeconds: device.readingInterval,
-        status: reading.status,
-        source: 'simulated',
-        timestamp,
-        receivedAt: timestamp,
-      });
-    });
+  return getSimulatedReadingsForDevice(device, settings).filter(
+    (reading) => reading.liters > 0 || reading.flowRate > 0 || reading.status === 'anomaly' || settings.presentationMode,
+  );
 };
 
 const normalizeFirestoreDate = (value) => {
@@ -203,7 +170,8 @@ export const listDeviceReadings = async (deviceId) => {
     }),
   );
 
-  return readings.length ? readings : buildLocalDeviceReadings(device);
+  const hasUsefulReadings = readings.some((reading) => reading.liters > 0 || reading.flowRate > 0 || reading.status === 'anomaly');
+  return hasUsefulReadings || !getSettings().simulationMode ? readings : buildLocalDeviceReadings(device);
 };
 
 export const listDeviceAlerts = async (deviceId) => {

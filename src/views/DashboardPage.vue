@@ -45,7 +45,7 @@
                 </div>
                 <div>
                   <span>Vazao</span>
-                  <strong>{{ activeDevice ? activeDevice.lastFlowRate + ' L/min' : '0 L/min' }}</strong>
+                  <strong>{{ activeDeviceFlowRate }}</strong>
                 </div>
                 <div>
                   <span>Sensor</span>
@@ -210,7 +210,7 @@ const devicesError = ref('');
 let stopAuthListener = null;
 let stopSettingsListener = null;
 const settings = ref(getSettings());
-const consumptionData = ref(getConsumptionReadings(settings.value));
+const consumptionData = ref(getConsumptionReadings(settings.value, devices.value));
 const dashboardGoal = computed(() => userGoals.value[0] || null);
 const todayTotalLiters = computed(() => consumptionData.value.rawReadings.reduce((total, reading) => {
   const readingDate = new Date(reading.timestamp);
@@ -241,6 +241,18 @@ const lastSimulatedReading = computed(() => {
     .slice()
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0] || null;
 });
+const activeDeviceReadings = computed(() => {
+  if (!activeDevice.value) {
+    return [];
+  }
+
+  return consumptionData.value.rawReadings.filter((reading) => reading.deviceId === activeDevice.value.id);
+});
+const lastActiveDeviceReading = computed(() =>
+  activeDeviceReadings.value
+    .slice()
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0] || null,
+);
 const heroTitle = computed(() => {
   if (deviceCount.value > 1) {
     return `${deviceCount.value} dispositivos conectados ao painel.`;
@@ -309,11 +321,18 @@ const lastReadingLabel = computed(() => {
     return formatVolume(0, settings.value);
   }
 
-  if (activeDevice.value.lastReadingAt) {
-    return formatVolume(activeDevice.value.lastReadingLiters, settings.value);
+  if (lastActiveDeviceReading.value) {
+    return formatVolume(lastActiveDeviceReading.value.liters, settings.value);
   }
 
-  return formatVolume(lastSimulatedReading.value?.liters || activeDevice.value.lastReadingLiters || 0, settings.value);
+  return formatVolume(activeDevice.value.lastReadingLiters || lastSimulatedReading.value?.liters || 0, settings.value);
+});
+const activeDeviceFlowRate = computed(() => {
+  if (!activeDevice.value) {
+    return '0 L/min';
+  }
+
+  return `${lastActiveDeviceReading.value?.flowRate ?? activeDevice.value.lastFlowRate ?? 0} L/min`;
 });
 const visibleMonthlyMetrics = computed(() => dashboardData.monthly.map((metric) => {
   if (metric.value === '0 L') {
@@ -342,6 +361,7 @@ const loadDashboardDevices = async () => {
   try {
     devicesError.value = '';
     devices.value = await listDevices();
+    consumptionData.value = getConsumptionReadings(settings.value, devices.value);
     syncTechnicalAlertNotifications(technicalAlerts.value);
   } catch (error) {
     devicesError.value = 'Nao foi possivel carregar dispositivos.';
@@ -355,7 +375,7 @@ const refreshDashboardDevices = () => {
 
 const refreshDashboardSettings = (nextSettings = getSettings()) => {
   settings.value = nextSettings;
-  consumptionData.value = getConsumptionReadings(nextSettings);
+  consumptionData.value = getConsumptionReadings(nextSettings, devices.value);
   syncTechnicalAlertNotifications(technicalAlerts.value);
 };
 

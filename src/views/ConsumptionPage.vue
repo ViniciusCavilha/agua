@@ -87,16 +87,25 @@ import { IonContent, IonIcon, IonPage, onIonViewWillEnter } from '@ionic/vue';
 import { alertCircleOutline, calendarOutline } from 'ionicons/icons';
 import AppShell from '../components/AppShell.vue';
 import { getSettings, onSettingsChange } from '../data/settings-store.js';
+import { listDevices } from '../services/device-service.js';
 import { getConsumptionReadings } from '../services/reading-service.js';
 
 const settings = reactive(getSettings());
-const consumptionData = ref(getConsumptionReadings(settings));
+const devices = ref([]);
+const consumptionData = ref(getConsumptionReadings(settings, devices.value));
 const activeBar = ref('');
 let stopSettingsListener = null;
 
-const refreshConsumptionData = (nextSettings = getSettings()) => {
+const refreshConsumptionData = async (nextSettings = getSettings()) => {
   Object.assign(settings, nextSettings);
-  consumptionData.value = getConsumptionReadings(settings);
+
+  try {
+    devices.value = await listDevices();
+  } catch (error) {
+    devices.value = [];
+  }
+
+  consumptionData.value = getConsumptionReadings(settings, devices.value);
 };
 
 const volumeUnitLabel = computed(() => (settings.measurementUnit === 'Metros cubicos' ? 'm3' : 'litros'));
