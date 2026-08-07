@@ -244,6 +244,7 @@ const saveAppSettings = () => {
     emailAlerts: settings.emailAlerts,
     weeklyReport: settings.weeklySummary,
     reportFrequency: settings.defaultPeriod,
+    theme: isDark.value ? 'dark' : 'light',
     settings: { ...settings },
   });
   syncCurrentUserProfile(account).catch(() => {});
@@ -258,6 +259,8 @@ const restoreDefaults = () => {
 
 const changeTheme = () => {
   isDark.value = toggleTheme() === 'dark';
+  const account = updateAccount({ theme: isDark.value ? 'dark' : 'light' });
+  syncCurrentUserProfile(account).catch(() => {});
 };
 
 const togglePushAlerts = async (event) => {
@@ -302,12 +305,14 @@ watch(
       emailAlerts: settings.emailAlerts,
       weeklyReport: settings.weeklySummary,
       reportFrequency: settings.defaultPeriod,
+      theme: isDark.value ? 'dark' : 'light',
       settings: { ...settings },
     });
     syncCurrentUserProfile(account).catch(() => {});
   },
   { deep: true },
 );
+
 </script>
 
 <style scoped>

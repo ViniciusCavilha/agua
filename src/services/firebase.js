@@ -59,6 +59,7 @@ const normalizeProfile = (profile = {}) => ({
   emailAlerts: profile.emailAlerts ?? true,
   weeklyReport: profile.weeklyReport ?? true,
   reportFrequency: profile.reportFrequency || 'Semanal',
+  theme: profile.theme === 'dark' ? 'dark' : 'light',
   emailVerified: profile.emailVerified ?? false,
   settings: profile.settings || null,
 });
@@ -146,7 +147,7 @@ export const loginWithEmail = async (email, password) => {
   return buildAccountFromUser(credential.user, profile || {});
 };
 
-export const createFirebaseAccount = async ({ name, email, password, phone, company, unit, role, avatarColor, avatarImage, settings, useCurrentUser = false }) => {
+export const createFirebaseAccount = async ({ name, email, password, phone, company, unit, role, avatarColor, avatarImage, settings, theme, useCurrentUser = false }) => {
   ensureFirebase();
   const currentUser = auth.currentUser;
   const isGoogleUser = currentUser?.providerData.some((provider) => provider.providerId === 'google.com');
@@ -167,6 +168,7 @@ export const createFirebaseAccount = async ({ name, email, password, phone, comp
     role,
     avatarColor,
     avatarImage,
+    theme,
     emailVerified: false,
     settings,
   });

@@ -325,7 +325,7 @@ import {
   getNotifications,
   removeNotification,
 } from '../data/notifications-store.js';
-import { getSavedTheme, toggleTheme } from '../data/theme-store.js';
+import { applyTheme, getSavedTheme, toggleTheme } from '../data/theme-store.js';
 import {
   confirmCurrentGoogleAccount,
   deleteFirebaseAccount,
@@ -412,6 +412,10 @@ const applyAccount = (nextAccount) => {
   weeklyReport.value = nextAccount.weeklyReport ?? true;
   reportFrequency.value = nextAccount.reportFrequency || 'Semanal';
   emailVerified.value = nextAccount.emailVerified ?? false;
+
+  if (nextAccount.theme) {
+    isDark.value = applyTheme(nextAccount.theme) === 'dark';
+  }
 };
 
 const unitOptions = computed(() => getAvailableUnits(company.value));
@@ -559,6 +563,7 @@ const saveProfile = () => {
     emailAlerts: emailAlerts.value,
     weeklyReport: weeklyReport.value,
     reportFrequency: reportFrequency.value,
+    theme: isDark.value ? 'dark' : 'light',
     uid: currentUser?.uid || account.uid || '',
     emailVerified: emailVerified.value,
   });
@@ -596,6 +601,12 @@ watch([emailAlerts, weeklyReport, reportFrequency], () => {
 
 const changeTheme = () => {
   isDark.value = toggleTheme() === 'dark';
+  const savedAccount = updateAccount({ theme: isDark.value ? 'dark' : 'light' });
+  const currentUser = getCurrentUser();
+
+  if (currentUser) {
+    saveUserProfile(currentUser.uid, { theme: savedAccount.theme }).catch(() => {});
+  }
 };
 
 const logout = () => {

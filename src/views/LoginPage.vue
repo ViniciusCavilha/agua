@@ -104,6 +104,7 @@ import SecondaryButton from '../components/SecondaryButton.vue';
 import { isFirebaseReady, loginWithEmail, loginWithGoogle } from '../services/firebase.js';
 import { saveAccount } from '../data/account-store.js';
 import { saveSettings } from '../data/settings-store.js';
+import { applyTheme } from '../data/theme-store.js';
 
 const router = useRouter();
 const email = ref('');
@@ -120,6 +121,8 @@ const finishLogin = (account) => {
     if (account.settings) {
       saveSettings(account.settings);
     }
+
+    applyTheme(account.theme || 'light');
   }
 
   router.push('/dashboard');
@@ -175,6 +178,7 @@ const googleLogin = async () => {
         unit: '',
         role: '',
         emailVerified: false,
+        theme: account.theme || 'light',
         settings: account.settings || null,
       });
       router.push('/cadastro?google=1');
