@@ -559,7 +559,7 @@ onMounted(loadDevices);
 }
 
 .devices-toolbar span {
-  color: var(--agua-feature-muted) !important;
+  color: #c9edf1 !important;
   display: block;
   font-size: 12px;
   font-weight: 700;
@@ -575,7 +575,7 @@ onMounted(loadDevices);
 }
 
 .devices-toolbar p {
-  color: var(--agua-feature-muted) !important;
+  color: #c9edf1 !important;
   font-size: 13px;
   line-height: 1.7;
   margin: 12px 0 0;
@@ -611,7 +611,7 @@ onMounted(loadDevices);
 .devices-toolbar .link-device-button {
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.26);
-  color: var(--agua-feature-text);
+  color: #ffffff;
 }
 
 .architecture-grid,

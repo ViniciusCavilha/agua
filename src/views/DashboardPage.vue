@@ -444,7 +444,7 @@ onUnmounted(() => {
 }
 
 .hero-strip span {
-  color: var(--agua-feature-muted) !important;
+  color: #c9edf1 !important;
   display: block;
   font-size: 12px;
   font-weight: 700;
@@ -462,7 +462,7 @@ onUnmounted(() => {
 }
 
 .hero-strip p {
-  color: var(--agua-feature-muted) !important;
+  color: #c9edf1 !important;
   font-size: 13px;
   margin: 12px 0 0;
 }
@@ -472,7 +472,7 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.14);
   border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 12px;
-  color: var(--agua-feature-text) !important;
+  color: #ffffff !important;
   display: inline-flex;
   font-size: 12px;
   font-weight: 800;
