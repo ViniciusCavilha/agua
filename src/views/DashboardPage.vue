@@ -438,8 +438,13 @@ onUnmounted(() => {
   width: 230px;
 }
 
+.hero-strip > div {
+  position: relative;
+  z-index: 1;
+}
+
 .hero-strip span {
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.78) !important;
   display: block;
   font-size: 12px;
   font-weight: 700;
@@ -447,7 +452,7 @@ onUnmounted(() => {
 }
 
 .hero-strip h2 {
-  color: #ffffff;
+  color: #ffffff !important;
   font-size: clamp(22px, 4vw, 34px);
   font-weight: 700;
   letter-spacing: 0;
@@ -457,7 +462,7 @@ onUnmounted(() => {
 }
 
 .hero-strip p {
-  color: rgba(255, 255, 255, 0.76);
+  color: rgba(255, 255, 255, 0.82) !important;
   font-size: 13px;
   margin: 12px 0 0;
 }
@@ -467,7 +472,7 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.14);
   border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 12px;
-  color: #ffffff;
+  color: #ffffff !important;
   display: inline-flex;
   font-size: 12px;
   font-weight: 800;
@@ -478,7 +483,7 @@ onUnmounted(() => {
 }
 
 .hero-strip strong {
-  color: #ffffff;
+  color: #ffffff !important;
   font-size: clamp(28px, 5vw, 44px);
   line-height: 1;
   position: relative;

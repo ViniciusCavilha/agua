@@ -124,8 +124,13 @@ const deleteGoal = (goalId) => {
   padding: 26px;
 }
 
+.goals-hero > div {
+  position: relative;
+  z-index: 1;
+}
+
 .goals-hero span {
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.78) !important;
   display: block;
   font-size: 12px;
   font-weight: 700;
@@ -133,7 +138,7 @@ const deleteGoal = (goalId) => {
 }
 
 .goals-hero h2 {
-  color: #ffffff;
+  color: #ffffff !important;
   font-size: clamp(22px, 4vw, 34px);
   line-height: 1.14;
   margin: 0;
@@ -141,13 +146,13 @@ const deleteGoal = (goalId) => {
 }
 
 .goals-hero p {
-  color: rgba(255, 255, 255, 0.76);
+  color: rgba(255, 255, 255, 0.82) !important;
   font-size: 13px;
   margin: 12px 0 0;
 }
 
 .goals-hero strong {
-  color: #ffffff;
+  color: #ffffff !important;
   font-size: clamp(34px, 7vw, 58px);
   line-height: 1;
 }

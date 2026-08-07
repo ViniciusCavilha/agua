@@ -553,8 +553,13 @@ onMounted(loadDevices);
   padding: 26px;
 }
 
+.devices-toolbar > div {
+  position: relative;
+  z-index: 1;
+}
+
 .devices-toolbar span {
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.78) !important;
   display: block;
   font-size: 12px;
   font-weight: 700;
@@ -562,7 +567,7 @@ onMounted(loadDevices);
 }
 
 .devices-toolbar h2 {
-  color: #ffffff;
+  color: #ffffff !important;
   font-size: clamp(22px, 4vw, 34px);
   line-height: 1.14;
   margin: 0;
@@ -570,7 +575,7 @@ onMounted(loadDevices);
 }
 
 .devices-toolbar p {
-  color: rgba(255, 255, 255, 0.76);
+  color: rgba(255, 255, 255, 0.82) !important;
   font-size: 13px;
   line-height: 1.7;
   margin: 12px 0 0;
