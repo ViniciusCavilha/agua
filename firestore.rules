@@ -28,6 +28,8 @@ service cloud.firestore {
         'emailAlerts',
         'weeklyReport',
         'reportFrequency',
+        'theme',
+        'themeConfigured',
         'emailVerified',
         'settings',
         'createdAt',
