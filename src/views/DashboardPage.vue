@@ -64,10 +64,16 @@
                   <h2>Consumo de água</h2>
                   <p>Últimas 24 horas</p>
                 </div>
-                <span class="waiting"><i /> {{ settings.simulationMode ? 'Simulação ativa' : 'Aguardando dados' }}</span>
+                <span :class="['chart-status', settings.simulationMode ? 'simulation' : 'realtime']">
+                  <i /> {{ settings.simulationMode ? 'Simulação ativa' : 'Em tempo real' }}
+                </span>
               </div>
 
-              <div class="hourly-chart" aria-label="Gráfico de consumo por horário nas últimas 24 horas">
+              <div
+                v-if="hasHourlyData"
+                class="hourly-chart"
+                aria-label="Gráfico de consumo por horário nas últimas 24 horas"
+              >
                 <button
                   v-for="bar in dailyHourlyBars"
                   :key="bar.hour"
@@ -87,6 +93,11 @@
                   </span>
                   <small>{{ bar.hour }}</small>
                 </button>
+              </div>
+              <div v-else class="hourly-chart-empty" role="status">
+                <span><i /></span>
+                <strong>Aguardando leituras dos medidores</strong>
+                <p>As barras aparecerão automaticamente quando o primeiro dado de consumo for recebido.</p>
               </div>
             </article>
           </div>
@@ -327,6 +338,7 @@ const visibleMonthlyMetrics = computed(() => dashboardData.monthly.map((metric) 
   return metric;
 }));
 const dailyHourlyBars = computed(() => consumptionData.value.dailyHourlyBars || []);
+const hasHourlyData = computed(() => dailyHourlyBars.value.some((bar) => Number(bar.liters) > 0));
 
 const toggleActiveHour = (hour) => {
   activeHour.value = activeHour.value === hour ? '' : hour;
@@ -558,6 +570,23 @@ onUnmounted(() => {
   background: var(--agua-suave);
 }
 
+.card-title .chart-status.realtime {
+  color: var(--agua-sucesso);
+}
+
+.card-title .chart-status.realtime i {
+  background: var(--agua-sucesso);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--agua-sucesso) 16%, transparent);
+}
+
+.card-title .chart-status.simulation {
+  color: var(--agua-suave);
+}
+
+.card-title .chart-status.simulation i {
+  background: var(--agua-suave);
+}
+
 .device-badge {
   align-items: center;
   border-radius: 999px;
@@ -697,6 +726,69 @@ onUnmounted(() => {
   height: 250px;
   margin-top: 22px;
   padding: 12px 8px 0;
+}
+
+.hourly-chart-empty {
+  align-content: center;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(33.333% - 1px),
+    var(--agua-borda) calc(33.333% - 1px),
+    var(--agua-borda) 33.333%
+  );
+  display: grid;
+  gap: 7px;
+  height: 250px;
+  justify-items: center;
+  margin-top: 22px;
+  padding: 24px;
+  text-align: center;
+}
+
+.hourly-chart-empty > span {
+  align-items: end;
+  border-bottom: 2px solid var(--agua-borda);
+  display: flex;
+  gap: 4px;
+  height: 34px;
+  justify-content: center;
+  width: 54px;
+}
+
+.hourly-chart-empty > span::before,
+.hourly-chart-empty > span::after,
+.hourly-chart-empty > span i {
+  background: color-mix(in srgb, var(--agua-agua) 24%, transparent);
+  border-radius: 4px 4px 0 0;
+  content: '';
+  display: block;
+  width: 8px;
+}
+
+.hourly-chart-empty > span::before {
+  height: 13px;
+}
+
+.hourly-chart-empty > span i {
+  height: 25px;
+}
+
+.hourly-chart-empty > span::after {
+  height: 18px;
+}
+
+.hourly-chart-empty strong {
+  color: var(--agua-petroleo);
+  font-size: 13px;
+}
+
+.hourly-chart-empty p {
+  color: var(--agua-suave);
+  font-size: 11px;
+  line-height: 1.55;
+  margin: 0;
+  max-width: 360px;
 }
 
 .hourly-bar {
@@ -1060,6 +1152,10 @@ onUnmounted(() => {
     height: 220px;
     overflow-x: auto;
     padding-inline: 4px;
+  }
+
+  .hourly-chart-empty {
+    height: 220px;
   }
 
   .bar-value {

@@ -31,10 +31,12 @@ const hasFirebaseConfig = Object.values(firebaseConfig).every(Boolean);
 const app = hasFirebaseConfig ? getApps()[0] || initializeApp(firebaseConfig) : null;
 const auth = app ? getAuth(app) : null;
 const db = app ? getFirestore(app) : null;
+const authPersistenceReady = auth
+  ? setPersistence(auth, browserLocalPersistence).catch(() => null)
+  : Promise.resolve();
 
 if (auth) {
   auth.languageCode = 'pt-BR';
-  setPersistence(auth, browserLocalPersistence);
 }
 
 const removeLocalOnlyFields = (profile = {}) => {
@@ -72,13 +74,15 @@ export const getCurrentUser = () => auth?.currentUser || null;
 
 export const getFirestoreDb = () => db;
 
-export const waitForCurrentUser = () => {
+export const waitForCurrentUser = async () => {
   if (!auth) {
-    return Promise.resolve(null);
+    return null;
   }
 
+  await authPersistenceReady;
+
   if (auth.currentUser) {
-    return Promise.resolve(auth.currentUser);
+    return auth.currentUser;
   }
 
   return new Promise((resolve) => {

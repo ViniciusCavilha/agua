@@ -109,7 +109,7 @@ import { applyTheme, resolveAccountTheme } from '../data/theme-store.js';
 const router = useRouter();
 const email = ref('');
 const password = ref('');
-const remember = ref(false);
+const remember = ref(true);
 const showPassword = ref(false);
 const loading = ref(false);
 const errorMessage = ref('');

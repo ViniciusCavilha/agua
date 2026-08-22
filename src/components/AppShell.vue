@@ -356,7 +356,7 @@ onUnmounted(() => {
 .settings.active,
 .settings:hover {
   background: rgba(255, 255, 255, 0.14);
-  color: var(--agua-branco);
+  color: #ffffff;
 }
 
 .side-nav ion-icon,

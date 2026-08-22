@@ -12,6 +12,7 @@ import ReportsPage from '../views/ReportsPage.vue';
 import ProfilePage from '../views/ProfilePage.vue';
 import SettingsPage from '../views/SettingsPage.vue';
 import TermsPage from '../views/TermsPage.vue';
+import { getUserProfile, isProfileComplete, waitForCurrentUser } from '../services/firebase.js';
 
 const routes = [
   { path: '/', redirect: '/login' },
@@ -51,7 +52,30 @@ const routes = [
   { path: '/configurações', name: 'Configurações', component: SettingsPage },
 ];
 
-export default createRouter({
+const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
   routes,
 });
+
+const publicRoutes = new Set(['/login', '/cadastro', '/termos', '/esqueci-senha']);
+
+router.beforeEach(async (to) => {
+  const user = await waitForCurrentUser();
+
+  if (!user && !publicRoutes.has(to.path)) {
+    return '/login';
+  }
+
+  if (user && (to.path === '/' || to.path === '/login')) {
+    try {
+      const profile = await getUserProfile(user.uid);
+      return isProfileComplete(profile) ? '/dashboard' : '/cadastro?google=1';
+    } catch (error) {
+      return '/dashboard';
+    }
+  }
+
+  return true;
+});
+
+export default router;
