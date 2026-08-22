@@ -121,7 +121,13 @@ import {
 import { getAccount, onAccountChange, saveAccount } from '../data/account-store.js';
 import { resolveAccountTheme } from '../data/theme-store.js';
 import { getCurrentUser, getUserProfile, watchAuthUser } from '../services/firebase.js';
-import { getNotifications, markAllNotificationsRead, markNotificationRead, onNotificationsChange } from '../data/notifications-store.js';
+import {
+  getNotificationRoute,
+  getNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+  onNotificationsChange,
+} from '../data/notifications-store.js';
 
 const props = defineProps({
   title: {
@@ -252,7 +258,7 @@ const openNotification = (notification) => {
   notifications.value = markNotificationRead(notification.id);
   isNotificationsOpen.value = false;
   closeMobileNav();
-  router.push(notification.to || '/perfil');
+  router.push(getNotificationRoute(notification));
 };
 
 const readAllNotifications = () => {

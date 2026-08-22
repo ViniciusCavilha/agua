@@ -12,6 +12,7 @@ import {
 import { getCurrentUser, getFirestoreDb, isFirebaseReady, waitForCurrentUser } from './firebase.js';
 import { getSimulatedReadingsForDevice, normalizeReadingPayload, READING_PAYLOAD_VERSION } from './reading-service.js';
 import { getSettings } from '../data/settings-store.js';
+import { generateTechnicalAlerts, TECHNICAL_ALERT_TYPES } from './technical-alert-service.js';
 
 const DEVICES_KEY = 'agua-plus-devices';
 
@@ -42,6 +43,30 @@ const simulatedDevice = {
   lastFlowRate: 0,
   lastPulseCount: 0,
   lastReadingAt: null,
+};
+
+const createLocalDeviceId = () => {
+  if (window.crypto?.randomUUID) {
+    return `local-${window.crypto.randomUUID()}`;
+  }
+
+  return `local-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
+const getNextSimulatedSequence = (devices = []) => {
+  const usedSequences = new Set(
+    devices
+      .map((device) => /^ESP32-FLOW-(\d+)$/.exec(String(device.deviceCode || '').toUpperCase()))
+      .filter(Boolean)
+      .map((match) => Number(match[1])),
+  );
+  let sequence = 1;
+
+  while (usedSequences.has(sequence)) {
+    sequence += 1;
+  }
+
+  return sequence;
 };
 
 const normalizeDevice = (device = {}) => ({
@@ -231,20 +256,24 @@ export const listDeviceAlerts = async (deviceId) => {
     return [];
   }
 
+  const currentStatusAlerts = generateTechnicalAlerts({ devices: [device] });
+
   if (shouldUseLocalDevices()) {
-    return [
-      {
-        id: `${device.id}-waiting`,
-        title: 'Dispositivo águardando conexão',
-        message: 'Pronto para receber leituras reais quando o ESP32 for conectado.',
-        status: device.status === 'Ativo' ? 'Resolvido' : 'Aberto',
-      },
-    ];
+    return currentStatusAlerts;
   }
 
   const devicesRef = getUserDevicesCollection();
   const snapshot = await getDocs(query(collection(devicesRef, deviceId, 'alerts')));
-  return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+  const deviceStatusTypes = new Set([
+    TECHNICAL_ALERT_TYPES.DEVICE_OFFLINE,
+    TECHNICAL_ALERT_TYPES.DEVICE_WAITING,
+    TECHNICAL_ALERT_TYPES.DEVICE_MAINTENANCE,
+  ]);
+  const storedAlerts = snapshot.docs
+    .map((item) => ({ id: item.id, deviceId, ...item.data() }))
+    .filter((alert) => !deviceStatusTypes.has(alert.type));
+
+  return [...currentStatusAlerts, ...storedAlerts];
 };
 
 export const listDeviceMaintenanceOrders = async (deviceId) => {
@@ -281,7 +310,7 @@ export const createDevice = async (device) => {
   });
 
   if (shouldUseLocalDevices()) {
-    const devices = saveLocalDevices([{ ...nextDevice, id: `local-${Date.now()}` }, ...getLocalDevices()]);
+    const devices = saveLocalDevices([{ ...nextDevice, id: createLocalDeviceId() }, ...getLocalDevices()]);
     return devices[0];
   }
 
@@ -324,6 +353,8 @@ export const createDevice = async (device) => {
   });
 
   await addDoc(collection(devicesRef, created.id, 'alerts'), {
+    deviceId: created.id,
+    deviceCode: nextDevice.deviceCode,
     type: 'device-waiting',
     title: 'Dispositivo águardando conexão',
     message: 'Este dispositivo simulado está pronto para receber leituras do ESP32 futuramente.',
@@ -341,10 +372,18 @@ export const createDevice = async (device) => {
   return { ...nextDevice, id: created.id };
 };
 
-export const createSimulatedDevice = (unit = '') => {
+export const createSimulatedDevice = async (unit = '') => {
+  const sequence = getNextSimulatedSequence(await listDevices());
+  const suffix = String(sequence).padStart(3, '0');
+
   return createDevice({
     ...simulatedDevice,
+    deviceCode: `ESP32-FLOW-${suffix}`,
     unit,
+    sensor: {
+      ...simulatedDevice.sensor,
+      sensorCode: `FLOW-YF-S201-${suffix}`,
+    },
   });
 };
 

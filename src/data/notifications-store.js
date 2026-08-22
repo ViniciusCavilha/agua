@@ -27,7 +27,16 @@ const saveNotifications = (notifications) => {
   return sorted;
 };
 
-export const addNotification = ({ id, type = 'info', title, message, to = '/perfil', read = false }) => {
+export const addNotification = ({
+  id,
+  type = 'info',
+  title,
+  message,
+  to = '/perfil',
+  read = false,
+  deviceId = '',
+  deviceCode = '',
+}) => {
   const notifications = getNotifications();
   const nextNotification = {
     id: id || `${type}-${Date.now()}`,
@@ -35,6 +44,8 @@ export const addNotification = ({ id, type = 'info', title, message, to = '/perf
     title,
     message,
     to,
+    deviceId,
+    deviceCode,
     read,
     createdAt: now(),
   };
@@ -51,6 +62,14 @@ export const addNotification = ({ id, type = 'info', title, message, to = '/perf
   }
 
   return saveNotifications([nextNotification, ...notifications]);
+};
+
+export const getNotificationRoute = (notification = {}) => {
+  if (notification.deviceId) {
+    return `/dispositivos/${encodeURIComponent(notification.deviceId)}`;
+  }
+
+  return notification.to || '/perfil';
 };
 
 export const ensureEmailVerificationNotification = () => {

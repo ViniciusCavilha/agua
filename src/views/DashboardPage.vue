@@ -120,7 +120,7 @@
                   :key="alert.id"
                   class="technical-alert"
                   :class="alert.severity"
-                  :to="alert.deviceId ? '/dispositivos' : '/consumo'"
+                  :to="alert.deviceId ? `/dispositivos/${alert.deviceId}` : '/consumo'"
                 >
                   <ion-icon :icon="alert.severity === 'critical' ? warningOutline : alertCircleOutline" />
                   <div>

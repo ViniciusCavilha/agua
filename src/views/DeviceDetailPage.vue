@@ -239,9 +239,9 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { IonContent, IonIcon, IonPage } from '@ionic/vue';
+import { IonContent, IonIcon, IonPage, onIonViewWillEnter } from '@ionic/vue';
 import {
   alertCircleOutline,
   analyticsOutline,
@@ -277,6 +277,7 @@ const editForm = ref(null);
 const settings = getSettings();
 const statuses = DEVICE_STATUSES;
 const sensorModels = SENSOR_MODELS;
+let loadSequence = 0;
 
 const deviceId = computed(() => String(route.params.id || ''));
 const sortedReadings = computed(() =>
@@ -304,13 +305,35 @@ const displayReadings = computed(() =>
 );
 
 const loadDevice = async () => {
+  const requestId = ++loadSequence;
+  const requestedDeviceId = deviceId.value;
   loading.value = true;
-  device.value = await getDeviceById(deviceId.value);
+  device.value = null;
+  readings.value = [];
+  alerts.value = [];
+  maintenanceOrders.value = [];
 
-  if (device.value) {
-    readings.value = await listDeviceReadings(deviceId.value);
-    alerts.value = await listDeviceAlerts(deviceId.value);
-    maintenanceOrders.value = await listDeviceMaintenanceOrders(deviceId.value);
+  const nextDevice = await getDeviceById(requestedDeviceId);
+
+  if (requestId !== loadSequence) {
+    return;
+  }
+
+  if (nextDevice) {
+    const [nextReadings, nextAlerts, nextMaintenanceOrders] = await Promise.all([
+      listDeviceReadings(requestedDeviceId),
+      listDeviceAlerts(requestedDeviceId),
+      listDeviceMaintenanceOrders(requestedDeviceId),
+    ]);
+
+    if (requestId !== loadSequence) {
+      return;
+    }
+
+    device.value = nextDevice;
+    readings.value = nextReadings;
+    alerts.value = nextAlerts;
+    maintenanceOrders.value = nextMaintenanceOrders;
   }
 
   loading.value = false;
@@ -377,7 +400,12 @@ const readingStatus = (status) => {
   return 'Normal';
 };
 
-onMounted(loadDevice);
+onIonViewWillEnter(loadDevice);
+watch(deviceId, (nextDeviceId, previousDeviceId) => {
+  if (nextDeviceId !== previousDeviceId) {
+    loadDevice();
+  }
+});
 </script>
 
 <style scoped>
