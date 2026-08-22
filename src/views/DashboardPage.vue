@@ -64,8 +64,8 @@
                   <h2>Consumo de água</h2>
                   <p>Últimas 24 horas</p>
                 </div>
-                <span :class="['chart-status', settings.simulationMode ? 'simulation' : 'realtime']">
-                  <i /> {{ settings.simulationMode ? 'Simulação ativa' : 'Em tempo real' }}
+                <span :class="['chart-status', settings.presentationMode ? 'simulation' : 'realtime']">
+                  <i /> {{ settings.presentationMode ? 'Simulação ativa' : 'Em tempo real' }}
                 </span>
               </div>
 
@@ -360,6 +360,8 @@ const statusClass = (status = '') => ({
 });
 
 const loadDashboardDevices = async () => {
+  settings.value = getSettings();
+
   try {
     devicesError.value = '';
     devices.value = await listDevices();

@@ -210,7 +210,7 @@ const buildDailyHourlyBars = (readings, settings, deviceCount = 0) => {
     }, 0);
   });
 
-  if (settings.simulationMode) {
+  if (settings.presentationMode) {
     const simulationFactor = Math.max(1, deviceCount || 1);
     totals = dailySimulationProfile.map((liters, index) => {
       const variation = settings.anomalyDemo && index === 6 ? 2.4 : 1;

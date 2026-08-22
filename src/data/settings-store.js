@@ -1,5 +1,6 @@
 const SETTINGS_KEY = 'agua-plus-app-settings';
 const SETTINGS_EVENT = 'agua-plus-settings-updated';
+const SIMULATION_MODE_KEY = 'agua-plus-simulation-mode';
 
 const fallbackSettings = {
   compactMode: false,
@@ -14,8 +15,35 @@ const fallbackSettings = {
   measurementUnit: 'Litros',
 };
 
+const normalizeBoolean = (value, fallback) => {
+  if (value === true || value === 'true') {
+    return true;
+  }
+
+  if (value === false || value === 'false') {
+    return false;
+  }
+
+  return fallback;
+};
+
+const normalizeSettings = (settings = {}) => {
+  const merged = { ...fallbackSettings, ...settings };
+
+  return {
+    ...merged,
+    compactMode: normalizeBoolean(merged.compactMode, fallbackSettings.compactMode),
+    emailAlerts: normalizeBoolean(merged.emailAlerts, fallbackSettings.emailAlerts),
+    pushAlerts: normalizeBoolean(merged.pushAlerts, fallbackSettings.pushAlerts),
+    weeklySummary: normalizeBoolean(merged.weeklySummary, fallbackSettings.weeklySummary),
+    simulationMode: normalizeBoolean(merged.simulationMode, fallbackSettings.simulationMode),
+    presentationMode: normalizeBoolean(merged.presentationMode, fallbackSettings.presentationMode),
+    anomalyDemo: normalizeBoolean(merged.anomalyDemo, fallbackSettings.anomalyDemo),
+  };
+};
+
 export const applySettings = (settings) => {
-  const nextSettings = { ...fallbackSettings, ...settings };
+  const nextSettings = normalizeSettings(settings);
 
   document.documentElement.dataset.compact = nextSettings.compactMode ? 'true' : 'false';
   document.body.dataset.compact = nextSettings.compactMode ? 'true' : 'false';
@@ -30,19 +58,25 @@ const dispatchSettingsUpdate = (settings) => {
 export const getSettings = () => {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
+    const explicitSimulationMode = localStorage.getItem(SIMULATION_MODE_KEY);
+    const storedSettings = raw ? JSON.parse(raw) : fallbackSettings;
+    const nextSettings = explicitSimulationMode === null
+      ? storedSettings
+      : { ...storedSettings, simulationMode: explicitSimulationMode === 'true' };
 
-    if (!raw) {
-      return applySettings(fallbackSettings);
-    }
-
-    return applySettings({ ...fallbackSettings, ...JSON.parse(raw) });
+    return applySettings(nextSettings);
   } catch (error) {
     return applySettings(fallbackSettings);
   }
 };
 
 export const saveSettings = (settings) => {
-  const nextSettings = { ...fallbackSettings, ...settings };
+  const nextSettings = normalizeSettings(settings);
+  const explicitSimulationMode = localStorage.getItem(SIMULATION_MODE_KEY);
+
+  if (explicitSimulationMode !== null) {
+    nextSettings.simulationMode = explicitSimulationMode === 'true';
+  }
 
   if (!nextSettings.simulationMode) {
     nextSettings.presentationMode = false;
@@ -55,7 +89,20 @@ export const saveSettings = (settings) => {
   return appliedSettings;
 };
 
+export const setSimulationMode = (enabled, settings = getSettings()) => {
+  const simulationMode = enabled === true;
+  localStorage.setItem(SIMULATION_MODE_KEY, String(simulationMode));
+
+  return saveSettings({
+    ...settings,
+    simulationMode,
+    presentationMode: simulationMode ? settings.presentationMode : false,
+    anomalyDemo: simulationMode ? settings.anomalyDemo : false,
+  });
+};
+
 export const enablePresentationMode = (settings = getSettings()) => {
+  localStorage.setItem(SIMULATION_MODE_KEY, 'true');
   return saveSettings({
     ...settings,
     simulationMode: true,
@@ -78,6 +125,7 @@ export const disablePresentationMode = (settings = getSettings()) => {
 
 export const resetSettings = () => {
   localStorage.removeItem(SETTINGS_KEY);
+  localStorage.removeItem(SIMULATION_MODE_KEY);
   const appliedSettings = applySettings(fallbackSettings);
   dispatchSettingsUpdate(appliedSettings);
   return appliedSettings;

@@ -118,7 +118,7 @@
                   Modo simulação
                   <small>Usar leituras simuladas enquanto nao houver hardware conectado.</small>
                 </span>
-                <input v-model="settings.simulationMode" type="checkbox" @change="syncSimulationMode" />
+                <input :checked="settings.simulationMode" type="checkbox" @change="syncSimulationMode" />
               </label>
 
               <label class="switch-row">
@@ -195,6 +195,7 @@ import {
   getSettings,
   resetSettings,
   saveSettings,
+  setSimulationMode,
 } from '../data/settings-store.js';
 import { getSavedTheme, toggleTheme } from '../data/theme-store.js';
 import { syncCurrentUserProfile } from '../services/firebase.js';
@@ -289,11 +290,9 @@ const togglePresentationMode = () => {
   saveAppSettings();
 };
 
-const syncSimulationMode = () => {
-  if (!settings.simulationMode) {
-    settings.presentationMode = false;
-    settings.anomalyDemo = false;
-  }
+const syncSimulationMode = (event) => {
+  Object.assign(settings, setSimulationMode(event.currentTarget.checked, settings));
+  saveAppSettings();
 };
 
 const openDefaultPeriod = () => {
