@@ -35,7 +35,7 @@ export const dashboardData = {
       icon: earthOutline,
       color: 'water',
       description: 'Conversão simbólica da economia de água em impacto ambiental positivo.',
-      insight: 'O impacto ambiental será gerado automaticamente a partir da economia registrada.',
+      insight: 'O impacto ambiental será gerado automáticamente a partir da economia registrada.',
     },
   ],
 };

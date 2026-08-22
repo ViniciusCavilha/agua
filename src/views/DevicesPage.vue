@@ -5,13 +5,13 @@
         <section class="devices-toolbar">
           <div>
             <span>Arquitetura preparada</span>
-            <h2>ESP32 e sensor de vazao prontos para integracao futura.</h2>
+            <h2>ESP32 e sensor de vazão prontos para integração futura.</h2>
             <p>Os dados abaixo continuam simulados, mas seguem o formato esperado para o hardware real.</p>
           </div>
           <div class="toolbar-actions">
             <button class="link-device-button" type="button" @click="openLinkModal">
               <ion-icon :icon="linkOutline" />
-              Vincular por codigo
+              Vincular por código
             </button>
             <button type="button" @click="addSimulatedDevice">
               <ion-icon :icon="addOutline" />
@@ -31,8 +31,8 @@
         <section v-if="technicalAlerts.length" class="technical-alerts-panel">
           <div class="panel-title">
             <div>
-              <h2>Alertas tecnicos</h2>
-              <p>Eventos simulados que o app ja esta preparado para tratar.</p>
+              <h2>Alertas técnicos</h2>
+              <p>Eventos simulados que o app já está preparado para tratar.</p>
             </div>
             <strong>{{ technicalAlerts.length }} ativo{{ technicalAlerts.length > 1 ? 's' : '' }}</strong>
           </div>
@@ -54,7 +54,7 @@
               <span class="device-icon"><ion-icon :icon="hardwareChipOutline" /></span>
               <div>
                 <h2>{{ device.name }}</h2>
-                <p>{{ device.location || 'Local nao informado' }}</p>
+                <p>{{ device.location || 'Local não informado' }}</p>
               </div>
               <strong :class="statusClass(device.status)">{{ device.status }}</strong>
             </div>
@@ -66,14 +66,14 @@
               </div>
               <div>
                 <span>Unidade</span>
-                <strong>{{ device.unit || 'Nao vinculada' }}</strong>
+                <strong>{{ device.unit || 'Não vinculada' }}</strong>
               </div>
               <div>
                 <span>Modelo do sensor</span>
                 <strong>{{ device.sensor.name }}</strong>
               </div>
               <div>
-                <span>Calibracao</span>
+                <span>Calibração</span>
                 <strong>{{ device.sensor.calibrationFactor }} pulsos/s = 1 L/min</strong>
               </div>
               <div>
@@ -88,11 +88,11 @@
                 <strong>{{ device.totalConsumption }} L</strong>
               </div>
               <div>
-                <span>Ultima vazao</span>
+                <span>Última vazão</span>
                 <strong>{{ device.lastFlowRate }} L/min</strong>
               </div>
               <div>
-                <span>Pulsos da ultima leitura</span>
+                <span>Pulsos da última leitura</span>
                 <strong>{{ device.lastPulseCount }} pulsos = {{ device.lastReadingLiters }} L</strong>
               </div>
             </div>
@@ -122,7 +122,7 @@
         <article v-if="!devices.length && !errorMessage" class="empty-devices">
           <span><ion-icon :icon="hardwareChipOutline" /></span>
           <h2>Nenhum dispositivo preparado ainda.</h2>
-          <p>Vincule um codigo de dispositivo ou crie um simulado para preparar o Firestore para o ESP32 no futuro.</p>
+          <p>Vincule um código de dispositivo ou crie um simulado para preparar o Firestore para o ESP32 no futuro.</p>
         </article>
 
         <div v-if="isLinkModalOpen" class="modal-backdrop" role="presentation" @click.self="closeLinkModal">
@@ -131,21 +131,21 @@
               <span class="modal-icon edit-icon"><ion-icon :icon="linkOutline" /></span>
               <div>
                 <h2 id="device-link-title">Vincular dispositivo</h2>
-                <p>Use o codigo que sera gravado no ESP32 para conectar este monitor a sua conta.</p>
+                <p>Use o código que será gravado no ESP32 para conectar este monitor a sua conta.</p>
               </div>
             </div>
 
             <form class="edit-form" @submit.prevent="saveLinkedDevice">
               <label>
-                Codigo do dispositivo
+                Código do dispositivo
                 <input v-model="linkForm.deviceCode" type="text" placeholder="Ex: ESP32-FLOW-001" required @input="formatDeviceCode" />
               </label>
               <label>
                 Nome do dispositivo
-                <input v-model="linkForm.name" type="text" placeholder="Ex: Caixa d'agua principal" required />
+                <input v-model="linkForm.name" type="text" placeholder="Ex: Caixa d'água principal" required />
               </label>
               <label>
-                Local de instalacao
+                Local de instalação
                 <input v-model="linkForm.location" type="text" placeholder="Ex: Laboratorio 2" required />
               </label>
               <label>
@@ -159,11 +159,11 @@
                 </select>
               </label>
               <label>
-                Codigo do sensor
+                Código do sensor
                 <input v-model="linkForm.sensorCode" type="text" placeholder="Ex: FLOW-YF-S201-001" @input="formatSensorCode" />
               </label>
               <label>
-                Fator de calibracao
+                Fator de calibração
                 <input v-model.number="linkForm.calibrationFactor" type="number" min="0.1" step="0.1" required />
               </label>
               <label>
@@ -194,7 +194,7 @@
             <span class="modal-icon"><ion-icon :icon="trashOutline" /></span>
             <h2 id="device-delete-title">Remover dispositivo?</h2>
             <p>
-              O dispositivo {{ deviceToDelete.name }} e os dados simulados vinculados a ele serao removidos da sua conta.
+              O dispositivo {{ deviceToDelete.name }} e os dados simulados vinculados a ele serão removidos da sua conta.
             </p>
             <div class="modal-actions">
               <button class="cancel-delete" type="button" @click="closeDeleteModal">Cancelar</button>
@@ -212,7 +212,7 @@
               <span class="modal-icon edit-icon"><ion-icon :icon="createOutline" /></span>
               <div>
                 <h2 id="device-edit-title">Editar dispositivo</h2>
-                <p>Ajustes que serao usados quando o ESP32 e o sensor forem conectados.</p>
+                <p>Ajustes que serão usados quando o ESP32 e o sensor forem conectados.</p>
               </div>
             </div>
 
@@ -222,7 +222,7 @@
                 <input v-model="editForm.name" type="text" required />
               </label>
               <label>
-                Local de instalacao
+                Local de instalação
                 <input v-model="editForm.location" type="text" required />
               </label>
               <label>
@@ -240,11 +240,11 @@
                 </select>
               </label>
               <label>
-                Codigo do sensor
+                Código do sensor
                 <input v-model="editForm.sensor.sensorCode" type="text" required />
               </label>
               <label>
-                Fator de calibracao
+                Fator de calibração
                 <input v-model.number="editForm.sensor.calibrationFactor" type="number" min="0.1" step="0.1" required />
               </label>
               <label>
@@ -374,7 +374,7 @@ const loadDevices = async () => {
     devices.value = await listDevices();
     syncTechnicalAlertNotifications(technicalAlerts.value);
   } catch (error) {
-    errorMessage.value = 'Nao foi possivel carregar os dispositivos. Confira as permissoes do Firestore.';
+    errorMessage.value = 'Não foi possível carregar os dispositivos. Confira as permissões do Firestore.';
     devices.value = [];
   }
 };
@@ -390,7 +390,7 @@ const addSimulatedDevice = async () => {
     await createSimulatedDevice(account.unit);
     await loadDevices();
   } catch (error) {
-    errorMessage.value = 'Nao foi possivel criar o dispositivo simulado agora.';
+    errorMessage.value = 'Não foi possível criar o dispositivo simulado agora.';
   }
   loading.value = false;
 };
@@ -447,7 +447,7 @@ const saveLinkedDevice = async () => {
     closeLinkModal();
     await loadDevices();
   } catch (error) {
-    linkError.value = error.message || 'Nao foi possivel vincular este dispositivo.';
+    linkError.value = error.message || 'Não foi possível vincular este dispositivo.';
   }
   loading.value = false;
 };
@@ -458,7 +458,7 @@ const changeStatus = async (deviceId, status) => {
     await updateDeviceStatus(deviceId, status);
     await loadDevices();
   } catch (error) {
-    errorMessage.value = 'Nao foi possivel atualizar o status.';
+    errorMessage.value = 'Não foi possível atualizar o status.';
   }
 };
 
@@ -506,7 +506,7 @@ const saveDeviceEdition = async () => {
     closeEditModal();
     await loadDevices();
   } catch (error) {
-    errorMessage.value = 'Nao foi possivel salvar as alteracoes do dispositivo.';
+    errorMessage.value = 'Não foi possível salvar as alterações do dispositivo.';
   }
 };
 
@@ -524,7 +524,7 @@ const confirmDeleteDevice = async () => {
     deviceToDelete.value = null;
     await loadDevices();
   } catch (error) {
-    errorMessage.value = 'Nao foi possivel remover o dispositivo.';
+    errorMessage.value = 'Não foi possível remover o dispositivo.';
     await loadDevices();
   }
 };
@@ -532,8 +532,8 @@ const confirmDeleteDevice = async () => {
 const statusClass = (status) => ({
   active: status === 'Ativo',
   offline: status === 'Offline',
-  waiting: status === 'Aguardando conexao',
-  maintenance: status === 'Manutencao',
+  waiting: status === 'Aguardando conexão',
+  maintenance: status === 'Manutenção',
 });
 
 onMounted(loadDevices);

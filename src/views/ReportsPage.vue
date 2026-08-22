@@ -1,10 +1,10 @@
 <template>
   <ion-page>
     <ion-content :fullscreen="true">
-      <AppShell title="Relatorios" :show-period="false">
+      <AppShell title="Relatórios" :show-period="false">
         <section class="report-hero">
           <div>
-            <span>Relatorio institucional</span>
+            <span>Relatório institucional</span>
             <h2>Resumo pronto para apresentar, baixar e compartilhar.</h2>
             <p>{{ reportSummary }}</p>
           </div>
@@ -26,8 +26,8 @@
           <article class="panel-card analysis-card">
             <div class="card-title">
               <div>
-                <h2>Analise do periodo</h2>
-                <p>Conclusao automatica com base nos dados atuais.</p>
+                <h2>Análise do período</h2>
+                <p>Conclusão automática com base nos dados atuais.</p>
               </div>
               <span>{{ simulationBadge }}</span>
             </div>
@@ -38,7 +38,7 @@
                 <p>{{ report?.deviceStatusSummary || 'Aguardando dispositivos' }}</p>
               </div>
               <div>
-                <span>Ultima leitura</span>
+                <span>Última leitura</span>
                 <p>{{ report?.lastReadingLabel || 'Sem leituras' }}</p>
               </div>
             </div>
@@ -47,11 +47,11 @@
           <article class="panel-card">
             <div class="card-title">
               <div>
-                <h2>Distribuicao semanal</h2>
-                <p>Volume por dia no periodo do relatorio.</p>
+                <h2>Distribuição semanal</h2>
+                <p>Volume por dia no período do relatorio.</p>
               </div>
             </div>
-            <div class="mini-chart" aria-label="Grafico de consumo usado no relatorio">
+            <div class="mini-chart" aria-label="Gráfico de consumo usado no relatorio">
               <div v-for="bar in weeklyBars" :key="bar.day" class="mini-bar">
                 <strong>{{ bar.liters }}</strong>
                 <span :style="{ height: bar.value ? bar.value + '%' : '2%' }" />
@@ -65,7 +65,7 @@
           <article class="panel-card">
             <div class="card-title">
               <div>
-                <h2>Dispositivos no relatorio</h2>
+                <h2>Dispositivos no relatório</h2>
                 <p>Equipamentos que alimentam os indicadores.</p>
               </div>
               <router-link to="/dispositivos">Gerenciar</router-link>
@@ -76,7 +76,7 @@
                 <span><ion-icon :icon="hardwareChipOutline" /></span>
                 <div>
                   <strong>{{ device.name || 'Dispositivo' }}</strong>
-                  <small>{{ device.deviceCode || 'Sem codigo' }}</small>
+                  <small>{{ device.deviceCode || 'Sem código' }}</small>
                 </div>
                 <em :class="statusClass(device.status)">{{ device.status || 'Sem status' }}</em>
               </div>
@@ -84,15 +84,15 @@
 
             <div v-else class="empty-state">
               <strong>Nenhum dispositivo cadastrado</strong>
-              <p>Quando um ESP32 for vinculado, ele aparecera automaticamente nos relatorios.</p>
+              <p>Quando um ESP32 for vinculado, ele aparecera automáticamente nos relatorios.</p>
             </div>
           </article>
 
           <article class="panel-card">
             <div class="card-title">
               <div>
-                <h2>Alertas do periodo</h2>
-                <p>Ocorrencias tecnicas consideradas no PDF.</p>
+                <h2>Alertas do período</h2>
+                <p>Ocorrências tecnicas consideradas no PDF.</p>
               </div>
               <span>{{ alerts.length }}</span>
             </div>
@@ -109,7 +109,7 @@
 
             <div v-else class="empty-state">
               <strong>Nenhum alerta ativo</strong>
-              <p>O relatorio indicara anomalias assim que o app detectar risco operacional.</p>
+              <p>O relatório indicará anomalias assim que o app detectar risco operacional.</p>
             </div>
           </article>
         </section>
@@ -150,14 +150,14 @@ const reportSummary = computed(() => {
     return 'Preparando dados de consumo, dispositivos e alertas.';
   }
 
-  return `${report.value.totalLabel} registrados na semana, ${report.value.devices.length} dispositivo(s) e ${report.value.alerts.length} alerta(s) tecnico(s).`;
+  return `${report.value.totalLabel} registrados na semana, ${report.value.devices.length} dispositivo(s) e ${report.value.alerts.length} alerta(s) técnico(s).`;
 });
 
 const reportMetrics = computed(() => [
-  { label: 'Consumo total', value: report.value?.totalLabel || '0 L', detail: 'Periodo semanal' },
-  { label: 'Media diaria', value: report.value?.averageLabel || '0 L', detail: 'Calculada por dia' },
+  { label: 'Consumo total', value: report.value?.totalLabel || '0 L', detail: 'Período semanal' },
+  { label: 'Média diária', value: report.value?.averageLabel || '0 L', detail: 'Calculada por dia' },
   { label: 'Pico registrado', value: report.value?.peakLabel || '0 L', detail: 'Maior leitura' },
-  { label: 'Alertas', value: String(report.value?.alerts.length || 0), detail: 'Ocorrencias tecnicas' },
+  { label: 'Alertas', value: String(report.value?.alerts.length || 0), detail: 'Ocorrências tecnicas' },
 ]);
 
 const weeklyBars = computed(() => report.value?.consumption.weeklyBars || []);
@@ -170,7 +170,7 @@ const simulationBadge = computed(() => (report.value?.settings.simulationMode ? 
 const statusClass = (status) => ({
   Ativo: 'active',
   Offline: 'offline',
-  Manutencao: 'maintenance',
+  Manutenção: 'maintenance',
 }[status] || 'waiting');
 
 onIonViewWillEnter(loadReport);

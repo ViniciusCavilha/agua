@@ -14,13 +14,13 @@
           <article class="usage-card">
             <div class="card-title">
               <div>
-                <h2>Historico semanal</h2>
+                <h2>Histórico semanal</h2>
                 <p>Consumo por dia em {{ volumeUnitLabel }}</p>
               </div>
               <span><ion-icon :icon="calendarOutline" /> {{ chartBadge }}</span>
             </div>
 
-            <div class="bar-chart" aria-label="Grafico semanal de consumo">
+            <div class="bar-chart" aria-label="Gráfico semanal de consumo">
               <button
                 v-for="bar in visibleWeeklyBars"
                 :key="bar.day"
@@ -48,7 +48,7 @@
             <h2>{{ alertTitle }}</h2>
             <p>{{ alertMessage }}</p>
             <div class="health-row">
-              <span>{{ settings.simulationMode ? 'Motor de simulacao' : 'Saude da rede' }}</span>
+              <span>{{ settings.simulationMode ? 'Motor de simulação' : 'Saúde da rede' }}</span>
               <strong>{{ settings.simulationMode ? settings.readingInterval + 's' : '0%' }}</strong>
             </div>
           </article>
@@ -57,7 +57,7 @@
         <article class="readings-card">
           <div class="card-title">
             <div>
-              <h2>Ultimas leituras</h2>
+              <h2>Últimas leituras</h2>
               <p>Eventos capturados pelos medidores</p>
             </div>
           </div>
@@ -73,7 +73,7 @@
 
           <div v-else class="empty-readings">
             <strong>Nenhuma leitura registrada</strong>
-            <p>Quando o sistema receber os primeiros dados, eles serao listados automaticamente aqui.</p>
+            <p>Quando o sistema receber os primeiros dados, eles serão listados automáticamente aqui.</p>
           </div>
         </article>
       </AppShell>
@@ -118,18 +118,18 @@ const toggleActiveBar = (day) => {
   activeBar.value = activeBar.value === day ? '' : day;
 };
 
-const chartBadge = computed(() => (settings.presentationMode ? 'Modo apresentacao' : settings.simulationMode ? 'Semana simulada' : 'Semana atual'));
+const chartBadge = computed(() => (settings.presentationMode ? 'Modo apresentação' : settings.simulationMode ? 'Semana simulada' : 'Semana atual'));
 const alertTitle = computed(() => (settings.anomalyDemo ? 'Anomalia simulada' : settings.presentationMode ? 'Demo operacional' : 'Aguardando leituras'));
 const alertMessage = computed(() => {
   if (settings.anomalyDemo) {
-    return 'Cenario de demonstracao ativo: o sistema simula consumo fora do padrao para testar alertas.';
+    return 'Cenário de demonstração ativo: o sistema simula consumo fora do padrão para testar alertas.';
   }
 
   if (settings.presentationMode) {
-    return 'Modo apresentacao ativo: as leituras simuladas representam um dia comum de operacao.';
+    return 'Modo apresentação ativo: as leituras simuladas representam um dia comum de operação.';
   }
 
-  return 'Assim que os medidores enviarem informacoes, os alertas e variacoes aparecem aqui.';
+  return 'Assim que os medidores enviarem informações, os alertas e variações aparecem aqui.';
 });
 
 onIonViewWillEnter(refreshConsumptionData);

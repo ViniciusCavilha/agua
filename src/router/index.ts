@@ -28,28 +28,28 @@ const routes: Array<RouteRecordRaw> = [
     component: ConsumptionPeriodPage,
     props: {
       periodLabel: 'Semana passada',
-      chartTitle: 'Historico da semana passada',
+      chartTitle: 'Histórico da semana passada',
       chartBadge: 'Semana passada',
       days: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'],
     },
   },
   {
-    path: '/consumo/mes-passado',
+    path: '/consumo/mês-passado',
     name: 'ConsumoMesPassado',
     component: ConsumptionPeriodPage,
     props: {
-      periodLabel: 'Mes passado',
-      chartTitle: 'Historico do mes passado',
-      chartBadge: 'Mes passado',
+      periodLabel: 'Mês passado',
+      chartTitle: 'Histórico do mês passado',
+      chartBadge: 'Mês passado',
       days: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6', 'Sem 7'],
     },
   },
   { path: '/metas', name: 'Metas', component: GoalsPage },
   { path: '/dispositivos', name: 'Dispositivos', component: DevicesPage },
   { path: '/dispositivos/:id', name: 'DetalheDispositivo', component: DeviceDetailPage },
-  { path: '/relatorios', name: 'Relatorios', component: ReportsPage },
+  { path: '/relatorios', name: 'Relatórios', component: ReportsPage },
   { path: '/perfil', name: 'Perfil', component: ProfilePage },
-  { path: '/configuracoes', name: 'Configuracoes', component: SettingsPage },
+  { path: '/configurações', name: 'Configurações', component: SettingsPage },
 ];
 
 export default createRouter({

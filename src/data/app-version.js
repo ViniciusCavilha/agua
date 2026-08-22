@@ -8,8 +8,8 @@ const clearBrowserCaches = async () => {
     return;
   }
 
-  const cacheNames = await window.caches.keys();
-  await Promise.all(cacheNames.map((cacheName) => window.caches.delete(cacheName)));
+  const cacheNamês = await window.caches.keys();
+  await Promise.all(cacheNamês.map((cacheName) => window.caches.delete(cacheName)));
 };
 
 const fetchPublishedVersion = async () => {

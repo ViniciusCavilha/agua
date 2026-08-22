@@ -1,6 +1,6 @@
 ﻿export const consumptionStats = [
   { label: 'Esta semana', value: '0 L', detail: 'Consumo acumulado semanal' },
-  { label: 'Media diaria', value: '0 L', detail: 'Aguardando dados' },
+  { label: 'Média diária', value: '0 L', detail: 'Aguardando dados' },
   { label: 'Pico do dia', value: '0 L', detail: 'Aguardando dados' },
   { label: 'Custo estimado', value: 'R$ 0,00', detail: 'Aguardando tarifa' },
 ];

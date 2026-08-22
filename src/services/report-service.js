@@ -47,32 +47,32 @@ const parseVolumeNumber = (value) => {
 const buildDeviceStatusSummary = (devices = []) => {
   const totals = {
     active: devices.filter((device) => device.status === 'Ativo').length,
-    waiting: devices.filter((device) => device.status === 'Aguardando conexao').length,
+    waiting: devices.filter((device) => device.status === 'Aguardando conexão').length,
     offline: devices.filter((device) => device.status === 'Offline').length,
-    maintenance: devices.filter((device) => device.status === 'Manutencao').length,
+    maintenance: devices.filter((device) => device.status === 'Manutenção').length,
   };
 
   if (!devices.length) {
     return 'Nenhum dispositivo cadastrado';
   }
 
-  return `${totals.active} ativos, ${totals.waiting} aguardando, ${totals.offline} offline, ${totals.maintenance} em manutencao`;
+  return `${totals.active} ativos, ${totals.waiting} águardando, ${totals.offline} offline, ${totals.maintenance} em manutenção`;
 };
 
 const getMainInsight = ({ report, alerts }) => {
   if (!report.devices.length) {
-    return 'O ambiente ainda nao possui dispositivos vinculados. A estrutura ja esta pronta para receber ESP32 e sensor de vazao.';
+    return 'O ambiente ainda não possui dispositivos vinculados. A estrutura já esta pronta para receber ESP32 e sensor de vazão.';
   }
 
   if (alerts.some((alert) => alert.severity === 'critical')) {
-    return 'Ha alertas criticos no periodo. Recomenda-se verificar dispositivos e leituras com prioridade.';
+    return 'Ha alertas críticos no período. Recomenda-se verificar dispositivos e leituras com prioridade.';
   }
 
   if (report.totalLiters > 0) {
-    return 'O monitoramento esta registrando consumo e pode ser usado para comparacao semanal, simulacao e apresentacao.';
+    return 'O monitoramento está registrando consumo e pode ser usado para comparação semanal, simulação e apresentação.';
   }
 
-  return 'Os dispositivos estao cadastrados, mas ainda nao ha volume relevante registrado neste periodo.';
+  return 'Os dispositivos estao cadastrados, mas ainda não há volume relevante registrado neste período.';
 };
 
 export const buildOperationalReport = async () => {
@@ -211,20 +211,20 @@ const drawMetric = (page, { x, y, width, label, value, detail }) => {
 
 export const downloadReportPdf = (report) => {
   const page = pdfPainter();
-  const institution = report.account.company || 'Instituicao nao informada';
-  const unit = report.account.unit || 'Unidade nao informada';
+  const institution = report.account.company || 'Instituição nao informada';
+  const unit = report.account.unit || 'Unidade não informada';
   const fileName = `relatorio-${safeFileName(institution)}-${formatDate(report.generatedAt).replace(/\//g, '-')}.pdf`;
 
   page.rect(0, 0, pdfWidth, pdfHeight, '#f4fbfb');
   page.rect(0, 0, pdfWidth, 132, '#0d4b5e');
   page.rect(0, 0, 300, 132, '#37c9c3');
-  page.text('Agua+', margin, 42, 22, '#ffffff', true);
-  page.text('Relatorio operacional', margin, 76, 18, '#ffffff', true);
+  page.text('Água+', margin, 42, 22, '#ffffff', true);
+  page.text('Relatório operacional', margin, 76, 18, '#ffffff', true);
   page.text('de consumo', margin, 100, 18, '#ffffff', true);
   page.text(`Gerado em ${formatDateTime(report.generatedAt)}`, 350, 44, 9, '#ddfbf8');
   page.text(institution, 350, 70, 14, '#ffffff', true);
   page.text(unit, 350, 92, 10, '#ddfbf8');
-  page.text(report.account.name || 'Usuario Agua+', 350, 110, 9, '#ddfbf8');
+  page.text(report.account.name || 'Usuário Água+', 350, 110, 9, '#ddfbf8');
 
   drawMetric(page, {
     x: margin,
@@ -232,13 +232,13 @@ export const downloadReportPdf = (report) => {
     width: 118,
     label: 'Consumo total',
     value: report.totalLabel,
-    detail: 'Periodo semanal',
+    detail: 'Período semanal',
   });
   drawMetric(page, {
     x: 172,
     y: 162,
     width: 118,
-    label: 'Media diaria',
+    label: 'Média diária',
     value: report.averageLabel,
     detail: 'Calculada por dia',
   });
@@ -259,13 +259,13 @@ export const downloadReportPdf = (report) => {
     detail: report.devices.length === 1 ? 'Cadastrado' : 'Cadastrados',
   });
 
-  page.text('Analise do periodo', margin, 270, 15, '#0d4b5e', true);
+  page.text('Análise do período', margin, 270, 15, '#0d4b5e', true);
   page.wrapText(report.insight, margin, 292, 86, 13, 10, '#46656d');
   page.text(`Status dos dispositivos: ${report.deviceStatusSummary}`, margin, 348, 9, '#2c6f76', true);
-  page.text(`Ultima leitura: ${report.lastReadingLabel}`, margin, 365, 9, '#46656d');
-  page.text(`Modo: ${report.settings.simulationMode ? 'simulado' : 'real'} | Apresentacao: ${report.settings.presentationMode ? 'ativa' : 'inativa'}`, margin, 382, 9, '#46656d');
+  page.text(`Última leitura: ${report.lastReadingLabel}`, margin, 365, 9, '#46656d');
+  page.text(`Modo: ${report.settings.simulationMode ? 'simulado' : 'real'} | Apresentação: ${report.settings.presentationMode ? 'ativa' : 'inativa'}`, margin, 382, 9, '#46656d');
 
-  page.text('Historico semanal', margin, 430, 15, '#0d4b5e', true);
+  page.text('Histórico semanal', margin, 430, 15, '#0d4b5e', true);
   const bars = report.consumption.weeklyBars;
   const chartX = margin;
   const chartY = 464;
@@ -284,7 +284,7 @@ export const downloadReportPdf = (report) => {
 
   page.text('Dispositivos monitorados', margin, 632, 15, '#0d4b5e', true);
   const deviceLines = report.devices.length
-    ? report.devices.slice(0, 4).map((device) => `${device.name || 'Dispositivo'} | ${device.deviceCode || 'Sem codigo'} | ${device.status || 'Sem status'} | ${device.sensor?.name || 'Sensor nao definido'}`)
+    ? report.devices.slice(0, 4).map((device) => `${device.name || 'Dispositivo'} | ${device.deviceCode || 'Sem código'} | ${device.status || 'Sem status'} | ${device.sensor?.name || 'Sensor nao definido'}`)
     : ['Nenhum dispositivo cadastrado no painel.'];
   deviceLines.forEach((line, index) => {
     page.text(line, margin, 656 + index * 16, 9, '#46656d');
@@ -293,9 +293,9 @@ export const downloadReportPdf = (report) => {
   page.text('Alertas e ultimas leituras', margin, 735, 15, '#0d4b5e', true);
   const alertText = report.alerts.length
     ? `${report.alerts.length} alerta(s): ${report.alerts.slice(0, 2).map((alert) => alert.title).join(', ')}`
-    : 'Nenhum alerta tecnico ativo no periodo.';
+    : 'Nenhum alerta técnico ativo no período.';
   page.wrapText(alertText, margin, 758, 92, 12, 9, '#46656d');
-  page.text('Documento gerado pelo Agua+ para acompanhamento de consumo e preparacao da integracao com ESP32.', margin, 812, 7, '#7c9398');
+  page.text('Documento gerado pelo Água+ para acompanhamento de consumo e preparação da integração com ESP32.', margin, 812, 7, '#7c9398');
 
   const pdf = createPdfDocument(page.output());
   const blob = new Blob([pdf], { type: 'application/pdf' });

@@ -25,7 +25,7 @@
                 </div>
                 <span :class="['device-badge', statusClass(activeDevice?.status)]">
                   <i />
-                  {{ activeDevice?.status || 'Nao vinculado' }}
+                  {{ activeDevice?.status || 'Não vinculado' }}
                 </span>
               </div>
 
@@ -40,16 +40,16 @@
 
               <div class="device-kpis">
                 <div>
-                  <span>Ultima leitura</span>
+                  <span>Última leitura</span>
                   <strong>{{ lastReadingLabel }}</strong>
                 </div>
                 <div>
-                  <span>Vazao</span>
+                  <span>Vazão</span>
                   <strong>{{ activeDeviceFlowRate }}</strong>
                 </div>
                 <div>
                   <span>Sensor</span>
-                  <strong>{{ activeDevice?.sensor?.name || 'Nao definido' }}</strong>
+                  <strong>{{ activeDevice?.sensor?.name || 'Não definido' }}</strong>
                 </div>
               </div>
 
@@ -61,13 +61,13 @@
             <article class="chart-card">
               <div class="card-title">
                 <div>
-                  <h2>Consumo de agua</h2>
-                  <p>Ultimas 24 horas</p>
+                  <h2>Consumo de água</h2>
+                  <p>Últimas 24 horas</p>
                 </div>
-                <span class="waiting"><i /> {{ settings.simulationMode ? 'Simulacao ativa' : 'Aguardando dados' }}</span>
+                <span class="waiting"><i /> {{ settings.simulationMode ? 'Simulação ativa' : 'Aguardando dados' }}</span>
               </div>
 
-              <div class="chart" aria-label="Grafico de consumo das ultimas 24 horas">
+              <div class="chart" aria-label="Gráfico de consumo das ultimas 24 horas">
                 <div class="labels">
                   <small>1.5k</small>
                   <small>1k</small>
@@ -111,7 +111,7 @@
             <article class="technical-alert-card">
               <div class="card-title compact">
                 <div>
-                  <h2>Alertas tecnicos</h2>
+                  <h2>Alertas técnicos</h2>
                   <p>Status operacional dos dispositivos</p>
                 </div>
                 <span :class="['alert-counter', technicalAlerts.length ? 'has-alerts' : '']">
@@ -139,7 +139,7 @@
                 <ion-icon :icon="shieldCheckmarkOutline" />
                 <div>
                   <strong>Nenhum alerta ativo</strong>
-                  <small>O app esta pronto para destacar falhas quando as leituras chegarem.</small>
+                  <small>O app está pronto para destacar falhas quando as leituras chegarem.</small>
                 </div>
               </div>
             </article>
@@ -147,7 +147,7 @@
             <article class="monthly-card">
               <div class="card-title compact">
                 <div>
-                  <h2>Resumo do mes</h2>
+                  <h2>Resumo do mês</h2>
                   <p>Indicadores principais</p>
                 </div>
               </div>
@@ -170,13 +170,13 @@
               <span :class="['panel-icon', selectedMetric.color]">
                 <ion-icon :icon="selectedMetric.icon" />
               </span>
-              <small>Resumo do mes</small>
+              <small>Resumo do mês</small>
               <h2 id="metric-title">{{ selectedMetric.label }}</h2>
               <strong>{{ selectedMetric.value }}</strong>
               <p>{{ selectedMetric.description }}</p>
 
               <div class="insight-box">
-                <span>Analise Agua+</span>
+                <span>Análise Água+</span>
                 <p>{{ selectedMetric.insight }}</p>
               </div>
             </section>
@@ -270,7 +270,7 @@ const heroDescription = computed(() => {
   }
 
   if (deviceCount.value === 1) {
-    return `${devices.value[0].deviceCode} esta preparado para receber leituras no formato do sensor de vazao.`;
+    return `${devices.value[0].deviceCode} está preparado para receber leituras no formato do sensor de vazão.`;
   }
 
   return dashboardData.target;
@@ -288,7 +288,7 @@ const heroActionLabel = computed(() => {
 });
 const dashboardStatus = computed(() => {
   if (devicesError.value) {
-    return 'Nao foi possivel carregar dispositivos';
+    return 'Não foi possível carregar dispositivos';
   }
 
   if (activeDevice.value) {
@@ -296,25 +296,25 @@ const dashboardStatus = computed(() => {
   }
 
   if (settings.value.anomalyDemo) {
-    return 'Cenario de anomalia ativo';
+    return 'Cenário de anomalia ativo';
   }
 
   if (settings.value.presentationMode) {
-    return 'Modo apresentacao ativo';
+    return 'Modo apresentação ativo';
   }
 
   return settings.value.simulationMode ? `Simulando a cada ${settings.value.readingInterval}s` : dashboardData.variation;
 });
 const deviceSummaryText = computed(() => {
   if (devicesError.value) {
-    return 'Confira as permissoes do Firestore.';
+    return 'Confira as permissões do Firestore.';
   }
 
   if (!activeDevice.value) {
     return 'Nenhum ESP32 preparado nesta conta.';
   }
 
-  return activeDevice.value.location || activeDevice.value.unit || 'Local ainda nao informado';
+  return activeDevice.value.location || activeDevice.value.unit || 'Local ainda não informado';
 });
 const lastReadingLabel = computed(() => {
   if (!activeDevice.value) {
@@ -352,9 +352,9 @@ const closeMetricInfo = () => {
 
 const statusClass = (status = '') => ({
   active: status === 'Ativo',
-  waiting: status === 'Aguardando conexao',
+  waiting: status === 'Aguardando conexão',
   offline: status === 'Offline',
-  maintenance: status === 'Manutencao',
+  maintenance: status === 'Manutenção',
 });
 
 const loadDashboardDevices = async () => {
@@ -364,7 +364,7 @@ const loadDashboardDevices = async () => {
     consumptionData.value = getConsumptionReadings(settings.value, devices.value);
     syncTechnicalAlertNotifications(technicalAlerts.value);
   } catch (error) {
-    devicesError.value = 'Nao foi possivel carregar dispositivos.';
+    devicesError.value = 'Não foi possível carregar dispositivos.';
     devices.value = [];
     consumptionData.value = getConsumptionReadings(settings.value, []);
   }

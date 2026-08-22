@@ -2,7 +2,7 @@
   <ion-page>
     <ion-content :fullscreen="true">
       <main class="recover-page">
-        <section class="recover-panel" aria-label="Recuperar senha Agua+">
+        <section class="recover-panel" aria-label="Recuperar senha Água+">
           <router-link class="brand" to="/login" aria-label="Voltar para login">
             <span><ion-icon :icon="waterOutline" /></span>
             Agua<b>+</b>
@@ -21,7 +21,7 @@
                 E-mail
                 <span class="input-shell">
                   <ion-icon :icon="mailOutline" />
-                  <input v-model="email" type="email" autocomplete="email" placeholder="seuemail@instituicao.com" required />
+                  <input v-model="email" type="email" autocomplete="email" placeholder="seuemail@instituição.com" required />
                 </span>
               </label>
 
@@ -35,7 +35,7 @@
           <div v-else class="content-block success-block">
             <span class="success-icon"><ion-icon :icon="checkmarkCircleOutline" /></span>
             <h1>Link enviado.</h1>
-            <p>Se o e-mail estiver cadastrado, voce recebera as instrucoes para redefinir sua senha em alguns minutos.</p>
+            <p>Se o e-mail estiver cadastrado, você receberá as instruções para redefinir sua senha em alguns minutos.</p>
             <PrimaryButton @click="goLogin">
               Voltar para login
               <ion-icon :icon="arrowForwardOutline" />
@@ -45,14 +45,14 @@
           <p class="switch-auth"><router-link to="/login">Voltar para entrar</router-link></p>
         </section>
 
-        <aside class="tips-panel" aria-label="Dicas de seguranca">
+        <aside class="tips-panel" aria-label="Dicas de segurança">
           <div class="tips-card">
             <div class="lock"><ion-icon :icon="lockClosedOutline" /></div>
             <h2>Seguranca em primeiro lugar.</h2>
-            <p>Use uma senha exclusiva e evite compartilhar acessos da sua instituicao.</p>
+            <p>Use uma senha exclusiva e evite compartilhar acessos da sua instituição.</p>
             <div class="steps">
               <span>1</span><p>Confirme o e-mail cadastrado.</p>
-              <span>2</span><p>Acesse o link de recuperacao.</p>
+              <span>2</span><p>Acesse o link de recuperação.</p>
               <span>3</span><p>Crie uma senha nova e segura.</p>
             </div>
           </div>

@@ -20,7 +20,7 @@
               <span><ion-icon :icon="calendarOutline" /> {{ chartBadge }}</span>
             </div>
 
-            <div class="bar-chart" aria-label="Grafico do periodo selecionado">
+            <div class="bar-chart" aria-label="Gráfico do período selecionado">
               <button
                 v-for="bar in bars"
                 :key="bar.day"
@@ -45,8 +45,8 @@
 
           <article class="alert-card">
             <span class="alert-icon"><ion-icon :icon="alertCircleOutline" /></span>
-            <h2>Periodo sem leituras</h2>
-            <p>Esta tela ja esta pronta para receber os dados historicos quando o hidrometro for conectado.</p>
+            <h2>Período sem leituras</h2>
+            <p>Esta tela já esta pronta para receber os dados historicos quando o hidrometro for conectado.</p>
             <div class="health-row">
               <span>Total registrado</span>
               <strong>{{ totalRegistered }}</strong>
@@ -57,7 +57,7 @@
         <article class="readings-card">
           <div class="card-title">
             <div>
-              <h2>Leituras do periodo</h2>
+              <h2>Leituras do período</h2>
               <p>Eventos capturados pelos medidores</p>
             </div>
           </div>
@@ -73,7 +73,7 @@
 
           <div v-else class="empty-readings">
             <strong>Nenhuma leitura registrada</strong>
-            <p>Os registros deste periodo aparecerao aqui automaticamente quando houver historico disponivel.</p>
+            <p>Os registros deste período aparecerão aqui automáticamente quando houver historico disponível.</p>
           </div>
         </article>
       </AppShell>

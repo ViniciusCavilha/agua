@@ -15,7 +15,7 @@ const deviceSimulationFactors = [1, 0.72, 0.58, 1.18, 0.86, 0.64];
 
 const emptyStats = [
   { label: 'Esta semana', value: '0 L', detail: 'Consumo acumulado semanal' },
-  { label: 'Media diaria', value: '0 L', detail: 'Aguardando dados' },
+  { label: 'Média diária', value: '0 L', detail: 'Aguardando dados' },
   { label: 'Pico do dia', value: '0 L', detail: 'Aguardando dados' },
   { label: 'Custo estimado', value: 'R$ 0,00', detail: 'Aguardando tarifa' },
 ];
@@ -43,14 +43,14 @@ const toIsoTimestamp = (value = new Date()) => {
   return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
 };
 
-const calculatePulseCount = (liters, calibrationFactor) => {
+const calculatéPulseCount = (liters, calibrationFactor) => {
   return Math.round(toNumber(liters) * toNumber(calibrationFactor, 7.5) * 60);
 };
 
 export const normalizeReadingPayload = (reading = {}) => {
   const calibrationFactor = toNumber(reading.calibrationFactor, 7.5);
   const liters = toNumber(reading.liters);
-  const pulseCount = toNumber(reading.pulseCount || reading.rawPulseCount || calculatePulseCount(liters, calibrationFactor));
+  const pulseCount = toNumber(reading.pulseCount || reading.rawPulseCount || calculatéPulseCount(liters, calibrationFactor));
   const timestamp = toIsoTimestamp(reading.timestamp || reading.createdAt || reading.receivedAt);
 
   return {
@@ -99,7 +99,7 @@ export const createSimulatedReading = ({
     calibrationFactor: device?.sensor?.calibrationFactor || 7.5,
     liters,
     flowRate,
-    pulseCount: calculatePulseCount(liters, device?.sensor?.calibrationFactor || 7.5),
+    pulseCount: calculatéPulseCount(liters, device?.sensor?.calibrationFactor || 7.5),
     intervalSeconds: device?.readingInterval || settings.readingInterval,
     status,
     source: 'simulated',
@@ -116,7 +116,7 @@ export const getSimulatedReadingsForDevice = (device, settings = getSettings(), 
 
   const factor = deviceSimulationFactors[deviceIndex % deviceSimulationFactors.length];
   const isOffline = device?.status === 'Offline';
-  const isMaintenance = device?.status === 'Manutencao';
+  const isMaintenance = device?.status === 'Manutenção';
   const statusMultiplier = isOffline ? 0 : isMaintenance ? 0.35 : 1;
 
   if (settings.presentationMode) {
@@ -198,8 +198,8 @@ const buildStats = (readings, settings) => {
 
   return [
     { label: 'Esta semana', value: formatVolume(weeklyTotal, settings), detail: 'Consumo acumulado semanal' },
-    { label: 'Media diaria', value: formatVolume(dailyAverage, settings), detail: readings.length ? 'Calculada a partir das leituras' : 'Aguardando dados' },
-    { label: 'Pico do dia', value: formatVolume(peakReading, settings), detail: readings.length ? 'Maior leitura diaria registrada' : 'Aguardando dados' },
+    { label: 'Média diária', value: formatVolume(dailyAverage, settings), detail: readings.length ? 'Calculada a partir das leituras' : 'Aguardando dados' },
+    { label: 'Pico do dia', value: formatVolume(peakReading, settings), detail: readings.length ? 'Maior leitura diária registrada' : 'Aguardando dados' },
     { label: 'Custo estimado', value: 'R$ 0,00', detail: 'Aguardando tarifa' },
   ];
 };
@@ -215,7 +215,7 @@ const formatDisplayReadings = (readings, settings) => {
       time: new Date(reading.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
       area: reading.deviceCode,
       liters: formatVolume(reading.liters, settings),
-      status: reading.status === 'anomaly' ? 'Consumo fora do padrao' : 'Leitura simulada',
+      status: reading.status === 'anomaly' ? 'Consumo fora do padrão' : 'Leitura simulada',
       raw: reading,
     }));
 };
@@ -239,7 +239,7 @@ const buildPeriodReadings = ({ days = [], offsetDays = 7 }, settings, devices = 
 
   return devices.flatMap((device, deviceIndex) => {
     const factor = deviceSimulationFactors[deviceIndex % deviceSimulationFactors.length] * 0.88;
-    const statusMultiplier = device.status === 'Offline' ? 0 : device.status === 'Manutencao' ? 0.3 : 1;
+    const statusMultiplier = device.status === 'Offline' ? 0 : device.status === 'Manutenção' ? 0.3 : 1;
 
     return days.map((day, index) => {
       const timestamp = new Date();
@@ -287,7 +287,7 @@ const buildPeriodBars = (days, readings, settings) => {
 };
 
 export const getPeriodConsumptionReadings = ({ periodLabel, days }, settings = getSettings(), devices = []) => {
-  const offsetDays = String(periodLabel || '').toLowerCase().includes('mes') ? 30 : 7;
+  const offsetDays = String(periodLabel || '').toLowerCase().includes('mês') ? 30 : 7;
   const rawReadings = buildPeriodReadings({ days, offsetDays }, settings, devices);
   const total = rawReadings.reduce((sum, reading) => sum + reading.liters, 0);
   const peak = rawReadings.reduce((max, reading) => Math.max(max, reading.liters), 0);
@@ -296,8 +296,8 @@ export const getPeriodConsumptionReadings = ({ periodLabel, days }, settings = g
   return {
     stats: [
       { label: periodLabel, value: formatVolume(total, settings), detail: rawReadings.length ? 'Consumo simulado por dispositivo' : 'Aguardando dados' },
-      { label: 'Media diaria', value: formatVolume(dailyAverage, settings), detail: rawReadings.length ? 'Calculada a partir das leituras' : 'Aguardando dados' },
-      { label: 'Pico do periodo', value: formatVolume(peak, settings), detail: rawReadings.length ? 'Maior leitura registrada' : 'Aguardando dados' },
+      { label: 'Média diária', value: formatVolume(dailyAverage, settings), detail: rawReadings.length ? 'Calculada a partir das leituras' : 'Aguardando dados' },
+      { label: 'Pico do período', value: formatVolume(peak, settings), detail: rawReadings.length ? 'Maior leitura registrada' : 'Aguardando dados' },
       { label: 'Custo estimado', value: 'R$ 0,00', detail: 'Aguardando tarifa' },
     ],
     bars: buildPeriodBars(days, rawReadings, settings),

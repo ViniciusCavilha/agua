@@ -114,7 +114,7 @@ export const ROLE_OPTIONS = [
   'Gestor',
   'Coordenador',
   'Supervisor',
-  'Tecnico de manutencao',
+  'Técnico de manutenção',
   'Analista',
   'Professor',
   'Aluno',
@@ -175,7 +175,7 @@ const setActiveAccountKey = (key) => {
   try {
     localStorage.setItem(ACTIVE_ACCOUNT_KEY, key);
   } catch (error) {
-    // localStorage indisponivel; segue apenas em memoria da pagina.
+    // localStorage indisponível; segue apenas em memoria da pagina.
   }
 };
 

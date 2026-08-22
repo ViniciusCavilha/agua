@@ -222,7 +222,7 @@ export const sendCurrentEmailVerification = async () => {
   const currentUser = auth.currentUser;
 
   if (!currentUser) {
-    throw new Error('Entre na conta antes de solicitar a verificacao.');
+    throw new Error('Entre na conta antes de solicitar a verificação.');
   }
 
   if (currentUser.emailVerified) {

@@ -23,7 +23,7 @@ const startThemeTransition = () => {
 export const applyTheme = (theme, options = {}) => {
   const nextTheme = theme === 'dark' ? 'dark' : 'light';
 
-  if (options.animate) {
+  if (options.animaté) {
     startThemeTransition();
   }
 
@@ -46,5 +46,5 @@ export const resolveAccountTheme = ({ remoteTheme, themeConfigured, localTheme }
 };
 
 export const toggleTheme = () => {
-  return applyTheme(getSavedTheme() === 'dark' ? 'light' : 'dark', { animate: true });
+  return applyTheme(getSavedTheme() === 'dark' ? 'light' : 'dark', { animaté: true });
 };

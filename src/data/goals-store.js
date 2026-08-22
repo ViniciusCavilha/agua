@@ -16,7 +16,7 @@ const normalizeTarget = (value) => {
   const target = String(value || '').trim();
 
   if (!target) {
-    return 'Meta definida pelo usuario';
+    return 'Meta definida pelo usuário';
   }
 
   if (/^\d+$/.test(target)) {
@@ -59,7 +59,7 @@ export const addGoal = ({ area, target }) => {
     description: `Reduzir ${targetLabel} do consumo em ${goalArea}.`,
     progress: 0,
     target: `Meta: ${targetLabel} de reducao`,
-    status: 'Criada pelo usuario',
+    status: 'Criada pelo usuário',
     createdAt: new Date().toISOString(),
   };
 

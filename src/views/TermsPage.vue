@@ -2,7 +2,7 @@
   <ion-page>
     <ion-content :fullscreen="true">
       <main class="terms-page">
-        <section class="terms-panel" aria-label="Termos de uso Agua+">
+        <section class="terms-panel" aria-label="Termos de uso Água+">
           <router-link class="brand" to="/cadastro?preserve=1" aria-label="Voltar para cadastro">
             <span><ion-icon :icon="waterOutline" /></span>
             Agua<b>+</b>
@@ -10,15 +10,15 @@
 
           <header class="terms-hero">
             <span>Termos e privacidade</span>
-            <h1>Termos de uso do Agua+</h1>
-            <p>Ultima atualizacao: 6 de agosto de 2026.</p>
+            <h1>Termos de uso do Água+</h1>
+            <p>Última atualização: 6 de agosto de 2026.</p>
           </header>
 
           <article class="terms-card">
             <section>
-              <h2>1. Sobre o Agua+</h2>
+              <h2>1. Sobre o Água+</h2>
               <p>
-                O Agua+ e um aplicativo em desenvolvimento para acompanhar consumo de agua, organizar leituras, exibir
+                O Água+ e um aplicativo em desenvolvimento para acompanhar consumo de água, organizar leituras, exibir
                 alertas e apoiar metas de economia em instituicoes e unidades monitoradas.
               </p>
             </section>
@@ -26,24 +26,24 @@
             <section>
               <h2>2. Uso do aplicativo</h2>
               <p>
-                Ao criar uma conta, voce concorda em informar dados corretos, manter o acesso protegido e usar o sistema
-                apenas para fins de acompanhamento, estudo, demonstracao ou gestao interna autorizada.
+                Ao criar uma conta, você concorda em informar dados corretos, manter o acesso protegido e usar o sistema
+                apenas para fins de acompanhamento, estudo, demonstração ou gestão interna autorizada.
               </p>
             </section>
 
             <section>
               <h2>3. Dados coletados</h2>
               <p>
-                O app pode armazenar nome, e-mail, telefone, instituicao, unidade, cargo, preferencias, dispositivos
-                cadastrados, alertas e leituras de consumo. Enquanto o projeto estiver em simulacao, os valores exibidos
+                O app pode armazenar nome, e-mail, telefone, instituição, unidade, cargo, preferências, dispositivos
+                cadastrados, alertas e leituras de consumo. Enquanto o projeto estiver em simulação, os valores exibidos
                 podem ser dados ficticios usados para testes.
               </p>
             </section>
 
             <section>
-              <h2>4. Conta Google e autenticacao</h2>
+              <h2>4. Conta Google e autenticação</h2>
               <p>
-                Caso voce entre com Google, o Agua+ pode utilizar dados basicos da conta, como nome, e-mail e foto de
+                Caso você entre com Google, o Água+ pode utilizar dados basicos da conta, como nome, e-mail e foto de
                 perfil, para preencher seu cadastro e identificar sua sessao.
               </p>
             </section>
@@ -52,23 +52,23 @@
               <h2>5. Leituras e dispositivos</h2>
               <p>
                 A estrutura do app esta preparada para receber dados de sensores e microcontroladores no futuro. Ate a
-                conexao com hardware real, os dados podem continuar simulados e nao devem ser usados como medicao oficial.
+                conexão com hardware real, os dados podem continuar simulados e não devem ser usados como medição oficial.
               </p>
             </section>
 
             <section>
-              <h2>6. Responsabilidades do usuario</h2>
+              <h2>6. Responsabilidades do usuário</h2>
               <p>
-                O usuario deve revisar as informacoes cadastradas, evitar compartilhar credenciais e nao utilizar o app
-                como unica fonte para decisoes criticas de manutencao, cobranca ou seguranca operacional.
+                O usuário deve revisar as informações cadastradas, evitar compartilhar credenciais e não utilizar o app
+                como única fonte para decisões críticas de manutenção, cobrança ou segurança operacional.
               </p>
             </section>
 
             <section>
               <h2>7. Privacidade</h2>
               <p>
-                Os dados sao usados para funcionamento do proprio Agua+, personalizacao do perfil, exibicao de historico,
-                alertas e relatorios. O projeto deve manter regras de acesso para que cada usuario veja apenas os dados
+                Os dados sao usados para funcionamento do próprio Água+, personalização do perfil, exibicao de historico,
+                alertas e relatorios. O projeto deve manter regras de acesso para que cada usuário vejá apenas os dados
                 associados a sua propria conta.
               </p>
             </section>
@@ -76,16 +76,16 @@
             <section>
               <h2>8. Exclusao de conta</h2>
               <p>
-                O usuario pode solicitar a exclusao da conta pela aba de perfil. Quando disponivel, essa acao remove a
-                conta de autenticacao e limpa os dados locais vinculados ao acesso atual.
+                O usuário pode solicitar a exclusão da conta pela aba de perfil. Quando disponível, essa ação remove a
+                conta de autenticação e limpa os dados locais vinculados ao acesso atual.
               </p>
             </section>
 
             <section>
-              <h2>9. Alteracoes nos termos</h2>
+              <h2>9. Alterações nos termos</h2>
               <p>
-                Estes termos podem ser atualizados conforme o Agua+ evoluir, principalmente quando forem adicionadas
-                integracoes reais com sensores, APIs, banco de dados e notificacoes.
+                Estes termos podem ser atualizados conforme o Água+ evoluir, principalmente quando forem adicionadas
+                integrações reais com sensores, APIs, banco de dados e notificações.
               </p>
             </section>
           </article>
@@ -110,7 +110,7 @@ import { arrowBackOutline, waterOutline } from 'ionicons/icons';
 <style scoped>
 .terms-page {
   --terms-petroleo: #0d4b5e;
-  --terms-agua: #1ca7a0;
+  --terms-água: #1ca7a0;
   --terms-bg: #ffffff;
   --terms-texto: #16343d;
   --terms-suave: #718087;
@@ -150,7 +150,7 @@ import { arrowBackOutline, waterOutline } from 'ionicons/icons';
 }
 
 .brand b {
-  color: var(--terms-agua);
+  color: var(--terms-água);
 }
 
 .terms-hero {

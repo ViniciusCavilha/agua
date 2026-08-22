@@ -1,7 +1,7 @@
 ﻿<template>
   <ion-page>
     <ion-content :fullscreen="true">
-      <AppShell title="Metas" period-label="Mes atual">
+      <AppShell title="Metas" period-label="Mês atual">
         <section class="goals-hero">
           <div>
             <span>Plano de economia</span>
@@ -36,7 +36,7 @@
         <article v-else class="empty-goals">
           <span>Sem metas cadastradas</span>
           <h2>Crie sua primeira meta para comecar o acompanhamento.</h2>
-          <p>Quando voce salvar uma meta, ela aparece aqui e tambem no card de meta do dashboard.</p>
+          <p>Quando você salvar uma meta, ela aparece aqui e também no card de meta do dashboard.</p>
         </article>
 
         <article class="create-card">
@@ -53,7 +53,7 @@
               <input v-model="area" type="text" placeholder="Ex: Refeitorio" />
             </label>
             <label>
-              Reducao desejada
+              Redução desejada
               <input v-model="target" type="text" placeholder="Ex: 15%" />
             </label>
             <PrimaryButton :disabled="!canSaveGoal">Salvar meta</PrimaryButton>

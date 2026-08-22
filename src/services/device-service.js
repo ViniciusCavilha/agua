@@ -15,20 +15,25 @@ import { getSettings } from '../data/settings-store.js';
 
 const DEVICES_KEY = 'agua-plus-devices';
 
-export const DEVICE_STATUSES = ['Aguardando conexao', 'Ativo', 'Offline', 'Manutencao'];
-export const SENSOR_MODELS = ['YF-S201', 'YF-B1', 'Sensor Hall generico', 'Medidor com saida de pulso', 'Outro'];
-export const SENSOR_TYPES = ['Fluxo de agua por pulso'];
+export const DEVICE_STATUSES = ['Aguardando conexão', 'Ativo', 'Offline', 'Manutenção'];
+export const SENSOR_MODELS = ['YF-S201', 'YF-B1', 'Sensor Hall genérico', 'Medidor com saída de pulso', 'Outro'];
+export const SENSOR_TYPES = ['Fluxo de água por pulso'];
+
+const normalizeDeviceStatus = (status = '') => ({
+  'Aguardando conexao': 'Aguardando conexão',
+  Manutencao: 'Manutenção',
+}[status] || status || 'Aguardando conexão');
 
 const simulatedDevice = {
   name: 'ESP32 Protótipo',
   deviceCode: 'ESP32-FLOW-001',
   location: 'Bancada de testes',
   unit: '',
-  status: 'Aguardando conexao',
+  status: 'Aguardando conexão',
   sensor: {
     name: 'YF-S201',
     sensorCode: 'FLOW-YF-S201-001',
-    type: 'Fluxo de agua por pulso',
+    type: 'Fluxo de água por pulso',
     calibrationFactor: 7.5,
   },
   readingInterval: 10,
@@ -45,11 +50,11 @@ const normalizeDevice = (device = {}) => ({
   deviceCode: device.deviceCode || '',
   location: device.location || '',
   unit: device.unit || '',
-  status: device.status || 'Aguardando conexao',
+  status: normalizeDeviceStatus(device.status),
   sensor: {
     name: device.sensor?.name || 'YF-S201',
     sensorCode: device.sensor?.sensorCode || '',
-    type: device.sensor?.type || 'Fluxo de agua por pulso',
+    type: device.sensor?.type || 'Fluxo de água por pulso',
     calibrationFactor: Number(device.sensor?.calibrationFactor || 7.5),
   },
   readingInterval: Number(device.readingInterval || 10),
@@ -230,7 +235,7 @@ export const listDeviceAlerts = async (deviceId) => {
     return [
       {
         id: `${device.id}-waiting`,
-        title: 'Dispositivo aguardando conexao',
+        title: 'Dispositivo águardando conexão',
         message: 'Pronto para receber leituras reais quando o ESP32 for conectado.',
         status: device.status === 'Ativo' ? 'Resolvido' : 'Aberto',
       },
@@ -253,9 +258,9 @@ export const listDeviceMaintenanceOrders = async (deviceId) => {
     return [
       {
         id: `${device.id}-installation-check`,
-        title: 'Validar instalacao do sensor',
-        description: 'Conferir posicao do YF-S201, sentido do fluxo e vedacao antes das leituras reais.',
-        status: 'Planejada',
+        title: 'Validar instalação do sensor',
+        description: 'Conferir posição do YF-S201, sentido do fluxo e vedação antes das leituras reais.',
+        status: 'Planejáda',
       },
     ];
   }
@@ -320,16 +325,16 @@ export const createDevice = async (device) => {
 
   await addDoc(collection(devicesRef, created.id, 'alerts'), {
     type: 'device-waiting',
-    title: 'Dispositivo aguardando conexao',
-    message: 'Este dispositivo simulado esta pronto para receber leituras do ESP32 futuramente.',
+    title: 'Dispositivo águardando conexão',
+    message: 'Este dispositivo simulado está pronto para receber leituras do ESP32 futuramente.',
     status: 'Aberto',
     createdAt: serverTimestamp(),
   });
 
   await addDoc(collection(devicesRef, created.id, 'maintenanceOrders'), {
-    title: 'Validar instalacao do sensor',
-    description: 'Ordem simulada para registrar a futura verificacao fisica do sensor de vazao.',
-    status: 'Planejada',
+    title: 'Validar instalação do sensor',
+    description: 'Ordem simulada para registrar a futura verificação fisica do sensor de vazão.',
+    status: 'Planejáda',
     createdAt: serverTimestamp(),
   });
 
@@ -356,7 +361,7 @@ export const linkDeviceByCode = async ({
   const normalizedCode = String(deviceCode || '').trim().toUpperCase();
 
   if (!normalizedCode) {
-    throw new Error('Informe o codigo do dispositivo.');
+    throw new Error('Informe o código do dispositivo.');
   }
 
   const alreadyLinked = (await listDevices()).some(
@@ -364,7 +369,7 @@ export const linkDeviceByCode = async ({
   );
 
   if (alreadyLinked) {
-    throw new Error('Este dispositivo ja esta vinculado a sua conta.');
+    throw new Error('Este dispositivo já esta vinculado a sua conta.');
   }
 
   return createDevice({
@@ -372,11 +377,11 @@ export const linkDeviceByCode = async ({
     deviceCode: normalizedCode,
     location,
     unit,
-    status: 'Aguardando conexao',
+    status: 'Aguardando conexão',
     sensor: {
       name: sensorModel,
       sensorCode: sensorCode || `${normalizedCode}-FLOW`,
-      type: 'Fluxo de agua por pulso',
+      type: 'Fluxo de água por pulso',
       calibrationFactor,
     },
     readingInterval,

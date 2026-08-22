@@ -2,8 +2,8 @@
   <ion-page>
     <ion-content :fullscreen="true">
       <main class="login-page">
-        <section class="login-panel" aria-label="Acesso ao Agua+">
-          <router-link class="brand" to="/login" aria-label="Agua+ inicio">
+        <section class="login-panel" aria-label="Acesso ao Água+">
+          <router-link class="brand" to="/login" aria-label="Água+ inicio">
             <span><ion-icon :icon="waterOutline" /></span>
             Agua<b>+</b>
           </router-link>
@@ -14,13 +14,13 @@
               Plataforma segura
             </span>
             <h1>Entre para acompanhar o consumo em tempo real.</h1>
-            <p>Monitore indicadores, metas e economia de agua em uma visao clara para sua operacao.</p>
+            <p>Monitore indicadores, metas e economia de água em uma visão clara para sua operação.</p>
           </div>
 
           <form @submit.prevent="login">
             <label>
               E-mail
-              <input v-model="email" type="email" autocomplete="email" placeholder="seuemail@instituicao.com" />
+              <input v-model="email" type="email" autocomplete="email" placeholder="seuemail@instituição.com" />
             </label>
 
             <label>
@@ -61,19 +61,19 @@
             <SecondaryButton disabled><ion-icon :icon="logoApple" /> Apple</SecondaryButton>
           </div>
 
-          <p class="signup">Nao tem uma conta? <router-link to="/cadastro">Cadastre-se</router-link></p>
+          <p class="signup">Não tem uma conta? <router-link to="/cadastro">Cadastre-se</router-link></p>
         </section>
 
-        <aside class="brand-panel" aria-label="Resumo Agua+">
+        <aside class="brand-panel" aria-label="Resumo Água+">
           <div class="panel-inner">
             <div class="drop"><ion-icon :icon="waterOutline" /></div>
             <h2>Cada gota vira decisao.</h2>
-            <p>O Agua+ transforma leitura de consumo em metas simples, alertas uteis e economia mensuravel.</p>
+            <p>O Água+ transforma leitura de consumo em metas simples, alertas úteis e economia mensuravel.</p>
 
             <div class="preview-card">
               <span class="preview-icon"><ion-icon :icon="leafOutline" /></span>
               <div>
-                <small>Economia no mes</small>
+                <small>Economia no mês</small>
                 <strong>18.420 L</strong>
               </div>
               <em>-12%</em>
@@ -158,7 +158,7 @@ const getAuthMessage = (error) => {
     return 'Login com Google cancelado.';
   }
 
-  return error?.message || 'Nao foi possivel entrar agora.';
+  return error?.message || 'Não foi possível entrar agora.';
 };
 
 const login = async () => {
@@ -216,7 +216,7 @@ const googleLogin = async () => {
 <style scoped>
 .login-page {
   --auth-petroleo: #0d4b5e;
-  --auth-agua: #1ca7a0;
+  --auth-água: #1ca7a0;
   --auth-bg: #ffffff;
   --auth-texto: #16343d;
   --auth-suave: #718087;
@@ -264,7 +264,7 @@ const googleLogin = async () => {
 }
 
 .brand b {
-  color: var(--auth-agua);
+  color: var(--auth-água);
 }
 
 .intro {
@@ -330,7 +330,7 @@ input {
 }
 
 input:focus {
-  border-color: var(--auth-agua);
+  border-color: var(--auth-água);
   box-shadow: 0 0 0 4px rgba(28, 167, 160, 0.14);
 }
 
@@ -541,7 +541,7 @@ input:focus {
 @media (max-width: 820px) {
   .login-page {
   --auth-petroleo: #0d4b5e;
-  --auth-agua: #1ca7a0;
+  --auth-água: #1ca7a0;
   --auth-bg: #ffffff;
   --auth-texto: #16343d;
   --auth-suave: #718087;

@@ -9,20 +9,20 @@
               <span v-else>{{ initials }}</span>
             </div>
             <div class="identity-copy">
-              <span>{{ role || 'Cargo nao informado' }}</span>
-              <h2>{{ name || 'Usuario Agua+' }}</h2>
+              <span>{{ role || 'Cargo não informado' }}</span>
+              <h2>{{ name || 'Usuário Água+' }}</h2>
               <p>{{ accountSummary }}</p>
             </div>
             <button class="edit-toggle" type="button" @click="isEditing = !isEditing">
               <ion-icon :icon="isEditing ? closeOutline : createOutline" />
-              {{ isEditing ? 'Fechar edicao' : 'Editar perfil' }}
+              {{ isEditing ? 'Fechar edição' : 'Editar perfil' }}
             </button>
           </article>
 
           <article class="plan-card">
             <span>Plano atual</span>
             <strong>Institucional</strong>
-            <p>{{ connectedMeters }} medidores preparados para sincronizacao e relatorios mensais ativos.</p>
+            <p>{{ connectedMeters }} medidores preparados para sincronização e relatorios mensais ativos.</p>
             <div class="plan-meter">
               <i />
             </div>
@@ -32,7 +32,7 @@
         <section v-if="showVerificationCard" class="verification-card">
           <span class="verification-icon"><ion-icon :icon="mailUnreadOutline" /></span>
           <div>
-            <strong>Verificacao de e-mail pendente</strong>
+            <strong>Verificação de e-mail pendente</strong>
             <p>Confirme o e-mail cadastrado para deixar sua conta ativa e pronta para receber alertas importantes.</p>
             <p v-if="verificationMessage" class="verification-message">{{ verificationMessage }}</p>
           </div>
@@ -45,11 +45,11 @@
               @click="requestEmailVerification"
             >
               <ion-icon :icon="mailUnreadOutline" />
-              Enviar verificacao
+              Enviar verificação
             </button>
             <button class="secondary-action confirm" type="button" :disabled="verificationLoading" @click="confirmEmailVerification">
               <ion-icon :icon="shieldCheckmarkOutline" />
-              {{ isGoogleVerification ? 'Confirmar com Google' : 'Ja verifiquei' }}
+              {{ isGoogleVerification ? 'Confirmar com Google' : 'Já verifiquei' }}
             </button>
           </div>
         </section>
@@ -58,8 +58,8 @@
           <article class="form-card">
             <div class="card-title">
               <div>
-                <h2>Dados e personalizacao</h2>
-                <p>Informacoes usadas no app, nos relatorios e na identificacao da unidade.</p>
+                <h2>Dados e personalização</h2>
+                <p>Informações usadas no app, nos relatorios e na identificação da unidade.</p>
               </div>
               <span v-if="saved" class="saved-pill">
                 <ion-icon :icon="checkmarkCircleOutline" />
@@ -102,10 +102,10 @@
               </div>
 
               <div class="form-section">
-                <span>Instituicao monitorada</span>
+                <span>Instituição monitorada</span>
                 <div class="field-grid">
                   <label>
-                    Instituicao
+                    Instituição
                     <input
                       :value="company"
                       type="text"
@@ -129,7 +129,7 @@
               </div>
 
               <div class="form-section">
-                <span>Aparencia do perfil</span>
+                <span>Aparência do perfil</span>
                 <div class="customization-panel">
                   <div class="avatar-editor">
                     <div class="avatar-preview compact" :style="avatarStyle">
@@ -185,7 +185,7 @@
                   <ion-icon :icon="refreshOutline" />
                   Restaurar
                 </button>
-                <PrimaryButton :disabled="!isEditing">Salvar alteracoes</PrimaryButton>
+                <PrimaryButton :disabled="!isEditing">Salvar alterações</PrimaryButton>
               </div>
             </form>
           </article>
@@ -194,7 +194,7 @@
             <div class="card-title">
               <div>
                 <h2>Preferencias</h2>
-                <p>Como o Agua+ deve se comportar para esta conta.</p>
+                <p>Como o Água+ deve se comportar para esta conta.</p>
               </div>
             </div>
 
@@ -207,7 +207,7 @@
               <label class="switch-row">
                 <span>
                   Alertas por e-mail
-                  <small>Receber avisos quando houver consumo fora do padrao.</small>
+                  <small>Receber avisos quando houver consumo fora do padrão.</small>
                 </span>
                 <input v-model="emailAlerts" type="checkbox" />
               </label>
@@ -258,7 +258,7 @@
             <section class="delete-modal logout-modal" role="dialog" aria-modal="true" aria-labelledby="logout-title">
               <span class="modal-icon logout-icon"><ion-icon :icon="logOutOutline" /></span>
               <h2 id="logout-title">Sair da conta?</h2>
-              <p>Voce sera levado para a tela de login e podera entrar novamente quando quiser.</p>
+              <p>Você será levado para a tela de login e poderá entrar novamente quando quiser.</p>
               <div class="modal-actions">
                 <button class="cancel-delete" type="button" @click="closeLogoutModal">Cancelar</button>
                 <button class="confirm-logout" type="button" @click="confirmLogout">
@@ -273,7 +273,7 @@
             <section class="delete-modal" role="dialog" aria-modal="true" aria-labelledby="delete-title">
               <span class="modal-icon"><ion-icon :icon="trashOutline" /></span>
               <h2 id="delete-title">Excluir conta?</h2>
-              <p>Essa acao apaga sua conta do Firebase, os dados salvos neste dispositivo e leva voce de volta para o login.</p>
+              <p>Essa ação apaga sua conta do Firebase, os dados salvos neste dispositivo e leva você de volta para o login.</p>
               <p v-if="deleteError" class="modal-error">{{ deleteError }}</p>
               <div class="modal-actions">
                 <button class="cancel-delete" type="button" @click="closeDeleteModal">Cancelar</button>
@@ -370,7 +370,7 @@ const roleOptions = ROLE_OPTIONS;
 let stopProfileAuthListener = null;
 
 const avatarColors = [
-  { label: 'Azul agua', value: '#1ca7a0' },
+  { label: 'Azul água', value: '#1ca7a0' },
   { label: 'Petroleo', value: '#0d4b5e' },
   { label: 'Verde', value: '#25a55b' },
   { label: 'Roxo', value: '#6658d3' },
@@ -419,7 +419,7 @@ const applyAccount = (nextAccount) => {
 };
 
 const unitOptions = computed(() => getAvailableUnits(company.value));
-const detectedInstitutionName = computed(() => getDetectedInstitution(company.value)?.name || 'instituicao');
+const detectedInstitutionName = computed(() => getDetectedInstitution(company.value)?.name || 'instituição');
 
 watch(unitOptions, (options) => {
   if (options.length && !options.includes(unit.value)) {
@@ -428,7 +428,7 @@ watch(unitOptions, (options) => {
 });
 
 const initials = computed(() => {
-  return String(name.value || 'Usuario Agua')
+  return String(name.value || 'Usuário Agua')
     .split(' ')
     .filter(Boolean)
     .slice(0, 2)
@@ -442,8 +442,8 @@ const avatarStyle = computed(() => ({
 }));
 
 const accountSummary = computed(() => {
-  const companyLabel = company.value || 'Instituicao nao informada';
-  const unitLabel = unit.value || 'Unidade nao selecionada';
+  const companyLabel = company.value || 'Instituição nao informada';
+  const unitLabel = unit.value || 'Unidade não selecionada';
   return `${companyLabel} - ${unitLabel}`;
 });
 
@@ -455,12 +455,12 @@ const showVerificationCard = computed(() => Boolean(email.value && !emailVerifie
 const isGoogleVerification = computed(() => providerIds.value.includes('google.com'));
 
 const preferenceRows = computed(() => [
-  { label: 'E-mail cadastrado', value: email.value || 'Nao informado' },
-  { label: 'Verificacao', value: emailVerified.value ? 'Confirmado' : 'Pendente' },
-  { label: 'Cargo', value: role.value || 'Nao informado' },
-  { label: 'Telefone', value: phone.value || 'Nao informado' },
-  { label: 'Instituicao', value: company.value || 'Nao informada' },
-  { label: 'Unidade principal', value: unit.value || 'Nao selecionada' },
+  { label: 'E-mail cadastrado', value: email.value || 'Não informado' },
+  { label: 'Verificação', value: emailVerified.value ? 'Confirmado' : 'Pendente' },
+  { label: 'Cargo', value: role.value || 'Não informado' },
+  { label: 'Telefone', value: phone.value || 'Não informado' },
+  { label: 'Instituição', value: company.value || 'Não informada' },
+  { label: 'Unidade principal', value: unit.value || 'Não selecionada' },
   { label: 'Resumo', value: weeklyReport.value ? reportFrequency.value : 'Desativado' },
 ]);
 
@@ -649,14 +649,14 @@ const getVerificationErrorMessage = (error) => {
   }
 
   if (code.includes('unauthorized-continue-uri') || code.includes('invalid-continue-uri')) {
-    return 'O dominio atual nao esta autorizado no Firebase para links de verificacao.';
+    return 'O domínio atual não está autorizado no Firebase para links de verificação.';
   }
 
   if (code.includes('requires-recent-login')) {
-    return 'Entre na conta novamente e tente enviar a verificacao logo em seguida.';
+    return 'Entre na conta novamente e tente enviar a verificação logo em seguida.';
   }
 
-  return error?.message || 'Nao foi possivel enviar a verificacao agora.';
+  return error?.message || 'Não foi possível enviar a verificação agora.';
 };
 
 const markEmailAsVerified = async () => {
@@ -680,7 +680,7 @@ const requestEmailVerification = async () => {
   try {
     verificationLoading.value = true;
     if (isGoogleVerification.value) {
-      verificationMessage.value = 'Esta conta usa Google. Confirme pelo popup do Google para ativar a verificacao no Agua+.';
+      verificationMessage.value = 'Esta conta usa Google. Confirme pelo popup do Google para ativar a verificação no Água+.';
       return;
     }
 
@@ -688,12 +688,12 @@ const requestEmailVerification = async () => {
 
     if (verification.alreadyVerifiedByFirebase) {
       verificationMessage.value =
-        'Este e-mail ja aparece como verificado no Firebase. Use "Ja verifiquei" para sincronizar com o Agua+.';
+        'Este e-mail já aparece como verificado no Firebase. Use "Já verifiquei" para sincronizar com o Água+.';
       return;
     }
 
     ensureEmailVerificationNotification();
-    verificationMessage.value = 'Enviamos um link de verificacao para o seu e-mail. Depois de confirmar, volte aqui e clique em "Ja verifiquei".';
+    verificationMessage.value = 'Enviamos um link de verificação para o seu e-mail. Depois de confirmar, volte aqui e clique em "Já verifiquei".';
   } catch (error) {
     verificationMessage.value = getVerificationErrorMessage(error);
   } finally {
@@ -711,7 +711,7 @@ const confirmEmailVerification = async () => {
       const confirmed = await confirmCurrentGoogleAccount();
 
       if (!confirmed) {
-        verificationMessage.value = 'A conta Google selecionada nao corresponde ao e-mail cadastrado.';
+        verificationMessage.value = 'A conta Google selecionada não corresponde ao e-mail cadastrado.';
         return;
       }
 
@@ -731,7 +731,7 @@ const confirmEmailVerification = async () => {
     await markEmailAsVerified();
     verificationMessage.value = 'Conta verificada com sucesso.';
   } catch (error) {
-    verificationMessage.value = error?.message || 'Nao foi possivel conferir a verificacao agora.';
+    verificationMessage.value = error?.message || 'Não foi possível conferir a verificação agora.';
   } finally {
     verificationLoading.value = false;
   }
@@ -745,11 +745,11 @@ const confirmDeleteAccount = async () => {
     router.replace('/login');
   } catch (error) {
     if (error?.code === 'auth/requires-recent-login') {
-      deleteError.value = 'Por seguranca, entre com Google novamente e tente excluir a conta logo em seguida.';
+      deleteError.value = 'Por segurança, entre com Google novamente e tente excluir a conta logo em seguida.';
       return;
     }
 
-    deleteError.value = error?.message || 'Nao foi possivel excluir a conta agora.';
+    deleteError.value = error?.message || 'Não foi possível excluir a conta agora.';
   }
 };
 

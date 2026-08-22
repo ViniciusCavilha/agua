@@ -107,7 +107,7 @@ export const getDefaultPeriodRoute = (period) => {
   const routes = {
     Diario: '/dashboard',
     Semanal: '/consumo',
-    Mensal: '/consumo/mes-passado',
+    Mensal: '/consumo/mês-passado',
   };
 
   return routes[period] || '/consumo';

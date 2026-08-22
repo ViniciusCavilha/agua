@@ -1,11 +1,11 @@
 <template>
   <ion-page>
     <ion-content :fullscreen="true">
-      <AppShell title="Configuracoes" :show-period="false">
+      <AppShell title="Configurações" :show-period="false">
         <section class="settings-layout">
           <aside class="summary-panel">
             <div class="summary-icon"><ion-icon :icon="settingsOutline" /></div>
-            <h2>Configuracao ativa</h2>
+            <h2>Configuração ativa</h2>
             <div class="summary-list">
               <div v-for="item in summaryRows" :key="item.label">
                 <span>{{ item.label }}</span>
@@ -16,15 +16,15 @@
             <div class="actions">
               <button class="save-action" type="button" @click="saveAppSettings">
                 <ion-icon :icon="saveOutline" />
-                Salvar configuracoes
+                Salvar configurações
               </button>
               <button class="reset-action" type="button" @click="restoreDefaults">
                 <ion-icon :icon="refreshOutline" />
-                Restaurar padrao
+                Restaurar padrão
               </button>
               <button class="reset-action" type="button" @click="openDefaultPeriod">
                 <ion-icon :icon="openOutline" />
-                Abrir periodo padrao
+                Abrir período padrão
               </button>
             </div>
           </aside>
@@ -32,7 +32,7 @@
           <article class="settings-panel">
             <div class="panel-title">
               <div>
-                <h2>Aparencia</h2>
+                <h2>Aparência</h2>
                 <p>Ajustes visuais do aplicativo neste dispositivo.</p>
               </div>
               <span v-if="saved" class="saved-pill">
@@ -52,7 +52,7 @@
             <label class="switch-row">
               <span>
                 Modo compacto
-                <small>Reduz espacos em listas e paineis para caber mais informacao.</small>
+                <small>Reduz espaços em listas e painéis para caber mais informação.</small>
               </span>
               <input v-model="settings.compactMode" type="checkbox" />
             </label>
@@ -61,7 +61,7 @@
           <article class="settings-panel">
             <div class="panel-title">
               <div>
-                <h2>Notificacoes</h2>
+                <h2>Notificações</h2>
                 <p>Defina como alertas e resumos devem aparecer.</p>
               </div>
             </div>
@@ -70,14 +70,14 @@
               <label class="switch-row">
                 <span>
                   Alertas por e-mail
-                  <small>Enviar avisos quando o consumo sair do padrao.</small>
+                  <small>Enviar avisos quando o consumo sair do padrão.</small>
                 </span>
                 <input v-model="settings.emailAlerts" type="checkbox" />
               </label>
 
               <label class="switch-row">
                 <span>
-                  Notificacoes push
+                  Notificações push
                   <small>{{ pushStatus }}</small>
                 </span>
                 <input :checked="settings.pushAlerts" type="checkbox" @change="togglePushAlerts" />
@@ -86,7 +86,7 @@
               <label class="switch-row">
                 <span>
                   Resumo semanal
-                  <small>Preparar uma visao consolidada toda semana.</small>
+                  <small>Preparar uma visão consolidada toda semana.</small>
                 </span>
                 <input v-model="settings.weeklySummary" type="checkbox" />
               </label>
@@ -96,16 +96,16 @@
           <article class="settings-panel">
             <div class="panel-title">
               <div>
-                <h2>Leituras e simulacao</h2>
-                <p>Controles para usar dados simulados ate conectar o hidrometro.</p>
+                <h2>Leituras e simulação</h2>
+                <p>Controles para usar dados simulados até conectar o hidrometro.</p>
               </div>
             </div>
 
             <div class="stack">
               <div class="presentation-box" :class="{ active: settings.presentationMode }">
                 <div>
-                  <strong>Modo apresentacao</strong>
-                  <small>Preenche a demonstracao com leituras realistas, alerta simulado e intervalo rapido.</small>
+                  <strong>Modo apresentação</strong>
+                  <small>Preenche a demonstração com leituras realistas, alerta simulado e intervalo rapido.</small>
                 </div>
                 <button type="button" @click="togglePresentationMode">
                   <ion-icon :icon="sparklesOutline" />
@@ -115,7 +115,7 @@
 
               <label class="switch-row">
                 <span>
-                  Modo simulacao
+                  Modo simulação
                   <small>Usar leituras simuladas enquanto nao houver hardware conectado.</small>
                 </span>
                 <input v-model="settings.simulationMode" type="checkbox" @change="syncSimulationMode" />
@@ -123,8 +123,8 @@
 
               <label class="switch-row">
                 <span>
-                  Cenario de anomalia
-                  <small>Forcar vazamento/consumo fora do horario em demonstracoes.</small>
+                  Cenário de anomalia
+                  <small>Forçar vazamento/consumo fora do horário em demonstrações.</small>
                 </span>
                 <input v-model="settings.anomalyDemo" type="checkbox" />
               </label>
@@ -149,7 +149,7 @@
 
             <div class="field-grid">
               <label>
-                Periodo padrao
+                Período padrão
                 <select v-model="settings.defaultPeriod">
                   <option>Diario</option>
                   <option>Semanal</option>
@@ -207,17 +207,17 @@ const pushPermission = ref(typeof Notification === 'undefined' ? 'unsupported' :
 
 const summaryRows = computed(() => [
   { label: 'Tema', value: isDark.value ? 'Escuro' : 'Claro' },
-  { label: 'Modo simulacao', value: settings.simulationMode ? 'Ativo' : 'Inativo' },
-  { label: 'Apresentacao', value: settings.presentationMode ? 'Ativa' : 'Inativa' },
+  { label: 'Modo simulação', value: settings.simulationMode ? 'Ativo' : 'Inativo' },
+  { label: 'Apresentação', value: settings.presentationMode ? 'Ativa' : 'Inativa' },
   { label: 'Anomalia demo', value: settings.anomalyDemo ? 'Ativa' : 'Inativa' },
   { label: 'Intervalo', value: `${settings.readingInterval}s` },
-  { label: 'Periodo padrao', value: settings.defaultPeriod },
+  { label: 'Período padrão', value: settings.defaultPeriod },
   { label: 'Unidade', value: settings.measurementUnit },
 ]);
 
 const pushStatus = computed(() => {
   if (pushPermission.value === 'unsupported') {
-    return 'Seu navegador nao tem suporte a notificacoes.';
+    return 'Seu navegador não tem suporte a notificações.';
   }
 
   if (pushPermission.value === 'granted') {

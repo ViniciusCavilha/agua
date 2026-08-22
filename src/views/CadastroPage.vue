@@ -2,7 +2,7 @@
   <ion-page>
     <ion-content :fullscreen="true">
       <main class="auth-page">
-        <section class="auth-panel" aria-label="Cadastro Agua+">
+        <section class="auth-panel" aria-label="Cadastro Água+">
           <router-link class="brand" to="/login" aria-label="Voltar para login">
             <span><ion-icon :icon="waterOutline" /></span>
             Agua<b>+</b>
@@ -14,7 +14,7 @@
               Novo acesso
             </span>
             <h1>Crie sua conta para comecar a monitorar.</h1>
-            <p>Cadastre sua instituicao e acompanhe consumo, metas e economia em um painel simples.</p>
+            <p>Cadastre sua instituição e acompanhe consumo, metas e economia em um painel simples.</p>
           </div>
 
           <form autocomplete="off" @submit.prevent="createAccount">
@@ -63,7 +63,7 @@
                   type="email"
                   autocomplete="new-password"
                   name="agua-register-email-new"
-                  placeholder="seuemail@instituicao.com"
+                  placeholder="seuemail@instituição.com"
                   required
                 />
               </span>
@@ -71,7 +71,7 @@
 
             <div class="field-grid">
               <label>
-                Instituicao
+                Instituição
                 <span class="input-shell">
                   <ion-icon :icon="businessOutline" />
                   <input
@@ -125,7 +125,7 @@
             <label class="terms">
               <input v-model="acceptedTerms" type="checkbox" autocomplete="off" required />
               <span>
-                Aceito os termos de uso e a politica de privacidade.
+                Aceito os termos de uso e a política de privacidade.
                 <router-link to="/termos" @click.stop>Clique aqui para ver os termos.</router-link>
               </span>
             </label>
@@ -145,17 +145,17 @@
             Google
           </SecondaryButton>
 
-          <p class="switch-auth">Ja tem uma conta? <router-link to="/login">Entrar</router-link></p>
+          <p class="switch-auth">Já tem uma conta? <router-link to="/login">Entrar</router-link></p>
         </section>
 
-        <aside class="info-panel" aria-label="Beneficios Agua+">
+        <aside class="info-panel" aria-label="Beneficios Água+">
           <div class="info-content">
             <div class="drop"><ion-icon :icon="waterOutline" /></div>
             <h2>Seu consumo, finalmente visivel.</h2>
             <p>Organize leituras, acompanhe metas e entregue indicadores claros para a equipe.</p>
 
             <div class="benefits">
-              <div><ion-icon :icon="checkmarkCircleOutline" /> Alertas de consumo fora do padrao</div>
+              <div><ion-icon :icon="checkmarkCircleOutline" /> Alertas de consumo fora do padrão</div>
               <div><ion-icon :icon="checkmarkCircleOutline" /> Resumo mensal com impacto financeiro</div>
               <div><ion-icon :icon="checkmarkCircleOutline" /> Metas de economia por unidade</div>
             </div>
@@ -241,7 +241,7 @@ const formatPhone = (value) => {
 };
 
 const unitOptions = computed(() => getAvailableUnits(company.value));
-const detectedInstitutionName = computed(() => getDetectedInstitution(company.value)?.name || 'instituicao');
+const detectedInstitutionName = computed(() => getDetectedInstitution(company.value)?.name || 'instituição');
 
 watch(unitOptions, (options) => {
   if (options.length && !options.includes(unit.value)) {
@@ -332,14 +332,14 @@ const getAuthMessage = (error) => {
   }
 
   if (code.includes('email-already-in-use')) {
-    return 'Esse e-mail ja esta cadastrado.';
+    return 'Esse e-mail já está cadastrado.';
   }
 
   if (code.includes('weak-password')) {
     return 'Use uma senha mais forte, com pelo menos 8 caracteres.';
   }
 
-  return error?.message || 'Nao foi possivel criar a conta agora.';
+  return error?.message || 'Não foi possível criar a conta agora.';
 };
 
 const createAccount = async () => {
@@ -480,7 +480,7 @@ onUnmounted(() => {
 <style scoped>
 .auth-page {
   --auth-petroleo: #0d4b5e;
-  --auth-agua: #1ca7a0;
+  --auth-água: #1ca7a0;
   --auth-bg: #ffffff;
   --auth-texto: #16343d;
   --auth-suave: #718087;
@@ -526,7 +526,7 @@ onUnmounted(() => {
 }
 
 .brand b {
-  color: var(--auth-agua);
+  color: var(--auth-água);
 }
 
 .intro {
@@ -598,7 +598,7 @@ label {
 }
 
 .input-shell:focus-within {
-  border-color: var(--auth-agua);
+  border-color: var(--auth-água);
   box-shadow: 0 0 0 4px rgba(28, 167, 160, 0.14);
 }
 
@@ -661,7 +661,7 @@ select {
 }
 
 .terms a:hover {
-  color: var(--auth-agua);
+  color: var(--auth-água);
 }
 
 .switch-auth {

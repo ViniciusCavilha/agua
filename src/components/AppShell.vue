@@ -1,7 +1,7 @@
 <template>
   <main class="app-shell" :class="{ 'mobile-nav-open': isMobileNavOpen }">
-    <aside class="sidebar" aria-label="Navegacao principal">
-      <router-link class="brand" to="/dashboard" aria-label="Agua+ dashboard">
+    <aside class="sidebar" aria-label="Navegação principal">
+      <router-link class="brand" to="/dashboard" aria-label="Água+ dashboard">
         <span><ion-icon :icon="waterOutline" /></span>
         Agua<b>+</b>
       </router-link>
@@ -13,9 +13,9 @@
         </router-link>
       </nav>
 
-      <router-link class="settings" to="/configuracoes" :class="{ active: isActive('/configuracoes') }">
+      <router-link class="settings" to="/configurações" :class="{ active: isActive('/configurações') }">
         <ion-icon :icon="settingsOutline" />
-        Configuracoes
+        Configurações
       </router-link>
     </aside>
 
@@ -53,7 +53,7 @@
             type="button"
             :aria-expanded="isNotificationsOpen"
             aria-haspopup="menu"
-            aria-label="Notificacoes"
+            aria-label="Notificações"
             @click="toggleNotifications"
           >
             <ion-icon :icon="notificationsOutline" />
@@ -61,7 +61,7 @@
           </button>
           <div v-if="isNotificationsOpen" class="notification-card" role="menu">
             <div class="notification-head">
-              <strong>Notificacoes</strong>
+              <strong>Notificações</strong>
               <button v-if="unreadCount" type="button" @click="readAllNotifications">Marcar lidas</button>
             </div>
             <button
@@ -87,11 +87,11 @@
       <slot />
     </section>
 
-    <nav id="mobile-navigation" class="bottom-nav" :class="{ open: isMobileNavOpen }" aria-label="Navegacao mobile">
-      <router-link v-for="item in bottomNavItems" :key="item.to" :to="item.to" :class="{ active: isActive(item.to) }" @click="closeMobileNav">
+    <nav id="mobile-navigation" class="bottom-nav" :class="{ open: isMobileNavOpen }" aria-label="Navegação mobile">
+      <button v-for="item in bottomNavItems" :key="item.to" type="button" :class="{ active: isActive(item.to) }" @click="navigatéMobile(item.to)">
         <ion-icon :icon="item.icon" />
         <span>{{ item.shortLabel }}</span>
-      </router-link>
+      </button>
     </nav>
   </main>
 </template>
@@ -149,23 +149,23 @@ let stopAccountListener = null;
 let stopAuthListener = null;
 
 const navItems = [
-  { label: 'Inicio', shortLabel: 'Inicio', to: '/dashboard', icon: homeOutline },
+  { label: 'Início', shortLabel: 'Início', to: '/dashboard', icon: homeOutline },
   { label: 'Consumo', shortLabel: 'Consumo', to: '/consumo', icon: barChartOutline },
   { label: 'Metas', shortLabel: 'Metas', to: '/metas', icon: pieChartOutline },
   { label: 'Dispositivos', shortLabel: 'Disp.', to: '/dispositivos', icon: hardwareChipOutline },
-  { label: 'Relatorios', shortLabel: 'Relat.', to: '/relatorios', icon: documentTextOutline },
+  { label: 'Relatórios', shortLabel: 'Relat.', to: '/relatorios', icon: documentTextOutline },
   { label: 'Perfil', shortLabel: 'Perfil', to: '/perfil', icon: personOutline },
 ];
 
 const bottomNavItems = [
   ...navItems,
-  { label: 'Configuracoes', shortLabel: 'Config.', to: '/configuracoes', icon: settingsOutline },
+  { label: 'Configurações', shortLabel: 'Config.', to: '/configurações', icon: settingsOutline },
 ];
 
 const periodOptions = [
   { label: 'Esta semana', detail: 'Resumo da semana atual', to: '/consumo' },
-  { label: 'Semana passada', detail: 'Resumo dos ultimos 7 dias fechados', to: '/consumo/semana-passada' },
-  { label: 'Mes passado', detail: 'Resumo do ciclo mensal anterior', to: '/consumo/mes-passado' },
+  { label: 'Semana passada', detail: 'Resumo dos últimos 7 dias fechados', to: '/consumo/semana-passada' },
+  { label: 'Mês passado', detail: 'Resumo do ciclo mensal anterior', to: '/consumo/mês-passado' },
 ];
 
 const firstName = computed(() => String(account.value.name || '').trim().split(/\s+/).filter(Boolean)[0] || '');
@@ -230,6 +230,17 @@ const toggleMobileNav = () => {
 
 const closeMobileNav = () => {
   isMobileNavOpen.value = false;
+};
+
+const navigatéMobile = async (path) => {
+  isNotificationsOpen.value = false;
+  closePeriodMenu();
+
+  if (route.path !== path) {
+    await router.push(path);
+  }
+
+  closeMobileNav();
 };
 
 const openNotification = (notification) => {
@@ -638,15 +649,19 @@ onUnmounted(() => {
     visibility: visible;
   }
 
-  .bottom-nav a {
+  .bottom-nav button {
     align-items: center;
+    background: transparent;
+    border: 0;
     border-radius: 12px;
     color: var(--agua-suave);
+    cursor: pointer;
     display: flex;
     font: 600 13px Poppins, sans-serif;
     gap: 10px;
     min-height: 44px;
     padding: 0 12px;
+    text-align: left;
     text-decoration: none;
   }
 

@@ -16,30 +16,30 @@ const alertDefinitions = {
   },
   [TECHNICAL_ALERT_TYPES.DEVICE_WAITING]: {
     severity: 'warning',
-    title: 'Dispositivo aguardando conexao',
-    message: 'O dispositivo esta cadastrado, mas ainda nao enviou leituras reais.',
+    title: 'Dispositivo águardando conexão',
+    message: 'O dispositivo está cadastrado, mas ainda não enviou leituras reais.',
   },
   [TECHNICAL_ALERT_TYPES.DEVICE_MAINTENANCE]: {
     severity: 'warning',
-    title: 'Manutencao em andamento',
-    message: 'Este ponto de medicao foi marcado para manutencao.',
+    title: 'Manutenção em andamento',
+    message: 'Este ponto de medição foi marcado para manutenção.',
   },
   [TECHNICAL_ALERT_TYPES.CONSUMPTION_ANOMALY]: {
     severity: 'critical',
-    title: 'Consumo fora do padrao',
+    title: 'Consumo fora do padrão',
     message: 'Uma leitura simulada indica consumo acima do esperado.',
   },
   [TECHNICAL_ALERT_TYPES.POSSIBLE_LEAK]: {
     severity: 'critical',
-    title: 'Possivel vazamento',
-    message: 'Fluxo continuo detectado em uma leitura de demonstracao.',
+    title: 'Possível vazamento',
+    message: 'Fluxo contínuo detectado em uma leitura de demonstração.',
   },
 };
 
 const buildAlert = ({ type, device = null, reading = null, message = '' }) => {
   const definition = alertDefinitions[type];
   const deviceCode = device?.deviceCode || reading?.deviceCode || '';
-  const deviceName = device?.name || deviceCode || 'Monitor de agua';
+  const deviceName = device?.name || deviceCode || 'Monitor de água';
 
   return {
     id: `${type}-${device?.id || reading?.deviceId || deviceCode || 'simulated'}`,
@@ -67,11 +67,11 @@ export const generateTechnicalAlerts = ({ devices = [], readings = [], settings 
       alerts.push(buildAlert({ type: TECHNICAL_ALERT_TYPES.DEVICE_OFFLINE, device }));
     }
 
-    if (device.status === 'Aguardando conexao') {
+    if (device.status === 'Aguardando conexão') {
       alerts.push(buildAlert({ type: TECHNICAL_ALERT_TYPES.DEVICE_WAITING, device }));
     }
 
-    if (device.status === 'Manutencao') {
+    if (device.status === 'Manutenção') {
       alerts.push(buildAlert({ type: TECHNICAL_ALERT_TYPES.DEVICE_MAINTENANCE, device }));
     }
   });
@@ -86,7 +86,7 @@ export const generateTechnicalAlerts = ({ devices = [], readings = [], settings 
         buildAlert({
           type: TECHNICAL_ALERT_TYPES.POSSIBLE_LEAK,
           reading,
-          message: 'A simulacao encontrou vazao alta com volume acumulado acima do limite.',
+          message: 'A simulação encontrou vazão alta com volume acumulado acima do limite.',
         }),
       );
     }

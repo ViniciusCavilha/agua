@@ -5,13 +5,13 @@
         <section v-if="loading" class="state-card">
           <span><ion-icon :icon="hardwareChipOutline" /></span>
           <h2>Carregando dispositivo...</h2>
-          <p>Buscando configuracoes, leituras e alertas vinculados.</p>
+          <p>Buscando configurações, leituras e alertas vinculados.</p>
         </section>
 
         <section v-else-if="!device" class="state-card">
           <span><ion-icon :icon="alertCircleOutline" /></span>
           <h2>Dispositivo nao encontrado.</h2>
-          <p>Ele pode ter sido removido ou ainda nao esta vinculado a esta conta.</p>
+          <p>Ele pode ter sido removido ou ainda não está vinculado a esta conta.</p>
           <router-link to="/dispositivos">
             <ion-icon :icon="arrowBackOutline" />
             Voltar para dispositivos
@@ -25,9 +25,9 @@
                 <ion-icon :icon="arrowBackOutline" />
                 Dispositivos
               </router-link>
-              <span>Monitor de vazao</span>
+              <span>Monitor de vazão</span>
               <h2>{{ device.name }}</h2>
-              <p>{{ device.location || 'Local de instalacao nao informado' }}</p>
+              <p>{{ device.location || 'Local de instalação não informado' }}</p>
             </div>
             <div class="hero-actions">
               <strong :class="statusClass(device.status)">{{ device.status }}</strong>
@@ -46,7 +46,7 @@
             </article>
             <article>
               <ion-icon :icon="analyticsOutline" />
-              <span>Ultima vazao</span>
+              <span>Última vazão</span>
               <strong>{{ lastReading.flowRate || device.lastFlowRate }} L/min</strong>
             </article>
             <article>
@@ -56,7 +56,7 @@
             </article>
             <article>
               <ion-icon :icon="radioOutline" />
-              <span>Ultima leitura</span>
+              <span>Última leitura</span>
               <strong>{{ lastReadingLabel }}</strong>
             </article>
           </section>
@@ -67,7 +67,7 @@
                 <div class="panel-title">
                   <div>
                     <h2>Leituras do dispositivo</h2>
-                    <p>Historico preparado para receber os envios reais do ESP32.</p>
+                    <p>Histórico preparado para receber os envios reais do ESP32.</p>
                   </div>
                   <strong>{{ readings.length }} registro{{ readings.length === 1 ? '' : 's' }}</strong>
                 </div>
@@ -84,15 +84,15 @@
 
                 <div v-else class="empty-inline">
                   <strong>Nenhuma leitura registrada</strong>
-                  <p>Quando o ESP32 enviar dados, eles aparecerao automaticamente aqui.</p>
+                  <p>Quando o ESP32 enviar dados, eles aparecerão automáticamente aqui.</p>
                 </div>
               </article>
 
               <article class="panel">
                 <div class="panel-title">
                   <div>
-                    <h2>Alertas e manutencao</h2>
-                    <p>Eventos tecnicos vinculados a este ponto de medicao.</p>
+                    <h2>Alertas e manutenção</h2>
+                    <p>Eventos técnicos vinculados a este ponto de medição.</p>
                   </div>
                 </div>
 
@@ -109,7 +109,7 @@
                   </div>
 
                   <div>
-                    <h3>Ordens de manutencao</h3>
+                    <h3>Ordens de manutenção</h3>
                     <div v-if="maintenanceOrders.length" class="ops-list">
                       <span v-for="order in maintenanceOrders" :key="order.id">
                         <strong>{{ order.title }}</strong>
@@ -124,7 +124,7 @@
 
             <aside class="side-panel">
               <article class="panel">
-                <h2>Configuracao tecnica</h2>
+                <h2>Configuração tecnica</h2>
                 <div class="tech-list">
                   <div>
                     <span>ID do dispositivo</span>
@@ -132,18 +132,18 @@
                   </div>
                   <div>
                     <span>Unidade</span>
-                    <strong>{{ device.unit || 'Nao vinculada' }}</strong>
+                    <strong>{{ device.unit || 'Não vinculada' }}</strong>
                   </div>
                   <div>
                     <span>Sensor</span>
                     <strong>{{ device.sensor.name }}</strong>
                   </div>
                   <div>
-                    <span>Codigo do sensor</span>
+                    <span>Código do sensor</span>
                     <strong>{{ device.sensor.sensorCode }}</strong>
                   </div>
                   <div>
-                    <span>Calibracao</span>
+                    <span>Calibração</span>
                     <strong>{{ device.sensor.calibrationFactor }} pulsos/s = 1 L/min</strong>
                   </div>
                   <div>
@@ -172,7 +172,7 @@
               <span><ion-icon :icon="createOutline" /></span>
               <div>
                 <h2 id="device-detail-edit-title">Editar dispositivo</h2>
-                <p>Atualize os dados que serao usados pela futura integracao com o ESP32.</p>
+                <p>Atualize os dados que serão usados pela futura integração com o ESP32.</p>
               </div>
             </div>
 
@@ -200,11 +200,11 @@
                 </select>
               </label>
               <label>
-                Codigo do sensor
+                Código do sensor
                 <input v-model="editForm.sensor.sensorCode" type="text" required />
               </label>
               <label>
-                Fator de calibracao
+                Fator de calibração
                 <input v-model.number="editForm.sensor.calibrationFactor" type="number" min="0.1" step="0.1" required />
               </label>
               <label>
@@ -361,13 +361,13 @@ const changeStatus = async (status) => {
 const statusClass = (status) => ({
   active: status === 'Ativo',
   offline: status === 'Offline',
-  waiting: status === 'Aguardando conexao',
-  maintenance: status === 'Manutencao',
+  waiting: status === 'Aguardando conexão',
+  maintenance: status === 'Manutenção',
 });
 
 const readingStatus = (status) => {
   if (status === 'anomaly') {
-    return 'Fora do padrao';
+    return 'Fora do padrão';
   }
 
   if (status === 'waiting') {
