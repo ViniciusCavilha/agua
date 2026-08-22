@@ -68,7 +68,12 @@
               v-for="notification in notifications"
               :key="notification.id"
               class="notification-item"
-              :class="{ unread: !notification.read, success: notification.type === 'success' }"
+              :class="{
+                unread: !notification.read,
+                success: notification.type === 'success',
+                warning: notification.type === 'warning',
+                critical: notification.type === 'critical',
+              }"
               type="button"
               role="menuitem"
               @click="openNotification(notification)"
@@ -538,6 +543,14 @@ onUnmounted(() => {
 
 .notification-item.success > span {
   background: var(--agua-sucesso);
+}
+
+.notification-item.warning > span {
+  background: var(--agua-alerta);
+}
+
+.notification-item.critical > span {
+  background: var(--agua-erro);
 }
 
 .notification-item:not(.unread) > span {

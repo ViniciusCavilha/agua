@@ -929,8 +929,8 @@ onUnmounted(() => {
 }
 
 .technical-alert.warning {
-  background: #fff7ed;
-  border-color: #fed7aa;
+  background: color-mix(in srgb, var(--agua-alerta) 24%, var(--agua-branco));
+  border-color: color-mix(in srgb, var(--agua-alerta) 68%, var(--agua-borda));
 }
 
 .technical-alert ion-icon,
@@ -946,7 +946,7 @@ onUnmounted(() => {
 }
 
 .technical-alert.warning ion-icon {
-  background: rgba(245, 158, 11, 0.14);
+  background: color-mix(in srgb, var(--agua-alerta) 22%, transparent);
   color: var(--agua-alerta);
 }
 

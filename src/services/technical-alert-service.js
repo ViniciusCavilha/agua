@@ -104,7 +104,7 @@ export const syncTechnicalAlertNotifications = (alerts = []) => {
   alerts.forEach((alert) => {
     addNotification({
       id: `technical-${alert.id}`,
-      type: alert.severity === 'critical' ? 'warning' : 'info',
+      type: alert.severity === 'critical' ? 'critical' : 'warning',
       title: alert.title,
       message: alert.deviceCode ? `${alert.deviceCode}: ${alert.message}` : alert.message,
       to: alert.deviceId ? `/dispositivos/${alert.deviceId}` : '/consumo',
