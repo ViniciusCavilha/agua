@@ -67,42 +67,26 @@
                 <span class="waiting"><i /> {{ settings.simulationMode ? 'Simulação ativa' : 'Aguardando dados' }}</span>
               </div>
 
-              <div class="chart" aria-label="Gráfico de consumo das ultimas 24 horas">
-                <div class="labels">
-                  <small>1.5k</small>
-                  <small>1k</small>
-                  <small>500</small>
-                  <small>0</small>
-                </div>
-                <div class="plot">
-                  <i v-for="line in 4" :key="line" />
-                  <svg viewBox="0 0 500 150" preserveAspectRatio="none" aria-hidden="true">
-                    <defs>
-                      <linearGradient id="consumptionFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop stop-color="#1ca7a0" stop-opacity="0.24" />
-                        <stop offset="1" stop-color="#1ca7a0" stop-opacity="0" />
-                      </linearGradient>
-                    </defs>
-                    <path
-                      d="M0 150 L500 150 L500 150 L0 150Z"
-                      fill="url(#consumptionFill)"
-                    />
-                    <path
-                      d="M0 150 L500 150"
-                      fill="none"
-                      stroke="#1ca7a0"
-                      stroke-linecap="round"
-                      stroke-width="3"
-                    />
-                  </svg>
-                  <div class="hours">
-                    <small>00h</small>
-                    <small>06h</small>
-                    <small>12h</small>
-                    <small>18h</small>
-                    <small>Agora</small>
-                  </div>
-                </div>
+              <div class="hourly-chart" aria-label="Gráfico de consumo por horário nas últimas 24 horas">
+                <button
+                  v-for="bar in dailyHourlyBars"
+                  :key="bar.hour"
+                  class="hourly-bar"
+                  :class="{ active: activeHour === bar.hour }"
+                  type="button"
+                  :aria-label="`${bar.hour}: ${bar.formattedValue}`"
+                  @click="toggleActiveHour(bar.hour)"
+                  @focus="activeHour = bar.hour"
+                  @blur="activeHour = ''"
+                  @mouseenter="activeHour = bar.hour"
+                  @mouseleave="activeHour = ''"
+                >
+                  <span class="bar-value">{{ bar.formattedValue }}</span>
+                  <span class="bar-track">
+                    <i :class="{ empty: !bar.liters }" :style="{ height: `${bar.height}%` }" />
+                  </span>
+                  <small>{{ bar.hour }}</small>
+                </button>
               </div>
             </article>
           </div>
@@ -204,6 +188,7 @@ import { getConsumptionReadings } from '../services/reading-service.js';
 import { generateTechnicalAlerts, syncTechnicalAlertNotifications } from '../services/technical-alert-service.js';
 
 const selectedMetric = ref(null);
+const activeHour = ref('');
 const route = useRoute();
 const devices = ref([]);
 const devicesError = ref('');
@@ -341,6 +326,11 @@ const visibleMonthlyMetrics = computed(() => dashboardData.monthly.map((metric) 
 
   return metric;
 }));
+const dailyHourlyBars = computed(() => consumptionData.value.dailyHourlyBars || []);
+
+const toggleActiveHour = (hour) => {
+  activeHour.value = activeHour.value === hour ? '' : hour;
+};
 
 const openMetricInfo = (metric) => {
   selectedMetric.value = metric;
@@ -692,51 +682,98 @@ onUnmounted(() => {
   line-height: 1.35;
 }
 
-.chart {
-  display: flex;
-  height: 260px;
-  margin-top: 20px;
+.hourly-chart {
+  align-items: end;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(33.333% - 1px),
+    var(--agua-borda) calc(33.333% - 1px),
+    var(--agua-borda) 33.333%
+  );
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(8, minmax(34px, 1fr));
+  height: 250px;
+  margin-top: 22px;
+  padding: 12px 8px 0;
 }
 
-.labels {
-  color: #94a1a5;
-  display: flex;
-  flex-direction: column;
+.hourly-bar {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--agua-suave);
+  cursor: pointer;
+  display: grid;
+  gap: 8px;
+  grid-template-rows: 26px 1fr 20px;
+  height: 100%;
+  justify-items: center;
+  min-width: 0;
+  padding: 0;
+}
+
+.bar-value {
+  background: var(--agua-petroleo);
+  border-radius: 999px;
+  color: #ffffff;
   font-size: 10px;
-  justify-content: space-between;
-  padding-bottom: 28px;
-  width: 34px;
+  font-weight: 800;
+  opacity: 0;
+  padding: 5px 8px;
+  transform: translateY(5px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  white-space: nowrap;
+  z-index: 2;
 }
 
-.plot {
-  flex: 1;
-  padding-bottom: 28px;
-  position: relative;
-}
-
-.plot > i {
-  background: #eaf0f0;
-  display: block;
-  height: 1px;
-  margin-bottom: 60px;
-}
-
-.plot svg {
-  height: calc(100% - 28px);
-  inset: 0 0 28px;
-  position: absolute;
+.bar-track {
+  align-items: end;
+  display: flex;
+  height: 100%;
+  justify-content: center;
   width: 100%;
 }
 
-.hours {
-  bottom: 0;
-  color: #94a1a5;
-  display: flex;
+.bar-track i {
+  background: linear-gradient(180deg, var(--agua-agua), var(--agua-petroleo));
+  border-radius: 999px 999px 5px 5px;
+  display: block;
+  min-height: 8px;
+  transition: filter 0.18s ease, height 0.35s ease, transform 0.18s ease;
+  width: min(100%, 32px);
+}
+
+.bar-track i.empty {
+  background: color-mix(in srgb, var(--agua-agua) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--agua-agua) 28%, transparent);
+}
+
+.hourly-bar small {
+  color: var(--agua-suave);
   font-size: 10px;
-  justify-content: space-between;
-  left: 0;
-  position: absolute;
-  right: 0;
+  font-weight: 700;
+}
+
+.hourly-bar:hover .bar-value,
+.hourly-bar:focus-visible .bar-value,
+.hourly-bar.active .bar-value {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hourly-bar:hover .bar-track i,
+.hourly-bar:focus-visible .bar-track i,
+.hourly-bar.active .bar-track i {
+  filter: drop-shadow(0 8px 12px rgba(28, 167, 160, 0.28));
+  transform: translateY(-3px);
+}
+
+.hourly-bar:focus-visible {
+  border-radius: 8px;
+  outline: 2px solid var(--agua-agua);
+  outline-offset: 3px;
 }
 
 .monthly-card {
@@ -1018,8 +1055,16 @@ onUnmounted(() => {
     padding: 22px;
   }
 
-  .chart {
-    height: 210px;
+  .hourly-chart {
+    gap: 7px;
+    height: 220px;
+    overflow-x: auto;
+    padding-inline: 4px;
+  }
+
+  .bar-value {
+    font-size: 9px;
+    padding-inline: 6px;
   }
 
   .chart-card,

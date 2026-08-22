@@ -12,6 +12,8 @@ const todayIndex = weekDays.length - 1;
 const presentationLiters = [420, 510, 465, 590, 540, 380, 720];
 const presentationFlowRates = [7.8, 8.6, 7.1, 9.4, 8.9, 6.2, 14.8];
 const deviceSimulationFactors = [1, 0.72, 0.58, 1.18, 0.86, 0.64];
+const dailyHourBuckets = [0, 3, 6, 9, 12, 15, 18, 21];
+const dailySimulationProfile = [18, 12, 86, 54, 38, 46, 92, 58];
 
 const emptyStats = [
   { label: 'Esta semana', value: '0 L', detail: 'Consumo acumulado semanal' },
@@ -191,6 +193,41 @@ const buildWeeklyBars = (readings, settings) => {
   }));
 };
 
+const buildDailyHourlyBars = (readings, settings, deviceCount = 0) => {
+  const now = new Date();
+  const todayReadings = readings.filter((reading) => {
+    const timestamp = new Date(reading.timestamp);
+    return timestamp.getFullYear() === now.getFullYear()
+      && timestamp.getMonth() === now.getMonth()
+      && timestamp.getDate() === now.getDate();
+  });
+
+  let totals = dailyHourBuckets.map((hour, index) => {
+    const nextHour = dailyHourBuckets[index + 1] ?? 24;
+    return todayReadings.reduce((sum, reading) => {
+      const readingHour = new Date(reading.timestamp).getHours();
+      return readingHour >= hour && readingHour < nextHour ? sum + Number(reading.liters || 0) : sum;
+    }, 0);
+  });
+
+  if (settings.simulationMode) {
+    const simulationFactor = Math.max(1, deviceCount || 1);
+    totals = dailySimulationProfile.map((liters, index) => {
+      const variation = settings.anomalyDemo && index === 6 ? 2.4 : 1;
+      return Math.round(liters * simulationFactor * variation);
+    });
+  }
+
+  const max = Math.max(...totals, 1);
+
+  return dailyHourBuckets.map((hour, index) => ({
+    hour: `${String(hour).padStart(2, '0')}h`,
+    liters: totals[index],
+    formattedValue: formatVolume(totals[index], settings),
+    height: totals[index] ? Math.max(8, Math.round((totals[index] / max) * 100)) : 0,
+  }));
+};
+
 const buildStats = (readings, settings) => {
   const weeklyTotal = readings.reduce((sum, reading) => sum + reading.liters, 0);
   const dailyAverage = weeklyTotal / weekDays.length;
@@ -222,11 +259,13 @@ const formatDisplayReadings = (readings, settings) => {
 
 export const getConsumptionReadings = (settings = getSettings(), devices = null) => {
   const rawReadings = getSimulatedReadings(settings, devices);
+  const deviceCount = Array.isArray(devices) ? devices.length : 1;
 
   return {
     ...emptyReadingsState,
     stats: buildStats(rawReadings, settings),
     weeklyBars: buildWeeklyBars(rawReadings, settings),
+    dailyHourlyBars: buildDailyHourlyBars(rawReadings, settings, deviceCount),
     readings: formatDisplayReadings(rawReadings, settings),
     rawReadings,
   };
