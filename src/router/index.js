@@ -12,6 +12,7 @@ import ReportsPage from '../views/ReportsPage.vue';
 import ProfilePage from '../views/ProfilePage.vue';
 import SettingsPage from '../views/SettingsPage.vue';
 import SustainabilityPage from '../views/SustainabilityPage.vue';
+import WaterHistoryPage from '../views/WaterHistoryPage.vue';
 import TermsPage from '../views/TermsPage.vue';
 import { getUserProfile, isProfileComplete, waitForCurrentUser } from '../services/firebase.js';
 
@@ -50,6 +51,7 @@ const routes = [
   { path: '/dispositivos/:id', name: 'DetalheDispositivo', component: DeviceDetailPage },
   { path: '/relatorios', name: 'Relatórios', component: ReportsPage },
   { path: '/sustentabilidade', name: 'Sustentabilidade', component: SustainabilityPage },
+  { path: '/historia-da-agua', name: 'HistoriaDaAgua', component: WaterHistoryPage },
   { path: '/perfil', name: 'Perfil', component: ProfilePage },
   { path: '/configurações', name: 'Configurações', component: SettingsPage },
 ];

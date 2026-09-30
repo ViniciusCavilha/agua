@@ -115,6 +115,7 @@ import {
   earthOutline,
   hardwareChipOutline,
   homeOutline,
+  hourglassOutline,
   menuOutline,
   notificationsOutline,
   personOutline,
@@ -174,6 +175,7 @@ const navItems = [
   { label: 'Dispositivos', shortLabel: 'Disp.', to: '/dispositivos', icon: hardwareChipOutline },
   { label: 'Relatórios', shortLabel: 'Relat.', to: '/relatorios', icon: documentTextOutline },
   { label: 'Sustentabilidade', shortLabel: 'Sustent.', to: '/sustentabilidade', icon: earthOutline },
+  { label: 'História da Água', shortLabel: 'História', to: '/historia-da-agua', icon: hourglassOutline },
   { label: 'Perfil', shortLabel: 'Perfil', to: '/perfil', icon: personOutline },
 ];
 
@@ -321,6 +323,7 @@ onUnmounted(() => {
   padding: 28px 18px;
   position: fixed;
   top: 0;
+  overflow-y: auto;
   width: 248px;
   z-index: 4;
 }
