@@ -26,6 +26,7 @@ import { checkForAppUpdate, startAppVersionMonitor } from './data/app-version.js
 import { clearStaleLocalCache } from './data/cache-store.js';
 import { applySavedTheme } from './data/theme-store.js';
 import { getSettings } from './data/settings-store.js';
+import { aguaPageTransition } from './animations/page-transition';
 
 const startApp = async () => {
   const updateFound = await checkForAppUpdate();
@@ -39,7 +40,10 @@ const startApp = async () => {
   getSettings();
 
   const app = createApp(App)
-    .use(IonicVue)
+    .use(IonicVue, {
+      animated: true,
+      navAnimation: aguaPageTransition,
+    })
     .use(router);
 
   await router.isReady();

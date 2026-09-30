@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content :fullscreen="true">
-      <AppShell title="Sustentabilidade" :show-period="false">
+      <AppShell title="Sustentabilidade" mobile-title="Sustent." :show-period="false">
         <section class="sustainability-hero">
           <div class="hero-copy">
             <span class="eyebrow">Biologia e consumo consciente</span>

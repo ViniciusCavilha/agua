@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content :fullscreen="true">
-      <AppShell title="Configurações" :show-period="false">
+      <AppShell title="Configurações" mobile-title="Config." :show-period="false">
         <section class="settings-layout">
           <aside class="summary-panel">
             <div class="summary-icon"><ion-icon :icon="settingsOutline" /></div>

@@ -19,11 +19,7 @@
       </router-link>
     </aside>
 
-    <section
-      class="workspace"
-      :class="{ 'workspace-entering': isWorkspaceEntering }"
-      @animationend="finishWorkspaceTransition"
-    >
+    <section class="workspace">
       <header class="topbar">
         <button
           class="icon-button mobile-only"
@@ -37,7 +33,10 @@
         </button>
         <div>
           <p>{{ displayedEyebrow }}</p>
-          <h1>{{ title }}</h1>
+          <h1>
+            <span class="title-full">{{ title }}</span>
+            <span class="title-mobile">{{ displayedMobileTitle }}</span>
+          </h1>
         </div>
         <div v-if="showPeriod" class="period-menu">
           <button class="period" type="button" :aria-expanded="isPeriodMenuOpen" aria-haspopup="menu" @click="togglePeriodMenu">
@@ -106,7 +105,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IonIcon } from '@ionic/vue';
 import {
@@ -139,6 +138,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  mobileTitle: {
+    type: String,
+    default: '',
+  },
   eyebrow: {
     type: String,
     default: '',
@@ -158,13 +161,11 @@ const router = useRouter();
 const isPeriodMenuOpen = ref(false);
 const isNotificationsOpen = ref(false);
 const isMobileNavOpen = ref(false);
-const isWorkspaceEntering = ref(true);
 const notifications = ref(getNotifications());
 const account = ref(getAccount());
 let stopNotificationsListener = null;
 let stopAccountListener = null;
 let stopAuthListener = null;
-let workspaceTransitionFrame = 0;
 
 const navItems = [
   { label: 'Início', shortLabel: 'Início', to: '/dashboard', icon: homeOutline },
@@ -189,6 +190,7 @@ const periodOptions = [
 
 const firstName = computed(() => String(account.value.name || '').trim().split(/\s+/).filter(Boolean)[0] || '');
 const displayedEyebrow = computed(() => props.eyebrow || (firstName.value ? `Ola, ${firstName.value}` : 'Ola'));
+const displayedMobileTitle = computed(() => props.mobileTitle || props.title);
 
 const refreshAccountName = async (user = getCurrentUser()) => {
   if (!user) {
@@ -251,21 +253,6 @@ const closeMobileNav = () => {
   isMobileNavOpen.value = false;
 };
 
-const playWorkspaceTransition = async () => {
-  isWorkspaceEntering.value = false;
-  await nextTick();
-  window.cancelAnimationFrame(workspaceTransitionFrame);
-  workspaceTransitionFrame = window.requestAnimationFrame(() => {
-    isWorkspaceEntering.value = true;
-  });
-};
-
-const finishWorkspaceTransition = (event) => {
-  if (event.target === event.currentTarget) {
-    isWorkspaceEntering.value = false;
-  }
-};
-
 const navigatéMobile = async (path) => {
   isNotificationsOpen.value = false;
   closePeriodMenu();
@@ -307,10 +294,7 @@ onMounted(() => {
   });
 });
 
-watch(() => route.fullPath, playWorkspaceTransition);
-
 onUnmounted(() => {
-  window.cancelAnimationFrame(workspaceTransitionFrame);
   stopNotificationsListener?.();
   stopAccountListener?.();
   stopAuthListener?.();
@@ -412,23 +396,6 @@ onUnmounted(() => {
   width: 100%;
 }
 
-.workspace.workspace-entering {
-  animation: workspace-enter 280ms cubic-bezier(0.22, 0.75, 0.26, 1) both;
-  will-change: opacity, transform;
-}
-
-@keyframes workspace-enter {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.997);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
 .topbar {
   align-items: center;
   display: grid;
@@ -450,6 +417,10 @@ onUnmounted(() => {
   letter-spacing: 0;
   line-height: 1.1;
   margin: 0;
+}
+
+.title-mobile {
+  display: none;
 }
 
 .icon-button,
@@ -666,6 +637,14 @@ onUnmounted(() => {
     min-width: 0;
   }
 
+  .title-full {
+    display: none;
+  }
+
+  .title-mobile {
+    display: inline;
+  }
+
   .period-menu {
     grid-column: 1 / -1;
     grid-row: 2;
@@ -767,11 +746,6 @@ onUnmounted(() => {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .workspace.workspace-entering {
-    animation: none;
-  }
-}
 </style>
 
 
