@@ -19,7 +19,11 @@
       </router-link>
     </aside>
 
-    <section class="workspace">
+    <section
+      class="workspace"
+      :class="{ 'workspace-entering': isWorkspaceEntering }"
+      @animationend="finishWorkspaceTransition"
+    >
       <header class="topbar">
         <button
           class="icon-button mobile-only"
@@ -102,13 +106,14 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IonIcon } from '@ionic/vue';
 import {
   barChartOutline,
   chevronDownOutline,
   documentTextOutline,
+  earthOutline,
   hardwareChipOutline,
   homeOutline,
   menuOutline,
@@ -153,11 +158,13 @@ const router = useRouter();
 const isPeriodMenuOpen = ref(false);
 const isNotificationsOpen = ref(false);
 const isMobileNavOpen = ref(false);
+const isWorkspaceEntering = ref(true);
 const notifications = ref(getNotifications());
 const account = ref(getAccount());
 let stopNotificationsListener = null;
 let stopAccountListener = null;
 let stopAuthListener = null;
+let workspaceTransitionFrame = 0;
 
 const navItems = [
   { label: 'Início', shortLabel: 'Início', to: '/dashboard', icon: homeOutline },
@@ -165,6 +172,7 @@ const navItems = [
   { label: 'Metas', shortLabel: 'Metas', to: '/metas', icon: pieChartOutline },
   { label: 'Dispositivos', shortLabel: 'Disp.', to: '/dispositivos', icon: hardwareChipOutline },
   { label: 'Relatórios', shortLabel: 'Relat.', to: '/relatorios', icon: documentTextOutline },
+  { label: 'Sustentabilidade', shortLabel: 'Sustent.', to: '/sustentabilidade', icon: earthOutline },
   { label: 'Perfil', shortLabel: 'Perfil', to: '/perfil', icon: personOutline },
 ];
 
@@ -243,6 +251,21 @@ const closeMobileNav = () => {
   isMobileNavOpen.value = false;
 };
 
+const playWorkspaceTransition = async () => {
+  isWorkspaceEntering.value = false;
+  await nextTick();
+  window.cancelAnimationFrame(workspaceTransitionFrame);
+  workspaceTransitionFrame = window.requestAnimationFrame(() => {
+    isWorkspaceEntering.value = true;
+  });
+};
+
+const finishWorkspaceTransition = (event) => {
+  if (event.target === event.currentTarget) {
+    isWorkspaceEntering.value = false;
+  }
+};
+
 const navigatéMobile = async (path) => {
   isNotificationsOpen.value = false;
   closePeriodMenu();
@@ -284,7 +307,10 @@ onMounted(() => {
   });
 });
 
+watch(() => route.fullPath, playWorkspaceTransition);
+
 onUnmounted(() => {
+  window.cancelAnimationFrame(workspaceTransitionFrame);
   stopNotificationsListener?.();
   stopAccountListener?.();
   stopAuthListener?.();
@@ -384,6 +410,23 @@ onUnmounted(() => {
   max-width: 1180px;
   padding: 28px clamp(18px, 4vw, 44px) 34px;
   width: 100%;
+}
+
+.workspace.workspace-entering {
+  animation: workspace-enter 280ms cubic-bezier(0.22, 0.75, 0.26, 1) both;
+  will-change: opacity, transform;
+}
+
+@keyframes workspace-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.997);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .topbar {
@@ -651,6 +694,7 @@ onUnmounted(() => {
     gap: 8px;
     justify-content: flex-start;
     left: 0;
+    overflow-y: auto;
     padding: 88px 16px 22px;
     position: fixed;
     top: 0;
@@ -720,6 +764,12 @@ onUnmounted(() => {
     left: auto;
     min-width: min(300px, calc(100vw - 28px));
     right: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace.workspace-entering {
+    animation: none;
   }
 }
 </style>
