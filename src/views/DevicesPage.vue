@@ -279,8 +279,8 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue';
-import { IonContent, IonIcon, IonPage } from '@ionic/vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { IonContent, IonIcon, IonPage, onIonViewWillEnter } from '@ionic/vue';
 import {
   addOutline,
   alertCircleOutline,
@@ -309,6 +309,7 @@ import {
   updateDeviceStatus,
 } from '../services/device-service.js';
 import { getConsumptionReadings } from '../services/reading-service.js';
+import { getCurrentUser, watchAuthUser } from '../services/firebase.js';
 import { generateTechnicalAlerts, syncTechnicalAlertNotifications } from '../services/technical-alert-service.js';
 
 const devices = ref([]);
@@ -319,12 +320,11 @@ const deviceToDelete = ref(null);
 const deviceToEdit = ref(null);
 const isLinkModalOpen = ref(false);
 const editForm = ref(null);
-const account = getAccount();
 const linkForm = ref({
   deviceCode: '',
   name: '',
   location: '',
-  unit: account.unit || '',
+  unit: getAccount().unit || '',
   sensorModel: 'YF-S201',
   sensorCode: '',
   calibrationFactor: 7.5,
@@ -333,6 +333,9 @@ const linkForm = ref({
 const statuses = DEVICE_STATUSES;
 const sensorModels = SENSOR_MODELS;
 const settings = getSettings();
+let activeUserId = getCurrentUser()?.uid || '';
+let loadSequence = 0;
+let stopAuthListener = null;
 const consumptionData = computed(() => getConsumptionReadings(settings, devices.value));
 const technicalAlerts = computed(() =>
   generateTechnicalAlerts({
@@ -369,11 +372,24 @@ const architectureItems = computed(() => [
 ]);
 
 const loadDevices = async () => {
+  const requestId = ++loadSequence;
+  const requestedUserId = getCurrentUser()?.uid || '';
+
   try {
     errorMessage.value = '';
-    devices.value = await listDevices();
+    const nextDevices = await listDevices();
+
+    if (requestId !== loadSequence || requestedUserId !== (getCurrentUser()?.uid || '')) {
+      return;
+    }
+
+    devices.value = nextDevices;
     syncTechnicalAlertNotifications(technicalAlerts.value);
   } catch (error) {
+    if (requestId !== loadSequence) {
+      return;
+    }
+
     errorMessage.value = 'Não foi possível carregar os dispositivos. Confira as permissões do Firestore.';
     devices.value = [];
   }
@@ -387,7 +403,7 @@ const addSimulatedDevice = async () => {
   loading.value = true;
   try {
     errorMessage.value = '';
-    await createSimulatedDevice(account.unit);
+    await createSimulatedDevice(getAccount().unit);
     await loadDevices();
   } catch (error) {
     errorMessage.value = 'Não foi possível criar o dispositivo simulado agora.';
@@ -400,7 +416,7 @@ const resetLinkForm = () => {
     deviceCode: '',
     name: '',
     location: '',
-    unit: account.unit || '',
+    unit: getAccount().unit || '',
     sensorModel: 'YF-S201',
     sensorCode: '',
     calibrationFactor: 7.5,
@@ -536,7 +552,36 @@ const statusClass = (status) => ({
   maintenance: status === 'Manutenção',
 });
 
-onMounted(loadDevices);
+onIonViewWillEnter(() => {
+  devices.value = [];
+  loadDevices();
+});
+
+onMounted(() => {
+  stopAuthListener = watchAuthUser((user) => {
+    const nextUserId = user?.uid || '';
+
+    if (nextUserId === activeUserId) {
+      return;
+    }
+
+    activeUserId = nextUserId;
+    loadSequence += 1;
+    devices.value = [];
+    errorMessage.value = '';
+    deviceToDelete.value = null;
+    deviceToEdit.value = null;
+    isLinkModalOpen.value = false;
+
+    if (user) {
+      loadDevices();
+    }
+  });
+});
+
+onUnmounted(() => {
+  stopAuthListener?.();
+});
 </script>
 
 <style scoped>

@@ -5,6 +5,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  onSnapshot,
   query,
   serverTimestamp,
   setDoc,
@@ -122,15 +123,14 @@ const saveLocalDevices = (devices) => {
   return normalized;
 };
 
-const getUserDevicesCollection = () => {
+const getUserDevicesCollection = (user = getCurrentUser()) => {
   const db = getFirestoreDb();
-  const currentUser = getCurrentUser();
 
-  if (!db || !currentUser) {
+  if (!db || !user) {
     return null;
   }
 
-  return collection(db, 'users', currentUser.uid, 'devices');
+  return collection(db, 'users', user.uid, 'devices');
 };
 
 const resolveDeviceUser = async () => {
@@ -174,7 +174,7 @@ export const listDevices = async () => {
     return [];
   }
 
-  const devicesRef = getUserDevicesCollection();
+  const devicesRef = getUserDevicesCollection(user);
   const snapshot = await getDocs(query(devicesRef));
   return sortDevicesByCreatedAt(snapshot.docs.map((item) => normalizeDevice({ ...item.data(), id: item.id })));
 };
@@ -194,7 +194,7 @@ export const getDeviceById = async (deviceId) => {
     return null;
   }
 
-  const devicesRef = getUserDevicesCollection();
+  const devicesRef = getUserDevicesCollection(user);
   const snapshot = await getDoc(doc(devicesRef, deviceId));
   return snapshot.exists() ? normalizeDevice({ ...snapshot.data(), id: snapshot.id }) : null;
 };
@@ -223,7 +223,19 @@ const normalizeFirestoreDate = (value) => {
   return value || new Date().toISOString();
 };
 
-export const listDeviceReadings = async (deviceId) => {
+const normalizeStoredReading = (item) => {
+  const storedReading = item.data();
+
+  return normalizeReadingPayload({
+    ...storedReading,
+    id: item.id,
+    source: storedReading.source || 'hardware',
+    timestamp: normalizeFirestoreDate(storedReading.timestamp),
+    receivedAt: normalizeFirestoreDate(storedReading.receivedAt),
+  });
+};
+
+export const listDeviceReadings = async (deviceId, { simulationFallback = true } = {}) => {
   const device = await getDeviceById(deviceId);
 
   if (!device) {
@@ -231,22 +243,41 @@ export const listDeviceReadings = async (deviceId) => {
   }
 
   if (shouldUseLocalDevices()) {
-    return buildLocalDeviceReadings(device);
+    return simulationFallback ? buildLocalDeviceReadings(device) : [];
   }
 
   const devicesRef = getUserDevicesCollection();
   const snapshot = await getDocs(query(collection(devicesRef, deviceId, 'readings')));
-  const readings = snapshot.docs.map((item) =>
-    normalizeReadingPayload({
-      ...item.data(),
-      id: item.id,
-      timestamp: normalizeFirestoreDate(item.data().timestamp),
-      receivedAt: normalizeFirestoreDate(item.data().receivedAt),
-    }),
-  );
+  const readings = snapshot.docs.map(normalizeStoredReading);
 
   const hasUsefulReadings = readings.some((reading) => reading.liters > 0 || reading.flowRate > 0 || reading.status === 'anomaly');
-  return hasUsefulReadings || !getSettings().simulationMode ? readings : buildLocalDeviceReadings(device);
+  return hasUsefulReadings || !simulationFallback || !getSettings().simulationMode ? readings : buildLocalDeviceReadings(device);
+};
+
+export const watchDeviceReadings = (deviceIds = [], callback, onError = () => {}) => {
+  const user = getCurrentUser();
+  const uniqueDeviceIds = [...new Set(deviceIds.filter(Boolean))];
+
+  if (shouldUseLocalDevices() || !user || !uniqueDeviceIds.length) {
+    callback([]);
+    return () => {};
+  }
+
+  const devicesRef = getUserDevicesCollection(user);
+  const readingsByDevice = new Map(uniqueDeviceIds.map((deviceId) => [deviceId, []]));
+  const emitReadings = () => callback([...readingsByDevice.values()].flat());
+  const unsubscribes = uniqueDeviceIds.map((deviceId) =>
+    onSnapshot(
+      query(collection(devicesRef, deviceId, 'readings')),
+      (snapshot) => {
+        readingsByDevice.set(deviceId, snapshot.docs.map(normalizeStoredReading));
+        emitReadings();
+      },
+      onError,
+    ),
+  );
+
+  return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
 };
 
 export const listDeviceAlerts = async (deviceId) => {
@@ -320,7 +351,7 @@ export const createDevice = async (device) => {
     throw new Error('Entre na conta antes de cadastrar dispositivos.');
   }
 
-  const devicesRef = getUserDevicesCollection();
+  const devicesRef = getUserDevicesCollection(user);
   const devicePayload = withoutDeviceId(nextDevice);
   const created = await addDoc(devicesRef, {
     ...devicePayload,
@@ -443,7 +474,7 @@ export const updateDeviceStatus = async (deviceId, status) => {
     throw new Error('Entre na conta antes de atualizar dispositivos.');
   }
 
-  const devicesRef = getUserDevicesCollection();
+  const devicesRef = getUserDevicesCollection(user);
   await setDoc(
     doc(devicesRef, deviceId),
     {
@@ -483,7 +514,7 @@ export const updateDevice = async (deviceId, updates) => {
   });
   const payload = withoutDeviceId(nextUpdates);
 
-  const devicesRef = getUserDevicesCollection();
+  const devicesRef = getUserDevicesCollection(user);
   await setDoc(
     doc(devicesRef, deviceId),
     {
@@ -517,7 +548,7 @@ export const removeDevice = async (deviceId) => {
     throw new Error('Entre na conta antes de remover dispositivos.');
   }
 
-  const devicesRef = getUserDevicesCollection();
+  const devicesRef = getUserDevicesCollection(user);
   const deviceRef = doc(devicesRef, deviceId);
 
   await Promise.all([

@@ -96,10 +96,10 @@
     </section>
 
     <nav id="mobile-navigation" class="bottom-nav" :class="{ open: isMobileNavOpen }" aria-label="Navegação mobile">
-      <button v-for="item in bottomNavItems" :key="item.to" type="button" :class="{ active: isActive(item.to) }" @click="navigatéMobile(item.to)">
+      <router-link v-for="item in bottomNavItems" :key="item.to" :to="item.to" :class="{ active: isActive(item.to) }" @click="handleMobileNavigation">
         <ion-icon :icon="item.icon" />
         <span>{{ item.shortLabel }}</span>
-      </button>
+      </router-link>
     </nav>
   </main>
 </template>
@@ -255,14 +255,9 @@ const closeMobileNav = () => {
   isMobileNavOpen.value = false;
 };
 
-const navigatéMobile = async (path) => {
+const handleMobileNavigation = () => {
   isNotificationsOpen.value = false;
   closePeriodMenu();
-
-  if (route.path !== path) {
-    await router.push(path);
-  }
-
   closeMobileNav();
 };
 
@@ -694,7 +689,7 @@ onUnmounted(() => {
     visibility: visible;
   }
 
-  .bottom-nav button {
+  .bottom-nav a {
     align-items: center;
     background: transparent;
     border: 0;

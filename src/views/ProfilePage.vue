@@ -22,7 +22,7 @@
           <article class="plan-card">
             <span>Plano atual</span>
             <strong>Institucional</strong>
-            <p>{{ connectedMeters }} medidores preparados para sincronização e relatorios mensais ativos.</p>
+            <p>{{ connectedMeters }} {{ connectedMeters === 1 ? 'medidor preparado' : 'medidores preparados' }} para sincronização e relatórios mensais ativos.</p>
             <div class="plan-meter">
               <i />
             </div>
@@ -293,7 +293,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { IonContent, IonIcon, IonPage } from '@ionic/vue';
+import { IonContent, IonIcon, IonPage, onIonViewWillEnter } from '@ionic/vue';
 import {
   checkmarkCircleOutline,
   closeOutline,
@@ -339,6 +339,7 @@ import {
   watchAuthUser,
 } from '../services/firebase.js';
 import { saveSettings } from '../data/settings-store.js';
+import { listDevices } from '../services/device-service.js';
 
 const router = useRouter();
 const initialUser = getCurrentUser();
@@ -357,7 +358,7 @@ const reportFrequency = ref(account.reportFrequency || 'Semanal');
 const saved = ref(false);
 const isEditing = ref(false);
 const isDark = ref(getSavedTheme() === 'dark');
-const connectedMeters = ref(12);
+const connectedMeters = ref(0);
 const showDeleteModal = ref(false);
 const showLogoutModal = ref(false);
 const profilePhotoInput = ref(null);
@@ -368,6 +369,16 @@ const verificationMessage = ref('');
 const providerIds = ref([]);
 const roleOptions = ROLE_OPTIONS;
 let stopProfileAuthListener = null;
+
+const refreshConnectedMeters = async () => {
+  try {
+    connectedMeters.value = (await listDevices()).length;
+  } catch (error) {
+    connectedMeters.value = 0;
+  }
+};
+
+onIonViewWillEnter(refreshConnectedMeters);
 
 const avatarColors = [
   { label: 'Azul água', value: '#1ca7a0' },

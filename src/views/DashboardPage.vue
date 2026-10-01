@@ -11,12 +11,24 @@
               {{ heroActionLabel }}
             </router-link>
           </div>
-          <strong>{{ currentConsumption }}</strong>
+          <strong>{{ overallCurrentConsumption }}</strong>
         </section>
 
         <section class="grid">
           <div class="main-column">
-            <MetricCard title="Consumo hoje" :value="currentConsumption" :variation="dashboardStatus" trend="neutral" />
+            <MetricCard title="Consumo hoje" :value="currentConsumption" :variation="dashboardStatus" trend="neutral">
+              <template #action>
+                <label class="device-filter">
+                  <span>Filtrar medidor</span>
+                  <select v-model="selectedDeviceId" aria-label="Filtrar consumo por dispositivo">
+                    <option value="all">Todos os dispositivos</option>
+                    <option v-for="device in devices" :key="device.id" :value="device.id">
+                      {{ device.name }} · {{ device.deviceCode }}
+                    </option>
+                  </select>
+                </label>
+              </template>
+            </MetricCard>
             <article v-if="activeDevice" class="device-status-card">
               <div class="card-title">
                 <div>
@@ -145,6 +157,8 @@
                   <h2>Resumo do mês</h2>
                   <p>Indicadores principais</p>
                 </div>
+                <span v-if="settings.presentationMode" class="chart-status simulation"><i /> Simulado</span>
+                <span v-else-if="monthlyImpactSummary.hasRealData" class="chart-status realtime"><i /> Dados reais</span>
               </div>
               <ListItem v-for="metric in visibleMonthlyMetrics" :key="metric.label" v-bind="metric" @click="openMetricInfo(metric)" />
             </article>
@@ -184,7 +198,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import { IonContent, IonIcon, IonPage, onIonViewWillEnter } from '@ionic/vue';
+import { IonContent, IonIcon, IonPage, onIonViewDidLeave, onIonViewWillEnter } from '@ionic/vue';
 import { alertCircleOutline, hardwareChipOutline, shieldCheckmarkOutline, warningOutline } from 'ionicons/icons';
 import { useRoute } from 'vue-router';
 import AppShell from '../components/AppShell.vue';
@@ -194,21 +208,45 @@ import { userGoals } from '../data/goals-store.js';
 import { dashboardData } from '../data/mock-data.js';
 import { formatVolume, getSettings, onSettingsChange } from '../data/settings-store.js';
 import { getCurrentUser, watchAuthUser } from '../services/firebase.js';
-import { listDevices } from '../services/device-service.js';
-import { getConsumptionReadings } from '../services/reading-service.js';
+import { listDevices, watchDeviceReadings } from '../services/device-service.js';
+import { getConsumptionReadings, getConsumptionReadingsFromData, getMonthlyImpactSummary } from '../services/reading-service.js';
 import { generateTechnicalAlerts, syncTechnicalAlertNotifications } from '../services/technical-alert-service.js';
 
 const selectedMetric = ref(null);
 const activeHour = ref('');
 const route = useRoute();
 const devices = ref([]);
+const liveDeviceReadings = ref([]);
+const selectedDeviceId = ref('all');
 const devicesError = ref('');
 let stopAuthListener = null;
 let stopSettingsListener = null;
+let stopReadingsListener = null;
 const settings = ref(getSettings());
 const consumptionData = ref(getConsumptionReadings(settings.value, devices.value));
 const dashboardGoal = computed(() => userGoals.value[0] || null);
-const todayTotalLiters = computed(() => consumptionData.value.rawReadings.reduce((total, reading) => {
+const selectedDevice = computed(() =>
+  selectedDeviceId.value === 'all'
+    ? null
+    : devices.value.find((device) => device.id === selectedDeviceId.value) || null,
+);
+const selectedDevices = computed(() => selectedDevice.value ? [selectedDevice.value] : devices.value);
+const selectedLiveReadings = computed(() =>
+  selectedDevice.value
+    ? liveDeviceReadings.value.filter((reading) => reading.deviceId === selectedDevice.value.id)
+    : liveDeviceReadings.value,
+);
+const overallConsumptionData = computed(() =>
+  settings.value.presentationMode
+    ? consumptionData.value
+    : getConsumptionReadingsFromData(liveDeviceReadings.value, settings.value),
+);
+const filteredConsumptionData = computed(() =>
+  settings.value.presentationMode
+    ? getConsumptionReadings(settings.value, selectedDevices.value)
+    : getConsumptionReadingsFromData(selectedLiveReadings.value, settings.value),
+);
+const getTodayTotal = (readings) => readings.reduce((total, reading) => {
   const readingDate = new Date(reading.timestamp);
   const today = new Date();
   const isToday =
@@ -217,8 +255,11 @@ const todayTotalLiters = computed(() => consumptionData.value.rawReadings.reduce
     readingDate.getFullYear() === today.getFullYear();
 
   return isToday ? total + reading.liters : total;
-}, 0));
+}, 0);
+const todayTotalLiters = computed(() => getTodayTotal(filteredConsumptionData.value.rawReadings));
+const overallTodayTotalLiters = computed(() => getTodayTotal(overallConsumptionData.value.rawReadings));
 const currentConsumption = computed(() => formatVolume(todayTotalLiters.value, settings.value));
+const overallCurrentConsumption = computed(() => formatVolume(overallTodayTotalLiters.value, settings.value));
 const activeDevice = computed(() => {
   return devices.value.find((device) => device.status === 'Ativo') || null;
 });
@@ -227,13 +268,13 @@ const deviceCount = computed(() => devices.value.length);
 const technicalAlerts = computed(() =>
   generateTechnicalAlerts({
     devices: devices.value,
-    readings: consumptionData.value.rawReadings,
+    readings: overallConsumptionData.value.rawReadings,
     settings: settings.value,
   }),
 );
 const visibleTechnicalAlerts = computed(() => technicalAlerts.value.slice(0, 3));
-const lastSimulatedReading = computed(() => {
-  return consumptionData.value.rawReadings
+const lastDashboardReading = computed(() => {
+  return overallConsumptionData.value.rawReadings
     .slice()
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0] || null;
 });
@@ -242,7 +283,7 @@ const activeDeviceReadings = computed(() => {
     return [];
   }
 
-  return consumptionData.value.rawReadings.filter((reading) => reading.deviceId === activeDevice.value.id);
+  return overallConsumptionData.value.rawReadings.filter((reading) => reading.deviceId === activeDevice.value.id);
 });
 const lastActiveDeviceReading = computed(() =>
   activeDeviceReadings.value
@@ -287,8 +328,12 @@ const dashboardStatus = computed(() => {
     return 'Não foi possível carregar dispositivos';
   }
 
-  if (activeDevice.value) {
-    return `${activeDevice.value.status} - ${activeDevice.value.deviceCode}`;
+  if (selectedDevice.value) {
+    return selectedDevice.value.status + ' - ' + selectedDevice.value.deviceCode;
+  }
+
+  if (devices.value.length) {
+    return devices.value.length + ' dispositivo' + (devices.value.length === 1 ? '' : 's') + ' na visão geral';
   }
 
   if (settings.value.anomalyDemo) {
@@ -321,7 +366,7 @@ const lastReadingLabel = computed(() => {
     return formatVolume(lastActiveDeviceReading.value.liters, settings.value);
   }
 
-  return formatVolume(activeDevice.value.lastReadingLiters || lastSimulatedReading.value?.liters || 0, settings.value);
+  return formatVolume(activeDevice.value.lastReadingLiters || lastDashboardReading.value?.liters || 0, settings.value);
 });
 const activeDeviceFlowRate = computed(() => {
   if (!activeDevice.value) {
@@ -330,14 +375,48 @@ const activeDeviceFlowRate = computed(() => {
 
   return `${lastActiveDeviceReading.value?.flowRate ?? activeDevice.value.lastFlowRate ?? 0} L/min`;
 });
-const visibleMonthlyMetrics = computed(() => dashboardData.monthly.map((metric) => {
-  if (metric.value === '0 L') {
-    return { ...metric, value: formatVolume(0, settings.value) };
-  }
-
-  return metric;
+const monthlyImpactSummary = computed(() => getMonthlyImpactSummary({
+  settings: settings.value,
+  devices: devices.value,
+  readings: liveDeviceReadings.value,
+  goals: userGoals.value,
 }));
-const dailyHourlyBars = computed(() => consumptionData.value.dailyHourlyBars || []);
+const formatCurrency = (value) => Number(value || 0).toLocaleString('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+});
+const visibleMonthlyMetrics = computed(() => {
+  const summary = monthlyImpactSummary.value;
+  const values = {
+    'Consumo total': formatVolume(summary.consumptionLiters, settings.value),
+    'Economia gerada': formatVolume(summary.savedLiters, settings.value),
+    'Valor economizado': formatCurrency(summary.savedAmount),
+    'Impacto ambiental': `${summary.treeEquivalent} ${summary.treeEquivalent === 1 ? 'árvore' : 'árvores'}`,
+  };
+  const simulatedInsights = {
+    'Consumo total': 'Projeção mensal baseada no perfil de leituras do modo de simulação.',
+    'Economia gerada': 'Economia simulada de 12% em comparação com o consumo mensal de referência.',
+    'Valor economizado': 'Estimativa simulada usando uma tarifa de referência de R$ 8,50 por m³.',
+    'Impacto ambiental': 'Equivalência simbólica calculada a partir da economia de água simulada.',
+  };
+  const realInsights = {
+    'Consumo total': summary.hasRealData
+      ? 'Soma das leituras reais recebidas pelos dispositivos durante o mês atual.'
+      : 'Aguardando as primeiras leituras reais dos dispositivos.',
+    'Economia gerada': summary.goalTargetPercentage
+      ? `Comparação com o mês anterior. Progresso atual: ${summary.goalProgress}% da meta média de ${summary.goalTargetPercentage.toLocaleString('pt-BR')}%.`
+      : 'Cadastre uma meta percentual e acumule leituras reais de dois meses para acompanhar a economia.',
+    'Valor economizado': 'Calculado pela economia real quando uma tarifa por m³ estiver configurada.',
+    'Impacto ambiental': 'Equivalência simbólica calculada somente a partir da economia real registrada.',
+  };
+
+  return dashboardData.monthly.map((metric) => ({
+    ...metric,
+    value: values[metric.label] || metric.value,
+    insight: (summary.simulated ? simulatedInsights : realInsights)[metric.label] || metric.insight,
+  }));
+});
+const dailyHourlyBars = computed(() => filteredConsumptionData.value.dailyHourlyBars || []);
 const hasHourlyData = computed(() => dailyHourlyBars.value.some((bar) => Number(bar.liters) > 0));
 
 const toggleActiveHour = (hour) => {
@@ -359,17 +438,44 @@ const statusClass = (status = '') => ({
   maintenance: status === 'Manutenção',
 });
 
+const stopRealtimeReadings = () => {
+  stopReadingsListener?.();
+  stopReadingsListener = null;
+};
+
+const subscribeToRealtimeReadings = () => {
+  stopRealtimeReadings();
+  liveDeviceReadings.value = [];
+  stopReadingsListener = watchDeviceReadings(
+    devices.value.map((device) => device.id),
+    (readings) => {
+      liveDeviceReadings.value = readings.filter((reading) => reading.source !== 'simulated');
+      syncTechnicalAlertNotifications(technicalAlerts.value);
+    },
+    () => {
+      liveDeviceReadings.value = [];
+    },
+  );
+};
+
 const loadDashboardDevices = async () => {
   settings.value = getSettings();
 
   try {
     devicesError.value = '';
     devices.value = await listDevices();
+    if (selectedDeviceId.value !== 'all' && !devices.value.some((device) => device.id === selectedDeviceId.value)) {
+      selectedDeviceId.value = 'all';
+    }
     consumptionData.value = getConsumptionReadings(settings.value, devices.value);
+    subscribeToRealtimeReadings();
     syncTechnicalAlertNotifications(technicalAlerts.value);
   } catch (error) {
+    stopRealtimeReadings();
     devicesError.value = 'Não foi possível carregar dispositivos.';
     devices.value = [];
+    liveDeviceReadings.value = [];
+    selectedDeviceId.value = 'all';
     consumptionData.value = getConsumptionReadings(settings.value, []);
   }
 };
@@ -385,6 +491,7 @@ const refreshDashboardSettings = (nextSettings = getSettings()) => {
 };
 
 onIonViewWillEnter(loadDashboardDevices);
+onIonViewDidLeave(stopRealtimeReadings);
 
 onMounted(() => {
   stopAuthListener = watchAuthUser(() => {
@@ -411,6 +518,7 @@ watch(
 onUnmounted(() => {
   stopAuthListener?.();
   stopSettingsListener?.();
+  stopRealtimeReadings();
   window.removeEventListener('focus', refreshDashboardDevices);
 });
 </script>
@@ -506,6 +614,40 @@ onUnmounted(() => {
 .side-column {
   display: grid;
   gap: 18px;
+}
+
+.device-filter {
+  display: grid;
+  gap: 7px;
+  width: 100%;
+}
+
+.device-filter span {
+  color: var(--agua-suave);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.device-filter select {
+  appearance: none;
+  background:
+    linear-gradient(45deg, transparent 50%, var(--agua-petroleo) 50%) calc(100% - 17px) 20px / 5px 5px no-repeat,
+    linear-gradient(135deg, var(--agua-petroleo) 50%, transparent 50%) calc(100% - 12px) 20px / 5px 5px no-repeat,
+    var(--agua-muted);
+  border: 1px solid var(--agua-borda);
+  border-radius: 13px;
+  color: var(--agua-petroleo);
+  cursor: pointer;
+  font: 700 12px Poppins, sans-serif;
+  min-height: 46px;
+  outline: none;
+  padding: 0 38px 0 13px;
+  width: 100%;
+}
+
+.device-filter select:focus {
+  border-color: var(--agua-agua);
+  box-shadow: 0 0 0 4px rgba(28, 167, 160, 0.14);
 }
 
 .chart-card,

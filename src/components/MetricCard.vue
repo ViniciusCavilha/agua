@@ -1,11 +1,16 @@
 ﻿<template>
-  <article class="metric">
-    <span class="eyebrow">{{ title }}</span>
-    <strong>{{ value }}</strong>
-    <span :class="['trend', trend]">
-      <ion-icon v-if="trend !== 'neutral'" :icon="trend === 'up' ? trendingUpOutline : trendingDownOutline" />
-      {{ variation }}
-    </span>
+  <article class="metric" :class="{ 'has-action': $slots.action }">
+    <div class="metric-copy">
+      <span class="eyebrow">{{ title }}</span>
+      <strong>{{ value }}</strong>
+      <span :class="['trend', trend]">
+        <ion-icon v-if="trend !== 'neutral'" :icon="trend === 'up' ? trendingUpOutline : trendingDownOutline" />
+        {{ variation }}
+      </span>
+    </div>
+    <div v-if="$slots.action" class="metric-action">
+      <slot name="action" />
+    </div>
   </article>
 </template>
 
@@ -42,12 +47,26 @@ defineProps({
   border: 1px solid var(--agua-borda);
   border-radius: 18px;
   box-shadow: var(--agua-shadow);
-  display: flex;
-  flex-direction: column;
+  align-items: center;
+  display: grid;
   gap: 7px;
+  grid-template-columns: minmax(0, 1fr) auto;
   overflow: hidden;
   padding: 20px;
   position: relative;
+}
+
+.metric-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.metric-action {
+  min-width: min(250px, 42%);
+  position: relative;
+  z-index: 1;
 }
 
 .metric::after {
@@ -60,6 +79,10 @@ defineProps({
   right: 18px;
   top: 18px;
   width: 8px;
+}
+
+.metric.has-action::after {
+  display: none;
 }
 
 .eyebrow {
@@ -94,5 +117,17 @@ strong {
 
 .neutral {
   color: var(--agua-suave);
+}
+
+@media (max-width: 620px) {
+  .metric {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .metric-action {
+    min-width: 0;
+    width: 100%;
+  }
 }
 </style>

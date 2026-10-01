@@ -25,8 +25,10 @@
                 </span>
               </label>
 
-              <PrimaryButton>
-                Enviar link
+              <p v-if="errorMessage" class="form-error" role="alert">{{ errorMessage }}</p>
+
+              <PrimaryButton :disabled="loading">
+                {{ loading ? 'Enviando...' : 'Enviar link' }}
                 <ion-icon :icon="sendOutline" />
               </PrimaryButton>
             </form>
@@ -76,13 +78,38 @@ import {
   waterOutline,
 } from 'ionicons/icons';
 import PrimaryButton from '../components/PrimaryButton.vue';
+import { isFirebaseReady, sendPasswordRecovery } from '../services/firebase.js';
 
 const router = useRouter();
 const email = ref('');
 const sent = ref(false);
+const loading = ref(false);
+const errorMessage = ref('');
 
-const sendRecovery = () => {
-  sent.value = true;
+const sendRecovery = async () => {
+  errorMessage.value = '';
+
+  if (!isFirebaseReady()) {
+    errorMessage.value = 'A recuperação de senha ainda não está configurada.';
+    return;
+  }
+
+  loading.value = true;
+
+  try {
+    await sendPasswordRecovery(email.value);
+    sent.value = true;
+  } catch (error) {
+    if (error?.code === 'auth/invalid-email') {
+      errorMessage.value = 'Digite um e-mail válido.';
+    } else if (error?.code === 'auth/too-many-requests') {
+      errorMessage.value = 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
+    } else {
+      errorMessage.value = 'Não foi possível enviar o link agora. Verifique sua conexão e tente novamente.';
+    }
+  } finally {
+    loading.value = false;
+  }
 };
 
 const goLogin = () => router.push('/login');
@@ -169,6 +196,17 @@ h1 {
 form {
   display: grid;
   gap: 17px;
+}
+
+.form-error {
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: 12px;
+  color: #be123c;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+  padding: 11px 13px;
 }
 
 label {

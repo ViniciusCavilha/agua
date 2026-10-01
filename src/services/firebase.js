@@ -9,6 +9,7 @@ import {
   reauthenticateWithPopup,
   reload,
   sendEmailVerification,
+  sendPasswordResetEmail,
   setPersistence,
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -168,6 +169,11 @@ export const loginWithEmail = async (email, password) => {
   await reload(credential.user);
   const profile = await getUserProfile(credential.user.uid);
   return buildAccountFromUser(credential.user, profile || {});
+};
+
+export const sendPasswordRecovery = async (email) => {
+  ensureFirebase();
+  await sendPasswordResetEmail(auth, String(email || '').trim().toLowerCase());
 };
 
 export const createFirebaseAccount = async ({ name, email, password, phone, company, unit, role, avatarColor, avatarImage, settings, theme, themeConfigured = true, useCurrentUser = false }) => {

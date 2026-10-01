@@ -14,6 +14,8 @@ const presentationFlowRates = [7.8, 8.6, 7.1, 9.4, 8.9, 6.2, 14.8];
 const deviceSimulationFactors = [1, 0.72, 0.58, 1.18, 0.86, 0.64];
 const dailyHourBuckets = [0, 3, 6, 9, 12, 15, 18, 21];
 const dailySimulationProfile = [18, 12, 86, 54, 38, 46, 92, 58];
+const monthlySimulationSavingsRate = 0.12;
+const monthlySimulationTariffPerCubicMeter = 8.5;
 
 const emptyStats = [
   { label: 'Esta semana', value: '0 L', detail: 'Consumo acumulado semanal' },
@@ -182,6 +184,85 @@ const groupLitersByDay = (readings) => {
   }, Array(7).fill(0));
 };
 
+const getGoalTargetPercentage = (goals = []) => {
+  const percentages = goals
+    .map((goal) => `${goal.target || ''} ${goal.description || ''}`.match(/(\d+(?:[.,]\d+)?)\s*%/))
+    .filter(Boolean)
+    .map((match) => toNumber(match[1].replace(',', '.')))
+    .filter((value) => value > 0);
+
+  if (!percentages.length) {
+    return 0;
+  }
+
+  return percentages.reduce((total, percentage) => total + percentage, 0) / percentages.length;
+};
+
+export const getMonthlyImpactSummary = ({ settings = getSettings(), devices = [], readings = [], goals = [] } = {}) => {
+  const now = new Date();
+  const realReadings = readings.filter((reading) => reading.source !== 'simulated');
+  const currentMonthLiters = realReadings.reduce((total, reading) => {
+    const timestamp = new Date(reading.timestamp);
+    const isCurrentMonth = timestamp.getFullYear() === now.getFullYear() && timestamp.getMonth() === now.getMonth();
+    return isCurrentMonth ? total + toNumber(reading.liters) : total;
+  }, 0);
+  const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const previousMonthLiters = realReadings.reduce((total, reading) => {
+    const timestamp = new Date(reading.timestamp);
+    const isPreviousMonth = timestamp.getFullYear() === previousMonth.getFullYear()
+      && timestamp.getMonth() === previousMonth.getMonth();
+    return isPreviousMonth ? total + toNumber(reading.liters) : total;
+  }, 0);
+  const goalTargetPercentage = getGoalTargetPercentage(goals);
+
+  if (!settings.presentationMode) {
+    const consumptionLiters = Math.round(currentMonthLiters);
+    const savedLiters = Math.round(Math.max(0, previousMonthLiters - currentMonthLiters));
+    const targetSavingsLiters = previousMonthLiters * (goalTargetPercentage / 100);
+    const goalProgress = targetSavingsLiters > 0
+      ? Math.min(100, Math.round((savedLiters / targetSavingsLiters) * 100))
+      : 0;
+    const tariff = Math.max(0, toNumber(settings.waterTariffPerCubicMeter));
+
+    return {
+      consumptionLiters,
+      savedLiters,
+      savedAmount: (savedLiters / 1000) * tariff,
+      treeEquivalent: savedLiters ? Math.max(1, Math.round(savedLiters / 1000)) : 0,
+      goalTargetPercentage,
+      goalProgress,
+      hasRealData: realReadings.length > 0,
+      simulated: false,
+    };
+  }
+
+  const deviceFactor = devices.length
+    ? devices.reduce((total, device, index) => {
+      const statusMultiplier = device.status === 'Offline' ? 0 : device.status === 'Manutenção' ? 0.35 : 1;
+      return total + deviceSimulationFactors[index % deviceSimulationFactors.length] * statusMultiplier;
+    }, 0)
+    : 1;
+  const baseWeeklyLiters = presentationLiters.reduce((total, liters) => total + liters, 0);
+  const anomalyLiters = settings.anomalyDemo && deviceFactor > 0 ? 200 : 0;
+  const consumptionLiters = Math.round((baseWeeklyLiters + anomalyLiters) * (30 / 7) * deviceFactor);
+  const savedLiters = Math.round(consumptionLiters * monthlySimulationSavingsRate);
+  const savedAmount = (savedLiters / 1000) * monthlySimulationTariffPerCubicMeter;
+  const treeEquivalent = savedLiters ? Math.max(1, Math.round(savedLiters / 1000)) : 0;
+
+  return {
+    consumptionLiters,
+    savedLiters,
+    savedAmount,
+    treeEquivalent,
+    goalTargetPercentage,
+    goalProgress: goalTargetPercentage
+      ? Math.min(100, Math.round((monthlySimulationSavingsRate * 100 / goalTargetPercentage) * 100))
+      : 0,
+    hasRealData: false,
+    simulated: true,
+  };
+};
+
 const buildWeeklyBars = (readings, settings) => {
   const totals = groupLitersByDay(readings);
   const max = Math.max(...totals, 1);
@@ -268,6 +349,20 @@ export const getConsumptionReadings = (settings = getSettings(), devices = null)
     dailyHourlyBars: buildDailyHourlyBars(rawReadings, settings, deviceCount),
     readings: formatDisplayReadings(rawReadings, settings),
     rawReadings,
+  };
+};
+
+export const getConsumptionReadingsFromData = (readings = [], settings = getSettings()) => {
+  const deviceCount = new Set(readings.map((reading) => reading.deviceId).filter(Boolean)).size;
+
+  return {
+    ...emptyReadingsState,
+    stats: buildStats(readings, settings),
+    weeklyBars: buildWeeklyBars(readings, settings),
+    dailyHourlyBars: buildDailyHourlyBars(readings, { ...settings, presentationMode: false }, deviceCount),
+    readings: formatDisplayReadings(readings, settings),
+    rawReadings: readings,
+    source: 'realtime',
   };
 };
 
