@@ -274,7 +274,7 @@ const buildWeeklyBars = (readings, settings) => {
   }));
 };
 
-const buildDailyHourlyBars = (readings, settings, deviceCount = 0) => {
+const buildDailyHourlyBars = (readings, settings) => {
   const now = new Date();
   const todayReadings = readings.filter((reading) => {
     const timestamp = new Date(reading.timestamp);
@@ -292,7 +292,9 @@ const buildDailyHourlyBars = (readings, settings, deviceCount = 0) => {
   });
 
   if (settings.presentationMode) {
-    const simulationFactor = Math.max(1, deviceCount || 1);
+    const baseWeeklyLiters = presentationLiters.reduce((total, liters) => total + liters, 0);
+    const simulatedWeeklyLiters = readings.reduce((total, reading) => total + Number(reading.liters || 0), 0);
+    const simulationFactor = readings.length ? simulatedWeeklyLiters / baseWeeklyLiters : 0;
     totals = dailySimulationProfile.map((liters, index) => {
       const variation = settings.anomalyDemo && index === 6 ? 2.4 : 1;
       return Math.round(liters * simulationFactor * variation);
@@ -340,26 +342,32 @@ const formatDisplayReadings = (readings, settings) => {
 
 export const getConsumptionReadings = (settings = getSettings(), devices = null) => {
   const rawReadings = getSimulatedReadings(settings, devices);
-  const deviceCount = Array.isArray(devices) ? devices.length : 1;
 
   return {
     ...emptyReadingsState,
     stats: buildStats(rawReadings, settings),
     weeklyBars: buildWeeklyBars(rawReadings, settings),
-    dailyHourlyBars: buildDailyHourlyBars(rawReadings, settings, deviceCount),
+    dailyHourlyBars: buildDailyHourlyBars(rawReadings, settings),
     readings: formatDisplayReadings(rawReadings, settings),
     rawReadings,
   };
 };
 
-export const getConsumptionReadingsFromData = (readings = [], settings = getSettings()) => {
-  const deviceCount = new Set(readings.map((reading) => reading.deviceId).filter(Boolean)).size;
+export const getConsumptionReadingsFromData = (
+  readings = [],
+  settings = getSettings(),
+  { presentationProfile = false } = {},
+) => {
+  const chartSettings = {
+    ...settings,
+    presentationMode: presentationProfile && settings.presentationMode,
+  };
 
   return {
     ...emptyReadingsState,
     stats: buildStats(readings, settings),
     weeklyBars: buildWeeklyBars(readings, settings),
-    dailyHourlyBars: buildDailyHourlyBars(readings, { ...settings, presentationMode: false }, deviceCount),
+    dailyHourlyBars: buildDailyHourlyBars(readings, chartSettings),
     readings: formatDisplayReadings(readings, settings),
     rawReadings: readings,
     source: 'realtime',

@@ -230,7 +230,6 @@ const selectedDevice = computed(() =>
     ? null
     : devices.value.find((device) => device.id === selectedDeviceId.value) || null,
 );
-const selectedDevices = computed(() => selectedDevice.value ? [selectedDevice.value] : devices.value);
 const selectedLiveReadings = computed(() =>
   selectedDevice.value
     ? liveDeviceReadings.value.filter((reading) => reading.deviceId === selectedDevice.value.id)
@@ -243,7 +242,13 @@ const overallConsumptionData = computed(() =>
 );
 const filteredConsumptionData = computed(() =>
   settings.value.presentationMode
-    ? getConsumptionReadings(settings.value, selectedDevices.value)
+    ? selectedDevice.value
+      ? getConsumptionReadingsFromData(
+        consumptionData.value.rawReadings.filter((reading) => reading.deviceId === selectedDevice.value.id),
+        settings.value,
+        { presentationProfile: true },
+      )
+      : consumptionData.value
     : getConsumptionReadingsFromData(selectedLiveReadings.value, settings.value),
 );
 const getTodayTotal = (readings) => readings.reduce((total, reading) => {

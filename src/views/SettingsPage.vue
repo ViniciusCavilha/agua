@@ -126,15 +126,33 @@
                   Cenário de anomalia
                   <small>Forçar vazamento/consumo fora do horário em demonstrações.</small>
                 </span>
-                <input v-model="settings.anomalyDemo" type="checkbox" />
+                <input v-model="settings.anomalyDemo" type="checkbox" :disabled="!settings.simulationMode" />
               </label>
 
               <label class="range-row">
                 <span>
                   Intervalo de leitura
-                  <small>{{ settings.readingInterval }} segundos</small>
+                  <small>Frequência usada para atualizar as leituras dos medidores.</small>
                 </span>
-                <input v-model.number="settings.readingInterval" type="range" min="5" max="60" step="5" />
+                <span class="range-control">
+                  <span class="range-current">
+                    <strong>{{ settings.readingInterval }}</strong>
+                    <small>segundos</small>
+                  </span>
+                  <input
+                    v-model.number="settings.readingInterval"
+                    :style="readingIntervalStyle"
+                    aria-label="Intervalo de leitura em segundos"
+                    type="range"
+                    min="5"
+                    max="60"
+                    step="5"
+                  />
+                  <span class="range-limits" aria-hidden="true">
+                    <small>5s</small>
+                    <small>60s</small>
+                  </span>
+                </span>
               </label>
             </div>
           </article>
@@ -205,6 +223,9 @@ const settings = reactive(getSettings());
 const saved = ref(false);
 const isDark = ref(getSavedTheme() === 'dark');
 const pushPermission = ref(typeof Notification === 'undefined' ? 'unsupported' : Notification.permission);
+const readingIntervalStyle = computed(() => ({
+  '--range-progress': (((Number(settings.readingInterval) - 5) / 55) * 100) + '%',
+}));
 
 const summaryRows = computed(() => [
   { label: 'Tema', value: isDark.value ? 'Escuro' : 'Claro' },
@@ -392,6 +413,7 @@ watch(
   grid-template-columns: auto 1fr;
   min-height: 62px;
   padding: 13px 14px;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .theme-row {
@@ -438,15 +460,162 @@ label {
   grid-template-columns: 1fr auto;
 }
 
-.switch-row input {
-  accent-color: var(--agua-agua);
-  height: 20px;
-  width: 20px;
+.switch-row {
+  cursor: pointer;
 }
 
-.range-row input {
-  accent-color: var(--agua-agua);
-  width: 170px;
+.switch-row:hover,
+.range-row:hover {
+  border-color: color-mix(in srgb, var(--agua-agua) 34%, var(--agua-borda));
+}
+
+.switch-row:has(input:checked) {
+  background:
+    linear-gradient(135deg, rgba(28, 167, 160, 0.1), transparent 54%),
+    var(--agua-muted);
+  border-color: color-mix(in srgb, var(--agua-agua) 52%, var(--agua-borda));
+}
+
+.switch-row:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+
+.switch-row input[type='checkbox'] {
+  appearance: none;
+  background: color-mix(in srgb, var(--agua-suave) 28%, var(--agua-branco));
+  border: 1px solid color-mix(in srgb, var(--agua-suave) 42%, var(--agua-borda));
+  border-radius: 999px;
+  box-shadow: inset 0 1px 3px rgba(13, 75, 94, 0.12);
+  cursor: pointer;
+  height: 30px;
+  margin: 0;
+  position: relative;
+  transition: background 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+  width: 52px;
+}
+
+.switch-row input[type='checkbox']::before {
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 3px 8px rgba(13, 75, 94, 0.24);
+  content: '';
+  height: 22px;
+  left: 3px;
+  position: absolute;
+  top: 3px;
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  width: 22px;
+}
+
+.switch-row input[type='checkbox']:checked {
+  background: linear-gradient(135deg, var(--agua-agua), #54d7cd);
+  border-color: var(--agua-agua);
+  box-shadow: 0 0 0 4px rgba(28, 167, 160, 0.1);
+}
+
+.switch-row input[type='checkbox']:checked::before {
+  transform: translateX(22px);
+}
+
+.switch-row input[type='checkbox']:focus-visible {
+  outline: 3px solid rgba(28, 167, 160, 0.24);
+  outline-offset: 3px;
+}
+
+.switch-row input[type='checkbox']:disabled {
+  cursor: not-allowed;
+}
+
+.range-row {
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 300px);
+  padding-block: 16px;
+}
+
+.range-control {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.range-current {
+  align-items: baseline;
+  background: rgba(28, 167, 160, 0.12);
+  border: 1px solid rgba(28, 167, 160, 0.2);
+  border-radius: 11px;
+  display: inline-flex;
+  gap: 5px;
+  justify-self: end;
+  padding: 5px 9px;
+}
+
+.range-current strong {
+  color: var(--agua-petroleo);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.range-current small {
+  color: var(--agua-suave);
+  font-size: 9px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.range-control input[type='range'] {
+  appearance: none;
+  background:
+    linear-gradient(
+      to right,
+      var(--agua-agua) 0,
+      var(--agua-agua) var(--range-progress),
+      color-mix(in srgb, var(--agua-suave) 24%, var(--agua-branco)) var(--range-progress),
+      color-mix(in srgb, var(--agua-suave) 24%, var(--agua-branco)) 100%
+    );
+  border-radius: 999px;
+  cursor: pointer;
+  height: 8px;
+  margin: 0;
+  outline: none;
+  width: 100%;
+}
+
+.range-control input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  background: #ffffff;
+  border: 4px solid var(--agua-agua);
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(13, 75, 94, 0.28);
+  height: 24px;
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+  width: 24px;
+}
+
+.range-control input[type='range']::-moz-range-thumb {
+  background: #ffffff;
+  border: 4px solid var(--agua-agua);
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(13, 75, 94, 0.28);
+  height: 16px;
+  width: 16px;
+}
+
+.range-control input[type='range']:hover::-webkit-slider-thumb,
+.range-control input[type='range']:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 6px rgba(28, 167, 160, 0.16), 0 4px 12px rgba(13, 75, 94, 0.28);
+  transform: scale(1.04);
+}
+
+.range-limits {
+  display: flex;
+  justify-content: space-between;
+}
+
+.range-limits small {
+  color: var(--agua-suave);
+  font-size: 9px;
+  font-weight: 700;
+  margin: 0;
 }
 
 .stack {
@@ -469,7 +638,11 @@ label {
 }
 
 .presentation-box.active {
+  background:
+    linear-gradient(135deg, rgba(31, 206, 195, 0.2), transparent 58%),
+    var(--agua-muted);
   border-color: rgba(28, 167, 160, 0.42);
+  box-shadow: inset 4px 0 0 var(--agua-agua);
 }
 
 .presentation-box strong {
@@ -498,6 +671,19 @@ label {
   gap: 7px;
   min-height: 42px;
   padding: 0 12px;
+  transition: box-shadow 0.18s ease, filter 0.18s ease, transform 0.18s ease;
+}
+
+.presentation-box button:hover {
+  box-shadow: 0 9px 20px rgba(13, 75, 94, 0.2);
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+.presentation-box.active button {
+  background: linear-gradient(135deg, var(--agua-agua), #54d7cd);
+  border-color: transparent;
+  color: #073039;
 }
 
 .field-grid {
@@ -616,6 +802,10 @@ select:focus {
 
   .range-row input {
     width: 100%;
+  }
+
+  .range-current {
+    justify-self: start;
   }
 }
 </style>

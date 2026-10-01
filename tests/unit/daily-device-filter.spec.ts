@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { getConsumptionReadingsFromData } from '@/services/reading-service.js'
+import { getConsumptionReadings, getConsumptionReadingsFromData } from '@/services/reading-service.js'
 
 const todayAt = (hour: number) => {
   const date = new Date()
@@ -25,5 +25,37 @@ describe('filtro diário por dispositivo', () => {
     expect(overview.dailyHourlyBars.reduce((total, bar) => total + bar.liters, 0)).toBe(350)
     expect(deviceA.dailyHourlyBars.reduce((total, bar) => total + bar.liters, 0)).toBe(150)
     expect(deviceA.rawReadings.every((reading) => reading.deviceId === 'device-a')).toBe(true)
+  })
+
+  test('preserva valores simulados diferentes ao filtrar cada dispositivo', () => {
+    const settings = {
+      anomalyDemo: false,
+      measurementUnit: 'Litros',
+      presentationMode: true,
+      readingInterval: 10,
+      simulationMode: true,
+    }
+    const devices = [
+      { id: 'device-a', deviceCode: 'A', status: 'Ativo', sensor: { calibrationFactor: 7.5 } },
+      { id: 'device-b', deviceCode: 'B', status: 'Ativo', sensor: { calibrationFactor: 7.5 } },
+    ]
+    const overview = getConsumptionReadings(settings, devices)
+    const deviceA = getConsumptionReadingsFromData(
+      overview.rawReadings.filter((reading) => reading.deviceId === 'device-a'),
+      settings,
+      { presentationProfile: true },
+    )
+    const deviceB = getConsumptionReadingsFromData(
+      overview.rawReadings.filter((reading) => reading.deviceId === 'device-b'),
+      settings,
+      { presentationProfile: true },
+    )
+    const totalA = deviceA.rawReadings.reduce((total, reading) => total + reading.liters, 0)
+    const totalB = deviceB.rawReadings.reduce((total, reading) => total + reading.liters, 0)
+    const chartTotalA = deviceA.dailyHourlyBars.reduce((total, bar) => total + bar.liters, 0)
+    const chartTotalB = deviceB.dailyHourlyBars.reduce((total, bar) => total + bar.liters, 0)
+
+    expect(totalA).not.toBe(totalB)
+    expect(chartTotalA).not.toBe(chartTotalB)
   })
 })
