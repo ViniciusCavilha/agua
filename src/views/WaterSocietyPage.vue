@@ -31,14 +31,33 @@
             <p>O desenvolvimento das técnicas de uso da água acompanha as mudanças da própria sociedade.</p>
           </header>
 
+          <p class="interaction-hint">Selecione um período para descobrir o que ele deixou como legado.</p>
+
           <div class="timeline">
-            <article v-for="(period, index) in historyPeriods" :key="period.title" class="timeline-card">
+            <button
+              v-for="(period, index) in historyPeriods"
+              :key="period.title"
+              type="button"
+              class="timeline-card"
+              :class="{ active: selectedHistory === index }"
+              :aria-pressed="selectedHistory === index"
+              @click="selectedHistory = index"
+            >
               <div class="timeline-index">{{ String(index + 1).padStart(2, '0') }}</div>
               <span class="card-icon"><ion-icon :icon="period.icon" /></span>
               <small>{{ period.period }}</small>
               <h3>{{ period.title }}</h3>
               <p>{{ period.description }}</p>
-            </article>
+            </button>
+          </div>
+
+          <div class="discovery-panel history-discovery" aria-live="polite">
+            <span class="discovery-icon"><ion-icon :icon="historyPeriods[selectedHistory].icon" /></span>
+            <div>
+              <small>Legado para o presente</small>
+              <h3>{{ historyPeriods[selectedHistory].legacyTitle }}</h3>
+              <p>{{ historyPeriods[selectedHistory].legacy }}</p>
+            </div>
           </div>
         </section>
 
@@ -78,15 +97,40 @@
             <p>Cada técnica responde ao seu período histórico e apresenta diferentes níveis de eficiência.</p>
           </header>
 
+          <p class="interaction-hint">Compare as técnicas para entender onde cada uma funciona melhor.</p>
+
           <div class="method-grid">
-            <article v-for="method in irrigationMethods" :key="method.title" class="method-card">
+            <button
+              v-for="(method, index) in irrigationMethods"
+              :key="method.title"
+              type="button"
+              class="method-card"
+              :class="{ active: selectedIrrigation === index }"
+              :aria-pressed="selectedIrrigation === index"
+              @click="selectedIrrigation = index"
+            >
               <span class="card-icon"><ion-icon :icon="method.icon" /></span>
               <div>
                 <small>{{ method.period }}</small>
                 <h3>{{ method.title }}</h3>
                 <p>{{ method.description }}</p>
               </div>
-            </article>
+            </button>
+          </div>
+
+          <div class="discovery-panel method-discovery" aria-live="polite">
+            <div class="comparison-item">
+              <small>Eficiência relativa</small>
+              <strong>{{ irrigationMethods[selectedIrrigation].efficiency }}</strong>
+            </div>
+            <div class="comparison-item">
+              <small>Principal vantagem</small>
+              <strong>{{ irrigationMethods[selectedIrrigation].advantage }}</strong>
+            </div>
+            <div class="comparison-item">
+              <small>Ponto de atenção</small>
+              <strong>{{ irrigationMethods[selectedIrrigation].attention }}</strong>
+            </div>
           </div>
         </section>
 
@@ -104,11 +148,25 @@
           </div>
 
           <div class="reuse-grid">
-            <article v-for="item in reuseOptions" :key="item.title">
-              <span class="card-icon"><ion-icon :icon="item.icon" /></span>
-              <h3>{{ item.title }}</h3>
-              <p>{{ item.description }}</p>
-              <small>{{ item.application }}</small>
+            <article v-for="(item, index) in reuseOptions" :key="item.title" :class="{ open: expandedReuse === index }">
+              <button
+                type="button"
+                class="reuse-toggle"
+                :aria-expanded="expandedReuse === index"
+                @click="expandedReuse = expandedReuse === index ? null : index"
+              >
+                <span class="card-icon"><ion-icon :icon="item.icon" /></span>
+                <span class="reuse-copy">
+                  <h3>{{ item.title }}</h3>
+                  <p>{{ item.description }}</p>
+                  <small>{{ item.application }}</small>
+                </span>
+                <ion-icon class="expand-icon" :icon="chevronDownOutline" />
+              </button>
+              <div v-if="expandedReuse === index" class="reuse-details" aria-live="polite">
+                <strong>Como aplicar com segurança</strong>
+                <p>{{ item.guidance }}</p>
+              </div>
             </article>
           </div>
 
@@ -167,10 +225,12 @@
 
 <script setup>
 import { IonContent, IonIcon, IonPage } from '@ionic/vue';
+import { ref } from 'vue';
 import {
   analyticsOutline,
   arrowForwardOutline,
   businessOutline,
+  chevronDownOutline,
   chevronForwardOutline,
   hardwareChipOutline,
   leafOutline,
@@ -192,28 +252,32 @@ const heroSteps = [
 ];
 
 const historyPeriods = [
-  { period: 'Há cerca de 12 mil anos', title: 'Revolução Agrícola', description: 'O cultivo e a domesticação de plantas favoreceram comunidades fixas e aumentaram a necessidade de administrar água.', icon: nutritionOutline },
-  { period: 'Antiguidade', title: 'Primeiras civilizações', description: 'Povos próximos a grandes rios desenvolveram canais, diques e reservatórios para irrigar plantações e abastecer cidades.', icon: libraryOutline },
-  { period: 'Períodos medieval e moderno', title: 'Expansão agrícola', description: 'Poços, rodas-d’água e técnicas regionais ampliaram o transporte e o aproveitamento da água.', icon: settingsOutline },
-  { period: 'Revolução Industrial', title: 'Crescimento urbano', description: 'Bombas, tubulações e redes de abastecimento acompanharam a industrialização e o aumento das cidades.', icon: businessOutline },
-  { period: 'Séculos XX e XXI', title: 'Agricultura contemporânea', description: 'Aspersão e gotejamento tornaram a irrigação mais controlável, mas a demanda crescente trouxe novos desafios ambientais.', icon: rainyOutline },
-  { period: 'Presente e futuro', title: 'Gestão inteligente', description: 'Sensores e dados permitem identificar consumo, desperdício e oportunidades de reutilização com mais precisão.', icon: analyticsOutline },
+  { period: 'Há cerca de 12 mil anos', title: 'Revolução Agrícola', description: 'O cultivo e a domesticação de plantas favoreceram comunidades fixas e aumentaram a necessidade de administrar água.', legacyTitle: 'A água ajudou a transformar grupos nômades em comunidades permanentes.', legacy: 'Ao depender do plantio, as populações passaram a observar estações, chuvas e rios. Essa organização criou novas formas de trabalho, armazenamento de alimentos e ocupação do território.', icon: nutritionOutline },
+  { period: 'Antiguidade', title: 'Primeiras civilizações', description: 'Povos próximos a grandes rios desenvolveram canais, diques e reservatórios para irrigar plantações e abastecer cidades.', legacyTitle: 'Obras hidráulicas se tornaram parte da organização social.', legacy: 'Controlar cheias e distribuir água exigia planejamento coletivo. Rios como o Nilo, Tigre, Eufrates e Indo influenciaram a economia, a política e a cultura de diferentes povos.', icon: libraryOutline },
+  { period: 'Períodos medieval e moderno', title: 'Expansão agrícola', description: 'Poços, rodas-d’água e técnicas regionais ampliaram o transporte e o aproveitamento da água.', legacyTitle: 'A energia da água também passou a movimentar a produção.', legacy: 'Rodas-d’água ajudaram na moagem de grãos e em outras tarefas. Conhecimentos hidráulicos circularam entre regiões e foram adaptados às condições locais.', icon: settingsOutline },
+  { period: 'Revolução Industrial', title: 'Crescimento urbano', description: 'Bombas, tubulações e redes de abastecimento acompanharam a industrialização e o aumento das cidades.', legacyTitle: 'Abastecimento e saneamento se tornaram desafios urbanos.', legacy: 'A concentração populacional aumentou a demanda e evidenciou a relação entre água contaminada e doenças, impulsionando redes públicas de tratamento e distribuição.', icon: businessOutline },
+  { period: 'Séculos XX e XXI', title: 'Agricultura contemporânea', description: 'Aspersão e gotejamento tornaram a irrigação mais controlável, mas a demanda crescente trouxe novos desafios ambientais.', legacyTitle: 'A produtividade cresceu, assim como a responsabilidade ambiental.', legacy: 'A mecanização permitiu produzir em maior escala, mas o uso intensivo mostrou a necessidade de evitar perdas, proteger o solo e respeitar a disponibilidade de cada bacia hidrográfica.', icon: rainyOutline },
+  { period: 'Presente e futuro', title: 'Gestão inteligente', description: 'Sensores e dados permitem identificar consumo, desperdício e oportunidades de reutilização com mais precisão.', legacyTitle: 'Medir permite agir antes que a água seja desperdiçada.', legacy: 'Sensores conectados podem revelar vazamentos, comparar períodos e orientar decisões. A tecnologia complementa, mas não substitui, práticas responsáveis e políticas de preservação.', icon: analyticsOutline },
 ];
 
 const biologySteps = ['Solo', 'Raízes', 'Caule', 'Folhas', 'Atmosfera'];
 
 const irrigationMethods = [
-  { period: 'Técnica tradicional', title: 'Canais e sulcos', description: 'A gravidade distribui a água pelo terreno, com baixo custo e maior possibilidade de perdas.', icon: waterOutline },
-  { period: 'Mecanização', title: 'Aspersão', description: 'A água é lançada sobre a plantação, simulando chuva e cobrindo áreas maiores.', icon: rainyOutline },
-  { period: 'Eficiência', title: 'Gotejamento', description: 'Pequenas quantidades chegam próximas às raízes, reduzindo evaporação e desperdício.', icon: leafOutline },
-  { period: 'Agricultura de precisão', title: 'Irrigação monitorada', description: 'Sensores orientam quando e quanto irrigar de acordo com dados do ambiente e do consumo.', icon: hardwareChipOutline },
+  { period: 'Técnica tradicional', title: 'Canais e sulcos', description: 'A gravidade distribui a água pelo terreno, com baixo custo e maior possibilidade de perdas.', efficiency: 'Baixa a moderada', advantage: 'Estrutura simples e menor investimento inicial.', attention: 'Pode perder água por infiltração, escoamento e evaporação.', icon: waterOutline },
+  { period: 'Mecanização', title: 'Aspersão', description: 'A água é lançada sobre a plantação, simulando chuva e cobrindo áreas maiores.', efficiency: 'Moderada', advantage: 'Distribui água em áreas amplas e terrenos variados.', attention: 'Vento e calor podem desviar ou evaporar parte da água.', icon: rainyOutline },
+  { period: 'Eficiência', title: 'Gotejamento', description: 'Pequenas quantidades chegam próximas às raízes, reduzindo evaporação e desperdício.', efficiency: 'Alta', advantage: 'Aplica água diretamente perto das raízes.', attention: 'Exige filtragem, manutenção e prevenção de entupimentos.', icon: leafOutline },
+  { period: 'Agricultura de precisão', title: 'Irrigação monitorada', description: 'Sensores orientam quando e quanto irrigar de acordo com dados do ambiente e do consumo.', efficiency: 'Ajustável por dados', advantage: 'Evita irrigar quando a planta ou o solo não precisam.', attention: 'Depende de calibração, conectividade e interpretação correta.', icon: hardwareChipOutline },
 ];
 
 const reuseOptions = [
-  { title: 'Água da chuva', description: 'Pode ser captada em telhados e armazenada de forma protegida.', application: 'Uso possível: limpeza e irrigação, conforme o sistema instalado.', icon: rainyOutline },
-  { title: 'Águas cinzas tratadas', description: 'Água de lavatórios e chuveiros pode ser reaproveitada após tratamento específico.', application: 'Uso possível: descargas e irrigação compatível com normas sanitárias.', icon: refreshOutline },
-  { title: 'Retorno planejado', description: 'Na agricultura, sistemas adequados podem recuperar parte da água e controlar uma nova aplicação.', application: 'Benefício: menor retirada das fontes e melhor aproveitamento do recurso.', icon: leafOutline },
+  { title: 'Água da chuva', description: 'Pode ser captada em telhados e armazenada de forma protegida.', application: 'Uso possível: limpeza e irrigação, conforme o sistema instalado.', guidance: 'A primeira água da chuva pode carregar sujeira do telhado e deve ser descartada por um separador. O reservatório precisa permanecer fechado, limpo e protegido contra mosquitos.', icon: rainyOutline },
+  { title: 'Águas cinzas tratadas', description: 'Água de lavatórios e chuveiros pode ser reaproveitada após tratamento específico.', application: 'Uso possível: descargas e irrigação compatível com normas sanitárias.', guidance: 'A rede deve ser separada da água potável. O tratamento varia conforme a origem e o uso final, e não se deve incluir água de vasos sanitários ou pias com gordura nesse grupo.', icon: refreshOutline },
+  { title: 'Retorno planejado', description: 'Na agricultura, sistemas adequados podem recuperar parte da água e controlar uma nova aplicação.', application: 'Benefício: menor retirada das fontes e melhor aproveitamento do recurso.', guidance: 'É necessário acompanhar qualidade, sais e possíveis contaminantes para não prejudicar o solo nem as plantas. O retorno deve fazer parte de um projeto técnico adequado à cultura.', icon: leafOutline },
 ];
+
+const selectedHistory = ref(0);
+const selectedIrrigation = ref(0);
+const expandedReuse = ref(null);
 
 const reuseCycle = ['Captação', 'Armazenamento', 'Tratamento', 'Uso adequado', 'Monitoramento'];
 
@@ -337,6 +401,24 @@ const goals = [
   margin: 9px 0 0;
 }
 
+.interaction-hint {
+  align-items: center;
+  color: var(--agua-agua);
+  display: flex;
+  font-size: 10px;
+  font-weight: 700;
+  gap: 7px;
+  margin: 18px 0 0;
+}
+
+.interaction-hint::before {
+  background: var(--agua-agua);
+  border-radius: 50%;
+  content: '';
+  height: 6px;
+  width: 6px;
+}
+
 .timeline {
   display: grid;
   gap: 14px;
@@ -348,9 +430,27 @@ const goals = [
   background: var(--agua-muted);
   border: 1px solid var(--agua-borda);
   border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
   min-height: 205px;
   padding: 18px;
   position: relative;
+  text-align: left;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  width: 100%;
+}
+
+.timeline-card:hover,
+.timeline-card:focus-visible,
+.timeline-card.active {
+  border-color: var(--agua-agua);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--agua-agua) 14%, transparent);
+  outline: none;
+  transform: translateY(-2px);
+}
+
+.timeline-card.active {
+  background: color-mix(in srgb, var(--agua-agua) 8%, var(--agua-branco));
 }
 
 .timeline-index {
@@ -409,6 +509,56 @@ const goals = [
   margin: 0;
 }
 
+.discovery-panel {
+  background: color-mix(in srgb, var(--agua-agua) 8%, var(--agua-branco));
+  border: 1px solid color-mix(in srgb, var(--agua-agua) 35%, var(--agua-borda));
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 18px;
+}
+
+.history-discovery {
+  align-items: start;
+  grid-template-columns: auto 1fr;
+}
+
+.discovery-icon {
+  align-items: center;
+  background: var(--agua-agua);
+  border-radius: 8px;
+  color: #fff;
+  display: flex;
+  font-size: 22px;
+  height: 44px;
+  justify-content: center;
+  width: 44px;
+}
+
+.discovery-panel small,
+.comparison-item small {
+  color: var(--agua-agua);
+  display: block;
+  font-size: 9px;
+  font-weight: 800;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.discovery-panel h3 {
+  color: var(--agua-petroleo);
+  font-size: 15px;
+  margin: 0 0 5px;
+}
+
+.discovery-panel p {
+  color: var(--agua-suave);
+  font-size: 11px;
+  line-height: 1.65;
+  margin: 0;
+}
+
 .agriculture-section {
   background: color-mix(in srgb, var(--agua-agua) 10%, var(--agua-branco));
   border: 1px solid var(--agua-borda);
@@ -462,10 +612,44 @@ const goals = [
 }
 
 .method-card {
+  background: transparent;
+  border-bottom: 0;
   border-left: 3px solid var(--agua-agua);
+  border-right: 0;
+  border-top: 0;
+  cursor: pointer;
   display: grid;
+  font-family: inherit;
   gap: 12px;
   padding: 8px 12px;
+  text-align: left;
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.method-card:hover,
+.method-card:focus-visible,
+.method-card.active {
+  background: color-mix(in srgb, var(--agua-agua) 8%, transparent);
+  outline: none;
+  transform: translateX(3px);
+}
+
+.method-discovery {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.comparison-item {
+  border-right: 1px solid var(--agua-borda);
+  padding: 2px 16px 2px 2px;
+}
+
+.comparison-item:last-child { border-right: 0; }
+
+.comparison-item strong {
+  color: var(--agua-petroleo);
+  display: block;
+  font-size: 11px;
+  line-height: 1.5;
 }
 
 .reuse-section {
@@ -487,7 +671,64 @@ const goals = [
   background: var(--agua-branco);
   border: 1px solid var(--agua-borda);
   border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.reuse-grid article.open {
+  border-color: var(--agua-agua);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--agua-agua) 12%, transparent);
+}
+
+.reuse-toggle {
+  align-items: start;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  display: grid;
+  font-family: inherit;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   padding: 18px;
+  text-align: left;
+  width: 100%;
+}
+
+.reuse-toggle:focus-visible {
+  outline: 2px solid var(--agua-agua);
+  outline-offset: -3px;
+}
+
+.reuse-copy { display: block; }
+.reuse-toggle .card-icon { margin-bottom: 0; margin-right: 12px; }
+
+.expand-icon {
+  color: var(--agua-agua);
+  font-size: 19px;
+  margin-left: 10px;
+  margin-top: 10px;
+  transition: transform 160ms ease;
+}
+
+.reuse-grid article.open .expand-icon { transform: rotate(180deg); }
+
+.reuse-details {
+  background: color-mix(in srgb, var(--agua-agua) 8%, var(--agua-branco));
+  border-top: 1px solid var(--agua-borda);
+  padding: 15px 18px 17px;
+}
+
+.reuse-details strong {
+  color: var(--agua-petroleo);
+  display: block;
+  font-size: 10px;
+  margin-bottom: 5px;
+}
+
+.reuse-details p {
+  color: var(--agua-suave);
+  font-size: 10px;
+  line-height: 1.6;
+  margin: 0;
 }
 
 .reuse-grid small {
@@ -584,6 +825,9 @@ const goals = [
   .split-heading { grid-template-columns: 1fr; }
   .reuse-grid,
   .ods-grid { grid-template-columns: 1fr; }
+  .method-discovery { grid-template-columns: 1fr; }
+  .comparison-item { border-bottom: 1px solid var(--agua-borda); border-right: 0; padding: 2px 0 12px; }
+  .comparison-item:last-child { border-bottom: 0; padding-bottom: 2px; }
 }
 
 @media (max-width: 560px) {
