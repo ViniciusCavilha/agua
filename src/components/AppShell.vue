@@ -115,7 +115,6 @@ import {
   earthOutline,
   hardwareChipOutline,
   homeOutline,
-  hourglassOutline,
   menuOutline,
   notificationsOutline,
   personOutline,
@@ -174,8 +173,7 @@ const navItems = [
   { label: 'Metas', shortLabel: 'Metas', to: '/metas', icon: pieChartOutline },
   { label: 'Dispositivos', shortLabel: 'Disp.', to: '/dispositivos', icon: hardwareChipOutline },
   { label: 'Relatórios', shortLabel: 'Relat.', to: '/relatorios', icon: documentTextOutline },
-  { label: 'Sustentabilidade', shortLabel: 'Sustent.', to: '/sustentabilidade', icon: earthOutline },
-  { label: 'História da Água', shortLabel: 'História', to: '/historia-da-agua', icon: hourglassOutline },
+  { label: 'Água e Sociedade', shortLabel: 'Sociedade', to: '/agua-e-sociedade', icon: earthOutline },
   { label: 'Perfil', shortLabel: 'Perfil', to: '/perfil', icon: personOutline },
 ];
 
