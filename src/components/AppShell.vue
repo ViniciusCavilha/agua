@@ -1,5 +1,5 @@
 <template>
-  <main class="app-shell" :class="{ 'mobile-nav-open': isMobileNavOpen }">
+  <main class="app-shell">
     <aside class="sidebar" aria-label="Navegação principal">
       <router-link class="brand" to="/dashboard" aria-label="Água+ dashboard">
         <span><ion-icon :icon="waterOutline" /></span>
@@ -21,17 +21,7 @@
 
     <section class="workspace">
       <header class="topbar">
-        <button
-          class="icon-button mobile-only"
-          type="button"
-          :aria-expanded="isMobileNavOpen"
-          aria-controls="mobile-navigation"
-          :aria-label="isMobileNavOpen ? 'Fechar menu' : 'Abrir menu'"
-          @click="toggleMobileNav"
-        >
-          <ion-icon :icon="isMobileNavOpen ? closeOutline : menuOutline" />
-        </button>
-        <div>
+        <div class="topbar-heading">
           <p>{{ displayedEyebrow }}</p>
           <h1>
             <span class="title-full">{{ title }}</span>
@@ -95,42 +85,78 @@
       <slot />
     </section>
 
-    <button
-      v-if="isMobileNavOpen"
-      class="nav-backdrop"
-      type="button"
-      aria-label="Fechar navegação"
-      @click="closeMobileNav"
-    />
-
-    <nav
-      id="mobile-navigation"
-      class="bottom-nav"
-      :class="{ open: isMobileNavOpen }"
-      :aria-hidden="!isMobileNavOpen"
-      aria-label="Navegação mobile"
-    >
-      <router-link v-for="item in bottomNavItems" :key="item.to" :to="item.to" :class="{ active: isActive(item.to) }" @click="handleMobileNavigation">
-        <ion-icon :icon="item.icon" />
-        <span>{{ item.shortLabel }}</span>
+    <nav class="bottom-nav" aria-label="Navegação mobile">
+      <router-link
+        v-for="item in bottomNavItems"
+        :key="item.to"
+        :to="item.to"
+        :class="{ active: isActive(item.to) }"
+        :aria-current="isActive(item.to) ? 'page' : undefined"
+        @click="closeFloatingMenus"
+      >
+        <ion-icon :icon="item.icon" aria-hidden="true" />
+        <span>{{ item.label }}</span>
       </router-link>
+      <button
+        type="button"
+        :class="{ active: isMoreOpen || hasActiveMoreItem }"
+        :aria-expanded="isMoreOpen"
+        :aria-controls="moreSheetId"
+        aria-haspopup="dialog"
+        @click="openMore"
+      >
+        <ion-icon :icon="ellipsisHorizontal" aria-hidden="true" />
+        <span>Mais</span>
+      </button>
     </nav>
+
+    <ion-modal
+      :id="moreSheetId"
+      class="mobile-more-modal"
+      :is-open="isMoreOpen"
+      :breakpoints="[0, 1]"
+      :initial-breakpoint="1"
+      :animated="!prefersReducedMotion"
+      :html-attributes="{ 'aria-label': 'Mais opções de navegação' }"
+      @didDismiss="closeMore"
+    >
+      <section class="more-sheet ion-content-scroll-host">
+        <header class="more-sheet-header">
+          <h2>Mais</h2>
+          <button class="icon-button" type="button" aria-label="Fechar menu" @click="closeMore">
+            <ion-icon :icon="closeOutline" aria-hidden="true" />
+          </button>
+        </header>
+        <nav class="more-links" aria-label="Mais abas">
+          <router-link
+            v-for="item in moreNavItems"
+            :key="item.to"
+            :to="item.to"
+            :aria-current="isActive(item.to) ? 'page' : undefined"
+            @click="closeMore"
+          >
+            <ion-icon :icon="item.icon" aria-hidden="true" />
+            <span>{{ item.label }}</span>
+          </router-link>
+        </nav>
+      </section>
+    </ion-modal>
   </main>
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, useId, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { IonIcon } from '@ionic/vue';
+import { IonIcon, IonModal } from '@ionic/vue';
 import {
   barChartOutline,
   chevronDownOutline,
   closeOutline,
   documentTextOutline,
   earthOutline,
+  ellipsisHorizontal,
   hardwareChipOutline,
   homeOutline,
-  menuOutline,
   notificationsOutline,
   personOutline,
   pieChartOutline,
@@ -175,27 +201,30 @@ const route = useRoute();
 const router = useRouter();
 const isPeriodMenuOpen = ref(false);
 const isNotificationsOpen = ref(false);
-const isMobileNavOpen = ref(false);
+const isMoreOpen = ref(false);
+const moreSheetId = `mobile-more-${useId()}`;
+const prefersReducedMotion = ref(false);
 const notifications = ref(getNotifications());
 const account = ref(getAccount());
 let stopNotificationsListener = null;
 let stopAccountListener = null;
 let stopAuthListener = null;
-let previousBodyOverflow = '';
+let mobileViewport;
 
 const navItems = [
-  { label: 'Início', shortLabel: 'Início', to: '/dashboard', icon: homeOutline },
-  { label: 'Consumo', shortLabel: 'Consumo', to: '/consumo', icon: barChartOutline },
-  { label: 'Metas', shortLabel: 'Metas', to: '/metas', icon: pieChartOutline },
-  { label: 'Dispositivos', shortLabel: 'Disp.', to: '/dispositivos', icon: hardwareChipOutline },
-  { label: 'Relatórios', shortLabel: 'Relat.', to: '/relatorios', icon: documentTextOutline },
-  { label: 'Água e Sociedade', shortLabel: 'Sociedade', to: '/agua-e-sociedade', icon: earthOutline },
-  { label: 'Perfil', shortLabel: 'Perfil', to: '/perfil', icon: personOutline },
+  { label: 'Início', to: '/dashboard', icon: homeOutline, mobilePrimary: true },
+  { label: 'Consumo', to: '/consumo', icon: barChartOutline, mobilePrimary: true },
+  { label: 'Metas', to: '/metas', icon: pieChartOutline },
+  { label: 'Dispositivos', to: '/dispositivos', icon: hardwareChipOutline, mobilePrimary: true },
+  { label: 'Relatórios', to: '/relatorios', icon: documentTextOutline },
+  { label: 'Água e Sociedade', to: '/agua-e-sociedade', icon: earthOutline },
+  { label: 'Perfil', to: '/perfil', icon: personOutline },
 ];
 
-const bottomNavItems = [
-  ...navItems,
-  { label: 'Configurações', shortLabel: 'Config.', to: '/configurações', icon: settingsOutline },
+const bottomNavItems = navItems.filter((item) => item.mobilePrimary);
+const moreNavItems = [
+  ...navItems.filter((item) => !item.mobilePrimary),
+  { label: 'Configurações', to: '/configurações', icon: settingsOutline },
 ];
 
 const periodOptions = [
@@ -254,31 +283,32 @@ const refreshNotifications = () => {
 };
 
 const toggleNotifications = () => {
-  closeMobileNav();
+  closeMore();
   closePeriodMenu();
   isNotificationsOpen.value = !isNotificationsOpen.value;
 };
 
-const toggleMobileNav = () => {
+const openMore = () => {
   isNotificationsOpen.value = false;
   closePeriodMenu();
-  isMobileNavOpen.value = !isMobileNavOpen.value;
+  prefersReducedMotion.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  isMoreOpen.value = true;
 };
 
-const closeMobileNav = () => {
-  isMobileNavOpen.value = false;
+const closeMore = () => {
+  isMoreOpen.value = false;
 };
 
-const handleMobileNavigation = () => {
-  isNotificationsOpen.value = false;
-  closePeriodMenu();
-  closeMobileNav();
+const closeMoreOnDesktop = (event) => {
+  if (!event.matches) {
+    closeMore();
+  }
 };
 
 const openNotification = (notification) => {
   notifications.value = markNotificationRead(notification.id);
   isNotificationsOpen.value = false;
-  closeMobileNav();
+  closeMore();
   router.push(getNotificationRoute(notification));
 };
 
@@ -289,7 +319,7 @@ const readAllNotifications = () => {
 const closeFloatingMenus = () => {
   closePeriodMenu();
   isNotificationsOpen.value = false;
-  closeMobileNav();
+  closeMore();
 };
 
 const handleEscapeKey = (event) => {
@@ -306,8 +336,11 @@ const isActive = (path) => {
   return route.path === path;
 };
 
+const hasActiveMoreItem = computed(() => moreNavItems.some((item) => isActive(item.to)));
+
 onMounted(() => {
-  previousBodyOverflow = document.body.style.overflow;
+  mobileViewport = window.matchMedia('(max-width: 980px)');
+  mobileViewport.addEventListener('change', closeMoreOnDesktop);
   window.addEventListener('keydown', handleEscapeKey);
   stopNotificationsListener = onNotificationsChange(refreshNotifications);
   stopAccountListener = onAccountChange((nextAccount) => {
@@ -320,7 +353,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  document.body.style.overflow = previousBodyOverflow;
+  mobileViewport?.removeEventListener('change', closeMoreOnDesktop);
   window.removeEventListener('keydown', handleEscapeKey);
   stopNotificationsListener?.();
   stopAccountListener?.();
@@ -331,10 +364,6 @@ watch(
   () => route.fullPath,
   closeFloatingMenus,
 );
-
-watch(isMobileNavOpen, (isOpen) => {
-  document.body.style.overflow = isOpen ? 'hidden' : previousBodyOverflow;
-});
 </script>
 
 <style scoped>
@@ -637,16 +666,89 @@ watch(isMobileNavOpen, (isOpen) => {
   padding: 10px 12px;
 }
 
-.mobile-only,
-.bottom-nav,
-.nav-backdrop {
+.bottom-nav {
   display: none;
+}
+
+.mobile-more-modal {
+  --background: var(--agua-branco);
+  --border-color: var(--agua-borda);
+  --border-radius: 8px 8px 0 0;
+  --border-style: solid;
+  --border-width: 1px 1px 0;
+  --height: min(calc(352px + env(safe-area-inset-bottom)), 90vh);
+  --height: min(calc(352px + env(safe-area-inset-bottom)), 90dvh);
+  --max-width: 520px;
+}
+
+.mobile-more-modal::part(content) {
+  box-sizing: border-box;
+}
+
+.more-sheet {
+  color: var(--agua-texto);
+  font-family: Poppins, sans-serif;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding: 16px max(16px, env(safe-area-inset-right))
+    calc(12px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+
+.more-sheet-header {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.more-sheet-header h2 {
+  color: var(--agua-petroleo);
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.more-sheet-header .icon-button {
+  border-radius: 8px;
+}
+
+.more-links {
+  display: grid;
+  gap: 4px;
+}
+
+.more-links a {
+  align-items: center;
+  border-radius: 8px;
+  color: var(--agua-texto);
+  display: grid;
+  font-size: 14px;
+  font-weight: 600;
+  gap: 12px;
+  grid-template-columns: 22px minmax(0, 1fr);
+  min-height: 48px;
+  overflow-wrap: anywhere;
+  padding: 6px 10px;
+  text-decoration: none;
+}
+
+.more-links a:hover,
+.more-links a[aria-current='page'] {
+  background: var(--agua-muted);
+  color: var(--agua-petroleo);
+}
+
+.more-links ion-icon {
+  font-size: 20px;
 }
 
 @media (max-width: 980px) {
   .app-shell {
+    --mobile-nav-height: 64px;
     display: block;
-    padding-bottom: 18px;
+    padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom));
     padding-left: 0;
   }
 
@@ -655,26 +757,19 @@ watch(isMobileNavOpen, (isOpen) => {
   }
 
   .workspace {
-    padding: calc(22px + env(safe-area-inset-top)) 18px calc(22px + env(safe-area-inset-bottom));
+    padding: calc(22px + env(safe-area-inset-top)) max(18px, env(safe-area-inset-right))
+      22px max(18px, env(safe-area-inset-left));
   }
 
   .topbar {
     align-items: start;
-    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    grid-template-columns: minmax(0, 1fr) 44px;
     position: relative;
     z-index: 7;
   }
 
-  .mobile-only {
-    display: grid;
+  .topbar-heading {
     grid-column: 1;
-    grid-row: 1;
-    position: relative;
-    z-index: 8;
-  }
-
-  .topbar > div:first-of-type {
-    grid-column: 2;
     grid-row: 1;
     min-width: 0;
   }
@@ -693,79 +788,62 @@ watch(isMobileNavOpen, (isOpen) => {
     justify-self: start;
   }
 
-  .app-shell.mobile-nav-open .period-menu {
-    opacity: 0;
-    pointer-events: none;
-    visibility: hidden;
+  .period-card {
+    left: 0;
+    right: auto;
   }
 
   .notification-menu {
-    grid-column: 3;
+    grid-column: 2;
     grid-row: 1;
     justify-self: end;
   }
 
   .bottom-nav {
-    background: color-mix(in srgb, var(--agua-branco) 94%, var(--agua-agua));
-    border-right: 1px solid var(--agua-borda);
+    align-items: stretch;
+    background: var(--agua-branco);
+    border-top: 1px solid var(--agua-borda);
     bottom: 0;
-    box-shadow: 18px 0 42px rgba(13, 75, 94, 0.16);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    justify-content: flex-start;
+    box-shadow: 0 -4px 18px rgba(8, 25, 31, 0.08);
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: minmax(0, 1fr);
+    height: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom));
     left: 0;
-    overflow-y: auto;
-    padding: calc(88px + env(safe-area-inset-top)) 16px calc(22px + env(safe-area-inset-bottom));
+    padding: 4px max(4px, env(safe-area-inset-right), calc((100% - 600px) / 2))
+      calc(4px + env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left), calc((100% - 600px) / 2));
     position: fixed;
-    top: 0;
-    transform: translateX(-104%);
-    pointer-events: none;
-    transition: transform 220ms ease, visibility 220ms ease;
-    visibility: hidden;
-    width: min(72vw, 252px);
-    z-index: 6;
+    right: 0;
+    z-index: 8;
   }
 
-  .nav-backdrop {
-    background: rgba(3, 16, 20, 0.42);
-    border: 0;
-    display: block;
-    inset: 0;
-    padding: 0;
-    position: fixed;
-    width: 100%;
-    z-index: 5;
-  }
-
-  .bottom-nav.open {
-    pointer-events: auto;
-    transform: translateX(0);
-    visibility: visible;
-  }
-
-  .bottom-nav a {
-    align-items: center;
+  .bottom-nav a,
+  .bottom-nav button {
+    align-content: center;
     background: transparent;
     border: 0;
-    border-radius: 12px;
-    color: var(--agua-suave);
+    border-radius: 8px;
+    color: var(--agua-texto);
     cursor: pointer;
-    display: flex;
-    font: 600 13px Poppins, sans-serif;
-    gap: 10px;
+    display: grid;
+    font: 600 11px/1.2 Poppins, sans-serif;
+    gap: 4px;
+    justify-items: center;
     min-height: 44px;
-    padding: 0 12px;
-    text-align: left;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    padding: 2px 0;
+    text-align: center;
     text-decoration: none;
   }
 
   .bottom-nav ion-icon {
-    font-size: 19px;
+    font-size: 22px;
   }
 
   .bottom-nav .active {
-    background: color-mix(in srgb, var(--agua-agua) 14%, transparent);
+    background: var(--agua-muted);
+    background: color-mix(in srgb, var(--agua-agua) 12%, var(--agua-branco));
     color: var(--agua-petroleo);
     font-weight: 700;
   }
@@ -773,29 +851,16 @@ watch(isMobileNavOpen, (isOpen) => {
 
 @media (max-width: 560px) {
   .workspace {
-    padding: 18px 14px;
+    padding: calc(18px + env(safe-area-inset-top)) max(14px, env(safe-area-inset-right))
+      18px max(14px, env(safe-area-inset-left));
   }
 
   .topbar {
     gap: 10px;
   }
 
-  .period-card,
   .notification-card {
-    left: 0;
-    right: auto;
-  }
-
-  .notification-menu {
-    grid-column: 3;
-    grid-row: 1;
-    justify-self: end;
-  }
-
-  .notification-card {
-    left: auto;
     min-width: min(300px, calc(100vw - 28px));
-    right: 0;
   }
 }
 
