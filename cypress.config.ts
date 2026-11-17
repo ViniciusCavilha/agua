@@ -6,7 +6,8 @@ export default defineConfig({
     specPattern: 'tests/e2e/specs/**/*.cy.{js,jsx,ts,tsx}',
     videosFolder: 'tests/e2e/videos',
     screenshotsFolder: 'tests/e2e/screenshots',
-    baseUrl: 'http://localhost:8100',
+    baseUrl: process.env.CYPRESS_BASE_URL || 'http://localhost:5173',
+    video: false,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     setupNodeEvents(on, config) {
       // implement node event listeners here

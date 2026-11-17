@@ -73,7 +73,7 @@
 
           <div v-else class="empty-readings">
             <strong>Nenhuma leitura registrada</strong>
-            <p>Quando o sistema receber os primeiros dados, eles serão listados automáticamente aqui.</p>
+            <p>Quando o sistema receber os primeiros dados, eles serão listados automaticamente aqui.</p>
           </div>
         </article>
       </AppShell>

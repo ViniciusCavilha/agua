@@ -46,7 +46,7 @@
           <article class="alert-card">
             <span class="alert-icon"><ion-icon :icon="alertCircleOutline" /></span>
             <h2>Período sem leituras</h2>
-            <p>Esta tela já esta pronta para receber os dados historicos quando o hidrometro for conectado.</p>
+            <p>Esta tela já está pronta para receber os dados históricos quando o hidrômetro for conectado.</p>
             <div class="health-row">
               <span>Total registrado</span>
               <strong>{{ totalRegistered }}</strong>
@@ -73,7 +73,7 @@
 
           <div v-else class="empty-readings">
             <strong>Nenhuma leitura registrada</strong>
-            <p>Os registros deste período aparecerão aqui automáticamente quando houver historico disponível.</p>
+            <p>Os registros deste período aparecerão aqui automaticamente quando houver histórico disponível.</p>
           </div>
         </article>
       </AppShell>

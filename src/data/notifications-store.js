@@ -1,5 +1,10 @@
+import { getAccountStorageScope } from './account-store.js';
+
 const NOTIFICATIONS_KEY = 'agua-plus-notifications';
 const NOTIFICATIONS_EVENT = 'agua-plus-notifications-updated';
+const ACCOUNT_EVENT = 'agua-plus-account-updated';
+
+const getNotificationsKey = () => `${NOTIFICATIONS_KEY}:${getAccountStorageScope()}`;
 
 const now = () => new Date().toISOString();
 
@@ -13,7 +18,7 @@ const sortNotifications = (items) => {
 
 export const getNotifications = () => {
   try {
-    const raw = localStorage.getItem(NOTIFICATIONS_KEY);
+    const raw = localStorage.getItem(getNotificationsKey());
     return raw ? sortNotifications(JSON.parse(raw)) : [];
   } catch (error) {
     return [];
@@ -22,7 +27,7 @@ export const getNotifications = () => {
 
 const saveNotifications = (notifications) => {
   const sorted = sortNotifications(notifications);
-  localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(sorted));
+  localStorage.setItem(getNotificationsKey(), JSON.stringify(sorted));
   dispatchUpdate();
   return sorted;
 };
@@ -121,16 +126,18 @@ export const removeNotificationsByPrefix = (prefix) => {
 };
 
 export const clearNotifications = () => {
-  localStorage.removeItem(NOTIFICATIONS_KEY);
+  localStorage.removeItem(getNotificationsKey());
   dispatchUpdate();
 };
 
 export const onNotificationsChange = (callback) => {
   window.addEventListener(NOTIFICATIONS_EVENT, callback);
+  window.addEventListener(ACCOUNT_EVENT, callback);
   window.addEventListener('storage', callback);
 
   return () => {
     window.removeEventListener(NOTIFICATIONS_EVENT, callback);
+    window.removeEventListener(ACCOUNT_EVENT, callback);
     window.removeEventListener('storage', callback);
   };
 };

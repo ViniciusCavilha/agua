@@ -16,7 +16,7 @@ const alertDefinitions = {
   },
   [TECHNICAL_ALERT_TYPES.DEVICE_WAITING]: {
     severity: 'warning',
-    title: 'Dispositivo águardando conexão',
+    title: 'Dispositivo aguardando conexão',
     message: 'O dispositivo está cadastrado, mas ainda não enviou leituras reais.',
   },
   [TECHNICAL_ALERT_TYPES.DEVICE_MAINTENANCE]: {

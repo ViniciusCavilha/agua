@@ -35,26 +35,26 @@
 
         <article v-else class="empty-goals">
           <span>Sem metas cadastradas</span>
-          <h2>Crie sua primeira meta para comecar o acompanhamento.</h2>
+          <h2>Crie sua primeira meta para começar o acompanhamento.</h2>
           <p>Quando você salvar uma meta, ela aparece aqui e também no card de meta do dashboard.</p>
         </article>
 
         <article class="create-card">
           <div class="card-title">
             <div>
-              <h2>Nova meta rapida</h2>
-              <p>Simule uma meta para a proxima etapa do projeto.</p>
+              <h2>Nova meta rápida</h2>
+              <p>Simule uma meta para a próxima etapa do projeto.</p>
             </div>
           </div>
 
           <form @submit.prevent="saveGoal">
             <label>
-              Area monitorada
-              <input v-model="area" type="text" placeholder="Ex: Refeitorio" />
+              Área monitorada
+              <input v-model.trim="area" type="text" placeholder="Ex: Refeitório" required />
             </label>
             <label>
               Redução desejada
-              <input v-model="target" type="text" placeholder="Ex: 15%" />
+              <input v-model.trim="target" type="text" inputmode="decimal" placeholder="Ex: 15%" required />
             </label>
             <PrimaryButton :disabled="!canSaveGoal">Salvar meta</PrimaryButton>
           </form>
@@ -87,7 +87,7 @@ const heroMessage = computed(() => {
     return 'Nenhuma meta cadastrada ainda. Crie uma meta real para acompanhar o progresso.';
   }
 
-  return 'Monitore progresso por area e priorize onde a economia tem maior impacto.';
+  return 'Monitore o progresso por área e priorize onde a economia tem maior impacto.';
 });
 
 const saveGoal = () => {

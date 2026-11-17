@@ -44,14 +44,14 @@
               <h2>4. Conta Google e autenticação</h2>
               <p>
                 Caso você entre com Google, o Água+ pode utilizar dados basicos da conta, como nome, e-mail e foto de
-                perfil, para preencher seu cadastro e identificar sua sessao.
+                perfil, para preencher seu cadastro e identificar sua sessão.
               </p>
             </section>
 
             <section>
               <h2>5. Leituras e dispositivos</h2>
               <p>
-                A estrutura do app esta preparada para receber dados de sensores e microcontroladores no futuro. Ate a
+                A estrutura do app está preparada para receber dados de sensores e microcontroladores no futuro. Até a
                 conexão com hardware real, os dados podem continuar simulados e não devem ser usados como medição oficial.
               </p>
             </section>
@@ -67,14 +67,14 @@
             <section>
               <h2>7. Privacidade</h2>
               <p>
-                Os dados sao usados para funcionamento do próprio Água+, personalização do perfil, exibicao de historico,
-                alertas e relatorios. O projeto deve manter regras de acesso para que cada usuário vejá apenas os dados
+                Os dados são usados para o funcionamento do próprio Água+, personalização do perfil, exibição de histórico,
+                alertas e relatórios. O projeto deve manter regras de acesso para que cada usuário veja apenas os dados
                 associados a sua propria conta.
               </p>
             </section>
 
             <section>
-              <h2>8. Exclusao de conta</h2>
+              <h2>8. Exclusão de conta</h2>
               <p>
                 O usuário pode solicitar a exclusão da conta pela aba de perfil. Quando disponível, essa ação remove a
                 conta de autenticação e limpa os dados locais vinculados ao acesso atual.

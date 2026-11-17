@@ -47,7 +47,7 @@ const removeLocalOnlyFields = (profile = {}) => {
 };
 const ensureFirebase = () => {
   if (!auth || !db) {
-    throw new Error('Firebase ainda nao configurado. Preencha o arquivo .env com as chaves do seu projeto.');
+    throw new Error('Firebase ainda não configurado. Preencha o arquivo .env com as chaves do seu projeto.');
   }
 };
 

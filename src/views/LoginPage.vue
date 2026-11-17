@@ -20,7 +20,7 @@
           <form @submit.prevent="login">
             <label>
               E-mail
-              <input v-model="email" type="email" autocomplete="email" placeholder="seuemail@instituição.com" />
+              <input v-model.trim="email" type="email" autocomplete="email" placeholder="seuemail@instituição.com" required />
             </label>
 
             <label>
@@ -31,6 +31,7 @@
                   :type="showPassword ? 'text' : 'password'"
                   autocomplete="current-password"
                   placeholder="Digite sua senha"
+                  required
                 />
                 <button type="button" :aria-label="showPassword ? 'Ocultar senha' : 'Mostrar senha'" @click="showPassword = !showPassword">
                   <ion-icon :icon="showPassword ? eyeOffOutline : eyeOutline" />
@@ -46,19 +47,18 @@
               <router-link to="/esqueci-senha">Esqueci minha senha</router-link>
             </div>
 
-            <PrimaryButton>
+            <PrimaryButton :disabled="loading" :aria-busy="loading">
               {{ loading ? 'Entrando...' : 'Entrar' }}
               <ion-icon :icon="arrowForwardOutline" />
             </PrimaryButton>
           </form>
 
-          <p v-if="errorMessage" class="auth-error">{{ errorMessage }}</p>
+          <p v-if="errorMessage" class="auth-error" role="alert">{{ errorMessage }}</p>
 
           <div class="divider"><span />ou continue com<span /></div>
 
           <div class="social">
             <SecondaryButton :disabled="loading" @click="googleLogin"><ion-icon :icon="logoGoogle" /> Google</SecondaryButton>
-            <SecondaryButton disabled><ion-icon :icon="logoApple" /> Apple</SecondaryButton>
           </div>
 
           <p class="signup">Não tem uma conta? <router-link to="/cadastro">Cadastre-se</router-link></p>
@@ -67,8 +67,8 @@
         <aside class="brand-panel" aria-label="Resumo Água+">
           <div class="panel-inner">
             <div class="drop"><ion-icon :icon="waterOutline" /></div>
-            <h2>Cada gota vira decisao.</h2>
-            <p>O Água+ transforma leitura de consumo em metas simples, alertas úteis e economia mensuravel.</p>
+            <h2>Cada gota vira decisão.</h2>
+            <p>O Água+ transforma leitura de consumo em metas simples, alertas úteis e economia mensurável.</p>
 
             <div class="preview-card">
               <span class="preview-icon"><ion-icon :icon="leafOutline" /></span>
@@ -94,7 +94,6 @@ import {
   eyeOffOutline,
   eyeOutline,
   leafOutline,
-  logoApple,
   logoGoogle,
   shieldCheckmarkOutline,
   waterOutline,
@@ -415,7 +414,7 @@ input:focus {
 .social {
   display: grid;
   gap: 12px;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
 }
 
 .signup {

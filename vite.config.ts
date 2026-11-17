@@ -7,6 +7,13 @@ import { defineConfig, type Plugin } from 'vite'
 
 const appVersion = `${Date.now()}`
 
+const supportedBrowsers = [
+  'Chrome >= 67',
+  'Edge >= 79',
+  'Firefox >= 68',
+  'Safari >= 14',
+]
+
 const appVersionPlugin = (): Plugin => ({
   name: 'agua-plus-app-version',
   configureServer(server) {
@@ -29,7 +36,10 @@ const appVersionPlugin = (): Plugin => ({
 export default defineConfig({
   plugins: [
     vue(),
-    legacy(),
+    legacy({
+      targets: supportedBrowsers,
+      modernTargets: supportedBrowsers,
+    }),
     appVersionPlugin()
   ],
   define: {

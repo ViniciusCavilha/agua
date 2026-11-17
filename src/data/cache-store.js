@@ -1,8 +1,13 @@
 const CACHE_VERSION_KEY = 'agua-plus-cache-version';
-const CURRENT_CACHE_VERSION = '2026-08-06-account-preferences-v3';
+const CURRENT_CACHE_VERSION = '2026-11-17-account-scoped-v4';
+const LEGACY_GLOBAL_KEYS = new Set([
+  'agua-plus-account',
+  'agua-plus-goals',
+  'agua-plus-notifications',
+]);
 
 const shouldRemoveKey = (key) => {
-  return key === 'agua-plus-account';
+  return LEGACY_GLOBAL_KEYS.has(key);
 };
 
 export const clearStaleLocalCache = () => {

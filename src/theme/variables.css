@@ -76,16 +76,35 @@
 html,
 body {
   background: var(--agua-claro);
+  max-width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
 }
 
 body {
   color: var(--agua-texto);
+  margin: 0;
+}
+
+#app {
+  min-height: 100%;
+  min-width: 0;
+  overflow-x: clip;
+  width: 100%;
+}
+
+img,
+svg,
+canvas {
+  max-width: 100%;
 }
 
 button,
 input,
-select {
+select,
+textarea {
   font-family: inherit;
+  min-width: 0;
 }
 
 button {
@@ -93,13 +112,20 @@ button {
 }
 
 input,
-select {
+select,
+textarea {
   color-scheme: light;
 }
 
 :root[data-theme='dark'] input,
-:root[data-theme='dark'] select {
+:root[data-theme='dark'] select,
+:root[data-theme='dark'] textarea {
   color-scheme: dark;
+}
+
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--agua-agua) 38%, transparent);
+  outline-offset: 2px;
 }
 
 :root[data-compact='true'] {
@@ -115,6 +141,17 @@ select {
 :root[data-compact='true'] .settings-panel,
 :root[data-compact='true'] .summary-panel {
   border-radius: 14px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
 
 

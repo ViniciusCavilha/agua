@@ -8,11 +8,13 @@
             <h2>Resumo pronto para apresentar, baixar e compartilhar.</h2>
             <p>{{ reportSummary }}</p>
           </div>
-          <button class="download-button" type="button" :disabled="isLoading" @click="downloadPdf">
+          <button class="download-button" type="button" :disabled="isLoading" :aria-busy="isLoading" @click="downloadPdf">
             <ion-icon :icon="downloadOutline" />
             Baixar PDF
           </button>
         </section>
+
+        <p v-if="reportError" class="report-error" role="alert">{{ reportError }}</p>
 
         <section class="kpi-grid">
           <article v-for="metric in reportMetrics" :key="metric.label" class="kpi-card">
@@ -31,7 +33,7 @@
               </div>
               <span>{{ simulationBadge }}</span>
             </div>
-            <strong>{{ report?.insight || 'Carregando analise...' }}</strong>
+            <strong>{{ report?.insight || 'Carregando análise...' }}</strong>
             <div class="analysis-details">
               <div>
                 <span>Status dos dispositivos</span>
@@ -48,10 +50,10 @@
             <div class="card-title">
               <div>
                 <h2>Distribuição semanal</h2>
-                <p>Volume por dia no período do relatorio.</p>
+                <p>Volume por dia no período do relatório.</p>
               </div>
             </div>
-            <div class="mini-chart" aria-label="Gráfico de consumo usado no relatorio">
+            <div class="mini-chart" aria-label="Gráfico de consumo usado no relatório">
               <div v-for="bar in weeklyBars" :key="bar.day" class="mini-bar">
                 <strong>{{ bar.liters }}</strong>
                 <span :style="{ height: bar.value ? bar.value + '%' : '2%' }" />
@@ -84,7 +86,7 @@
 
             <div v-else class="empty-state">
               <strong>Nenhum dispositivo cadastrado</strong>
-              <p>Quando um ESP32 for vinculado, ele aparecera automáticamente nos relatorios.</p>
+              <p>Quando um ESP32 for vinculado, ele aparecerá automaticamente nos relatórios.</p>
             </div>
           </article>
 
@@ -92,7 +94,7 @@
             <div class="card-title">
               <div>
                 <h2>Alertas do período</h2>
-                <p>Ocorrências tecnicas consideradas no PDF.</p>
+                <p>Ocorrências técnicas consideradas no PDF.</p>
               </div>
               <span>{{ alerts.length }}</span>
             </div>
@@ -128,21 +130,34 @@ import { buildOperationalReport, downloadReportPdf } from '../services/report-se
 
 const report = ref(null);
 const isLoading = ref(false);
+const reportError = ref('');
 let stopSettingsListener = null;
 
 const loadReport = async () => {
   isLoading.value = true;
+  reportError.value = '';
 
   try {
     report.value = await buildOperationalReport();
+  } catch (error) {
+    reportError.value = error?.message || 'Não foi possível carregar os dados do relatório.';
   } finally {
     isLoading.value = false;
   }
 };
 
 const downloadPdf = async () => {
-  const currentReport = report.value || await buildOperationalReport();
-  downloadReportPdf(currentReport);
+  isLoading.value = true;
+  reportError.value = '';
+
+  try {
+    const currentReport = report.value || await buildOperationalReport();
+    downloadReportPdf(currentReport);
+  } catch (error) {
+    reportError.value = error?.message || 'Não foi possível gerar o PDF agora.';
+  } finally {
+    isLoading.value = false;
+  }
 };
 
 const reportSummary = computed(() => {
@@ -157,7 +172,7 @@ const reportMetrics = computed(() => [
   { label: 'Consumo total', value: report.value?.totalLabel || '0 L', detail: 'Período semanal' },
   { label: 'Média diária', value: report.value?.averageLabel || '0 L', detail: 'Calculada por dia' },
   { label: 'Pico registrado', value: report.value?.peakLabel || '0 L', detail: 'Maior leitura' },
-  { label: 'Alertas', value: String(report.value?.alerts.length || 0), detail: 'Ocorrências tecnicas' },
+  { label: 'Alertas', value: String(report.value?.alerts.length || 0), detail: 'Ocorrências técnicas' },
 ]);
 
 const weeklyBars = computed(() => report.value?.consumption.weeklyBars || []);
@@ -176,7 +191,6 @@ const statusClass = (status) => ({
 onIonViewWillEnter(loadReport);
 
 onMounted(() => {
-  loadReport();
   stopSettingsListener = onSettingsChange(loadReport);
 });
 
@@ -246,6 +260,17 @@ onUnmounted(() => {
 .download-button:disabled {
   cursor: wait;
   opacity: 0.75;
+}
+
+.report-error {
+  background: var(--agua-danger-bg);
+  border: 1px solid var(--agua-danger-border);
+  border-radius: 14px;
+  color: var(--agua-erro);
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0 0 20px;
+  padding: 12px 14px;
 }
 
 .kpi-grid {

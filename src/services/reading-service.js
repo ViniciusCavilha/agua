@@ -47,14 +47,14 @@ const toIsoTimestamp = (value = new Date()) => {
   return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
 };
 
-const calculatéPulseCount = (liters, calibrationFactor) => {
+const calculatePulseCount = (liters, calibrationFactor) => {
   return Math.round(toNumber(liters) * toNumber(calibrationFactor, 7.5) * 60);
 };
 
 export const normalizeReadingPayload = (reading = {}) => {
   const calibrationFactor = toNumber(reading.calibrationFactor, 7.5);
   const liters = toNumber(reading.liters);
-  const pulseCount = toNumber(reading.pulseCount || reading.rawPulseCount || calculatéPulseCount(liters, calibrationFactor));
+  const pulseCount = toNumber(reading.pulseCount || reading.rawPulseCount || calculatePulseCount(liters, calibrationFactor));
   const timestamp = toIsoTimestamp(reading.timestamp || reading.createdAt || reading.receivedAt);
 
   return {
@@ -103,7 +103,7 @@ export const createSimulatedReading = ({
     calibrationFactor: device?.sensor?.calibrationFactor || 7.5,
     liters,
     flowRate,
-    pulseCount: calculatéPulseCount(liters, device?.sensor?.calibrationFactor || 7.5),
+    pulseCount: calculatePulseCount(liters, device?.sensor?.calibrationFactor || 7.5),
     intervalSeconds: device?.readingInterval || settings.readingInterval,
     status,
     source: 'simulated',

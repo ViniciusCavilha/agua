@@ -1,19 +1,20 @@
 import { createRouter, createWebHashHistory } from '@ionic/vue-router';
-import LoginPage from '../views/LoginPage.vue';
-import DashboardPage from '../views/DashboardPage.vue';
-import CadastroPage from '../views/CadastroPage.vue';
-import ForgotPasswordPage from '../views/ForgotPasswordPage.vue';
-import ConsumptionPage from '../views/ConsumptionPage.vue';
-import ConsumptionPeriodPage from '../views/ConsumptionPeriodPage.vue';
-import GoalsPage from '../views/GoalsPage.vue';
-import DevicesPage from '../views/DevicesPage.vue';
-import DeviceDetailPage from '../views/DeviceDetailPage.vue';
-import ReportsPage from '../views/ReportsPage.vue';
-import ProfilePage from '../views/ProfilePage.vue';
-import SettingsPage from '../views/SettingsPage.vue';
-import WaterSocietyPage from '../views/WaterSocietyPage.vue';
-import TermsPage from '../views/TermsPage.vue';
 import { getUserProfile, isProfileComplete, waitForCurrentUser } from '../services/firebase.js';
+
+const LoginPage = () => import('../views/LoginPage.vue');
+const DashboardPage = () => import('../views/DashboardPage.vue');
+const CadastroPage = () => import('../views/CadastroPage.vue');
+const ForgotPasswordPage = () => import('../views/ForgotPasswordPage.vue');
+const ConsumptionPage = () => import('../views/ConsumptionPage.vue');
+const ConsumptionPeriodPage = () => import('../views/ConsumptionPeriodPage.vue');
+const GoalsPage = () => import('../views/GoalsPage.vue');
+const DevicesPage = () => import('../views/DevicesPage.vue');
+const DeviceDetailPage = () => import('../views/DeviceDetailPage.vue');
+const ReportsPage = () => import('../views/ReportsPage.vue');
+const ProfilePage = () => import('../views/ProfilePage.vue');
+const SettingsPage = () => import('../views/SettingsPage.vue');
+const WaterSocietyPage = () => import('../views/WaterSocietyPage.vue');
+const TermsPage = () => import('../views/TermsPage.vue');
 
 const routes = [
   { path: '/', redirect: '/login' },
@@ -54,6 +55,7 @@ const routes = [
   { path: '/historia-da-agua', redirect: '/agua-e-sociedade' },
   { path: '/perfil', name: 'Perfil', component: ProfilePage },
   { path: '/configurações', name: 'Configurações', component: SettingsPage },
+  { path: '/:pathMatch(.*)*', redirect: '/dashboard' },
 ];
 
 const router = createRouter({

@@ -18,8 +18,8 @@ export const dashboardData = {
       value: '0 L',
       icon: leafOutline,
       color: 'success',
-      description: 'Quantidade estimada de água economizada em comparação com o consumo historico.',
-      insight: 'Esse indicador será calculado quando houver historico suficiente de consumo.',
+      description: 'Quantidade estimada de água economizada em comparação com o consumo histórico.',
+      insight: 'Esse indicador será calculado quando houver histórico suficiente de consumo.',
     },
     {
       label: 'Valor economizado',

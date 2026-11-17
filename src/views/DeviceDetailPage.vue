@@ -10,7 +10,7 @@
 
         <section v-else-if="!device" class="state-card">
           <span><ion-icon :icon="alertCircleOutline" /></span>
-          <h2>Dispositivo nao encontrado.</h2>
+          <h2>Dispositivo não encontrado.</h2>
           <p>Ele pode ter sido removido ou ainda não está vinculado a esta conta.</p>
           <router-link to="/dispositivos">
             <ion-icon :icon="arrowBackOutline" />
@@ -764,6 +764,8 @@ input {
   display: flex;
   inset: 0;
   justify-content: center;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 20px;
   position: fixed;
   z-index: 20;
@@ -778,6 +780,8 @@ input {
   display: grid;
   gap: 14px;
   max-width: 720px;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
   padding: 24px;
   width: min(100%, 720px);
 }
@@ -854,6 +858,17 @@ input {
 }
 
 @media (max-width: 640px) {
+  .modal-backdrop {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .edit-modal {
+    border-radius: 16px;
+    max-height: calc(100dvh - 24px);
+    padding: 18px;
+  }
+
   .summary-grid,
   .ops-grid,
   .edit-form {

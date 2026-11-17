@@ -59,7 +59,7 @@
             <div class="card-title">
               <div>
                 <h2>Dados e personalização</h2>
-                <p>Informações usadas no app, nos relatorios e na identificação da unidade.</p>
+                <p>Informações usadas no app, nos relatórios e na identificação da unidade.</p>
               </div>
               <span v-if="saved" class="saved-pill">
                 <ion-icon :icon="checkmarkCircleOutline" />
@@ -193,7 +193,7 @@
           <aside class="prefs-card">
             <div class="card-title">
               <div>
-                <h2>Preferencias</h2>
+                <h2>Preferências</h2>
                 <p>Como o Água+ deve se comportar para esta conta.</p>
               </div>
             </div>
@@ -213,8 +213,8 @@
               </label>
               <label class="switch-row">
                 <span>
-                  Resumo automatico
-                  <small>Preparar o relatorio semanal assim que houver leituras.</small>
+                  Resumo automático
+                  <small>Preparar o relatório semanal assim que houver leituras.</small>
                 </span>
                 <input v-model="weeklyReport" type="checkbox" />
               </label>
@@ -453,7 +453,7 @@ const avatarStyle = computed(() => ({
 }));
 
 const accountSummary = computed(() => {
-  const companyLabel = company.value || 'Instituição nao informada';
+  const companyLabel = company.value || 'Instituição não informada';
   const unitLabel = unit.value || 'Unidade não selecionada';
   return `${companyLabel} - ${unitLabel}`;
 });
@@ -735,7 +735,7 @@ const confirmEmailVerification = async () => {
 
     if (!isVerified) {
       ensureEmailVerificationNotification();
-      verificationMessage.value = 'Ainda nao consta como verificado. Abra o link enviado no e-mail e tente novamente.';
+      verificationMessage.value = 'Ainda não consta como verificado. Abra o link enviado no e-mail e tente novamente.';
       return;
     }
 
@@ -1331,6 +1331,8 @@ select:focus {
   display: flex;
   inset: 0;
   justify-content: center;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 20px;
   position: fixed;
   z-index: 20;
@@ -1345,6 +1347,8 @@ select:focus {
   display: grid;
   gap: 14px;
   max-width: 430px;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
   padding: 24px;
   width: min(100%, 430px);
 }
@@ -1443,6 +1447,17 @@ select:focus {
 }
 
 @media (max-width: 700px) {
+  .modal-backdrop {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .delete-modal {
+    border-radius: 16px;
+    max-height: calc(100dvh - 24px);
+    padding: 18px;
+  }
+
   .identity-card {
     align-items: flex-start;
     grid-template-columns: auto 1fr;

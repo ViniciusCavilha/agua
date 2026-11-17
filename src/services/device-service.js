@@ -387,7 +387,7 @@ export const createDevice = async (device) => {
     deviceId: created.id,
     deviceCode: nextDevice.deviceCode,
     type: 'device-waiting',
-    title: 'Dispositivo águardando conexão',
+    title: 'Dispositivo aguardando conexão',
     message: 'Este dispositivo simulado está pronto para receber leituras do ESP32 futuramente.',
     status: 'Aberto',
     createdAt: serverTimestamp(),
@@ -395,7 +395,7 @@ export const createDevice = async (device) => {
 
   await addDoc(collection(devicesRef, created.id, 'maintenanceOrders'), {
     title: 'Validar instalação do sensor',
-    description: 'Ordem simulada para registrar a futura verificação fisica do sensor de vazão.',
+    description: 'Ordem simulada para registrar a futura verificação física do sensor de vazão.',
     status: 'Planejáda',
     createdAt: serverTimestamp(),
   });
@@ -439,7 +439,7 @@ export const linkDeviceByCode = async ({
   );
 
   if (alreadyLinked) {
-    throw new Error('Este dispositivo já esta vinculado a sua conta.');
+    throw new Error('Este dispositivo já está vinculado à sua conta.');
   }
 
   return createDevice({
@@ -500,7 +500,7 @@ export const updateDevice = async (deviceId, updates) => {
   const currentDevice = await getDeviceById(deviceId);
 
   if (!currentDevice) {
-    throw new Error('Dispositivo nao encontrado.');
+    throw new Error('Dispositivo não encontrado.');
   }
 
   const nextUpdates = normalizeDevice({

@@ -118,7 +118,7 @@ export const ROLE_OPTIONS = [
   'Analista',
   'Professor',
   'Aluno',
-  'Responsavel pela unidade',
+  'Responsável pela unidade',
   'Outro',
 ];
 
@@ -149,6 +149,18 @@ const normalizeOwner = (value) => {
   return String(value || '')
     .trim()
     .toLowerCase();
+};
+
+export const getAccountStorageScope = (account = getAccount()) => {
+  if (account?.uid) {
+    return `uid:${account.uid}`;
+  }
+
+  if (account?.email) {
+    return `email:${normalizeOwner(account.email)}`;
+  }
+
+  return 'guest';
 };
 
 const getScopedAccountKey = (account = {}) => {
@@ -228,6 +240,8 @@ export const updateAccount = (account) => {
 
 export const deleteAccount = () => {
   const activeKey = getActiveAccountKey();
+  const activeAccount = getAccount();
+  const accountScope = getAccountStorageScope(activeAccount);
 
   if (activeKey) {
     localStorage.removeItem(activeKey);
@@ -237,6 +251,8 @@ export const deleteAccount = () => {
   localStorage.removeItem(ACCOUNT_KEY);
   localStorage.removeItem('agua-plus-goals');
   localStorage.removeItem('agua-plus-notifications');
+  localStorage.removeItem(`agua-plus-goals:${accountScope}`);
+  localStorage.removeItem(`agua-plus-notifications:${accountScope}`);
   window.dispatchEvent(new CustomEvent(ACCOUNT_EVENT, { detail: { ...fallbackAccount } }));
   return { ...fallbackAccount };
 };

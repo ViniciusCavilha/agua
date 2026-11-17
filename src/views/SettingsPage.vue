@@ -116,7 +116,7 @@
               <label class="switch-row">
                 <span>
                   Modo simulação
-                  <small>Usar leituras simuladas enquanto nao houver hardware conectado.</small>
+                  <small>Usar leituras simuladas enquanto não houver hardware conectado.</small>
                 </span>
                 <input :checked="settings.simulationMode" type="checkbox" @change="syncSimulationMode" />
               </label>
@@ -161,7 +161,7 @@
             <div class="panel-title">
               <div>
                 <h2>Padroes do painel</h2>
-                <p>Preferencias usadas nas telas de consumo e relatorios.</p>
+                <p>Preferências usadas nas telas de consumo e relatórios.</p>
               </div>
             </div>
 
@@ -169,7 +169,7 @@
               <label>
                 Período padrão
                 <select v-model="settings.defaultPeriod">
-                  <option>Diario</option>
+                  <option value="Diario">Diário</option>
                   <option>Semanal</option>
                   <option>Mensal</option>
                 </select>
@@ -179,7 +179,7 @@
                 Unidade de medida
                 <select v-model="settings.measurementUnit">
                   <option>Litros</option>
-                  <option>Metros cubicos</option>
+                  <option value="Metros cubicos">Metros cúbicos</option>
                 </select>
               </label>
             </div>
@@ -191,7 +191,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onUnmounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { IonContent, IonIcon, IonPage } from '@ionic/vue';
 import {
@@ -223,6 +223,9 @@ const settings = reactive(getSettings());
 const saved = ref(false);
 const isDark = ref(getSavedTheme() === 'dark');
 const pushPermission = ref(typeof Notification === 'undefined' ? 'unsupported' : Notification.permission);
+let remoteSyncTimer = null;
+let savedTimer = null;
+let pendingAccountSync = null;
 const readingIntervalStyle = computed(() => ({
   '--range-progress': (((Number(settings.readingInterval) - 5) / 55) * 100) + '%',
 }));
@@ -243,34 +246,58 @@ const pushStatus = computed(() => {
   }
 
   if (pushPermission.value === 'granted') {
-    return 'Permissao concedida para alertas locais do navegador.';
+    return 'Permissão concedida para alertas locais do navegador.';
   }
 
   if (pushPermission.value === 'denied') {
-    return 'Permissao bloqueada no navegador.';
+    return 'Permissão bloqueada no navegador.';
   }
 
-  return 'Pedir permissao para alertas locais do navegador.';
+  return 'Pedir permissão para alertas locais do navegador.';
 });
 
 const showSaved = () => {
   saved.value = true;
-  window.setTimeout(() => {
+  window.clearTimeout(savedTimer);
+  savedTimer = window.setTimeout(() => {
     saved.value = false;
   }, 1600);
 };
 
+const buildUpdatedAccount = () => updateAccount({
+  emailAlerts: settings.emailAlerts,
+  weeklyReport: settings.weeklySummary,
+  reportFrequency: settings.defaultPeriod,
+  theme: isDark.value ? 'dark' : 'light',
+  themeConfigured: true,
+  settings: { ...settings },
+});
+
+const syncAccountProfile = (account, immediate = false) => {
+  pendingAccountSync = account;
+  window.clearTimeout(remoteSyncTimer);
+
+  const sync = () => {
+    const nextAccount = pendingAccountSync;
+    pendingAccountSync = null;
+    remoteSyncTimer = null;
+
+    if (nextAccount) {
+      syncCurrentUserProfile(nextAccount).catch(() => {});
+    }
+  };
+
+  if (immediate) {
+    sync();
+    return;
+  }
+
+  remoteSyncTimer = window.setTimeout(sync, 500);
+};
+
 const saveAppSettings = () => {
   saveSettings(settings);
-  const account = updateAccount({
-    emailAlerts: settings.emailAlerts,
-    weeklyReport: settings.weeklySummary,
-    reportFrequency: settings.defaultPeriod,
-    theme: isDark.value ? 'dark' : 'light',
-    themeConfigured: true,
-    settings: { ...settings },
-  });
-  syncCurrentUserProfile(account).catch(() => {});
+  syncAccountProfile(buildUpdatedAccount(), true);
   showSaved();
 };
 
@@ -325,18 +352,20 @@ watch(
   settings,
   () => {
     saveSettings(settings);
-    const account = updateAccount({
-      emailAlerts: settings.emailAlerts,
-      weeklyReport: settings.weeklySummary,
-      reportFrequency: settings.defaultPeriod,
-      theme: isDark.value ? 'dark' : 'light',
-      themeConfigured: true,
-      settings: { ...settings },
-    });
-    syncCurrentUserProfile(account).catch(() => {});
+    syncAccountProfile(buildUpdatedAccount());
   },
   { deep: true },
 );
+
+onUnmounted(() => {
+  window.clearTimeout(savedTimer);
+  window.clearTimeout(remoteSyncTimer);
+
+  if (pendingAccountSync) {
+    syncCurrentUserProfile(pendingAccountSync).catch(() => {});
+    pendingAccountSync = null;
+  }
+});
 
 </script>
 

@@ -34,30 +34,41 @@
           <p class="interaction-hint">Selecione um período para descobrir o que ele deixou como legado.</p>
 
           <div class="timeline">
-            <button
+            <article
               v-for="(period, index) in historyPeriods"
               :key="period.title"
-              type="button"
-              class="timeline-card"
-              :class="{ active: selectedHistory === index }"
-              :aria-pressed="selectedHistory === index"
-              @click="selectedHistory = index"
+              class="timeline-item"
+              :class="{ open: selectedHistory === index }"
             >
-              <div class="timeline-index">{{ String(index + 1).padStart(2, '0') }}</div>
-              <span class="card-icon"><ion-icon :icon="period.icon" /></span>
-              <small>{{ period.period }}</small>
-              <h3>{{ period.title }}</h3>
-              <p>{{ period.description }}</p>
-            </button>
-          </div>
+              <button
+                type="button"
+                class="timeline-card"
+                :class="{ active: selectedHistory === index }"
+                :aria-expanded="selectedHistory === index"
+                @click="selectedHistory = selectedHistory === index ? null : index"
+              >
+                <div class="timeline-index">{{ String(index + 1).padStart(2, '0') }}</div>
+                <span class="card-icon"><ion-icon :icon="period.icon" /></span>
+                <small>{{ period.period }}</small>
+                <h3>{{ period.title }}</h3>
+                <p>{{ period.description }}</p>
+                <span class="card-action">
+                  {{ selectedHistory === index ? 'Fechar detalhes' : 'Descobrir o legado' }}
+                  <ion-icon :icon="chevronDownOutline" />
+                </span>
+              </button>
 
-          <div class="discovery-panel history-discovery" aria-live="polite">
-            <span class="discovery-icon"><ion-icon :icon="historyPeriods[selectedHistory].icon" /></span>
-            <div>
-              <small>Legado para o presente</small>
-              <h3>{{ historyPeriods[selectedHistory].legacyTitle }}</h3>
-              <p>{{ historyPeriods[selectedHistory].legacy }}</p>
-            </div>
+              <Transition name="timeline-reveal">
+                <div v-if="selectedHistory === index" class="timeline-detail" aria-live="polite">
+                  <span class="discovery-icon"><ion-icon :icon="period.icon" /></span>
+                  <div>
+                    <small>Legado para o presente</small>
+                    <h3>{{ period.legacyTitle }}</h3>
+                    <p>{{ period.legacy }}</p>
+                  </div>
+                </div>
+              </Transition>
+            </article>
           </div>
         </section>
 
@@ -275,7 +286,7 @@ const reuseOptions = [
   { title: 'Retorno planejado', description: 'Na agricultura, sistemas adequados podem recuperar parte da água e controlar uma nova aplicação.', application: 'Benefício: menor retirada das fontes e melhor aproveitamento do recurso.', guidance: 'É necessário acompanhar qualidade, sais e possíveis contaminantes para não prejudicar o solo nem as plantas. O retorno deve fazer parte de um projeto técnico adequado à cultura.', icon: leafOutline },
 ];
 
-const selectedHistory = ref(0);
+const selectedHistory = ref(null);
 const selectedIrrigation = ref(0);
 const expandedReuse = ref(null);
 
@@ -420,10 +431,16 @@ const goals = [
 }
 
 .timeline {
+  align-items: start;
   display: grid;
   gap: 14px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 24px;
+}
+
+.timeline-item {
+  display: grid;
+  min-width: 0;
 }
 
 .timeline-card {
@@ -451,6 +468,8 @@ const goals = [
 
 .timeline-card.active {
   background: color-mix(in srgb, var(--agua-agua) 8%, var(--agua-branco));
+  border-radius: 8px 8px 0 0;
+  transform: none;
 }
 
 .timeline-index {
@@ -509,6 +528,74 @@ const goals = [
   margin: 0;
 }
 
+.card-action {
+  align-items: center;
+  color: var(--agua-agua);
+  display: flex;
+  font-size: 9px;
+  font-weight: 800;
+  gap: 5px;
+  justify-content: space-between;
+  margin-top: 14px;
+}
+
+.card-action ion-icon {
+  font-size: 16px;
+  transition: transform 180ms ease;
+}
+
+.timeline-card.active .card-action ion-icon {
+  transform: rotate(180deg);
+}
+
+.timeline-detail {
+  align-items: start;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--agua-agua) 13%, var(--agua-branco)), var(--agua-branco));
+  border: 1px solid var(--agua-agua);
+  border-radius: 0 0 8px 8px;
+  border-top: 0;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: auto 1fr;
+  padding: 17px;
+  transform-origin: top;
+}
+
+.timeline-detail small {
+  color: var(--agua-agua);
+  display: block;
+  font-size: 9px;
+  font-weight: 800;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.timeline-detail h3 {
+  color: var(--agua-petroleo);
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 0 0 6px;
+}
+
+.timeline-detail p {
+  color: var(--agua-suave);
+  font-size: 10px;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.timeline-reveal-enter-active,
+.timeline-reveal-leave-active {
+  overflow: hidden;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.timeline-reveal-enter-from,
+.timeline-reveal-leave-to {
+  opacity: 0;
+  transform: translateY(-8px) scaleY(0.96);
+}
+
 .discovery-panel {
   background: color-mix(in srgb, var(--agua-agua) 8%, var(--agua-branco));
   border: 1px solid color-mix(in srgb, var(--agua-agua) 35%, var(--agua-borda));
@@ -517,11 +604,6 @@ const goals = [
   gap: 14px;
   margin-top: 18px;
   padding: 18px;
-}
-
-.history-discovery {
-  align-items: start;
-  grid-template-columns: auto 1fr;
 }
 
 .discovery-icon {

@@ -61,7 +61,7 @@ const buildDeviceStatusSummary = (devices = []) => {
 
 const getMainInsight = ({ report, alerts }) => {
   if (!report.devices.length) {
-    return 'O ambiente ainda não possui dispositivos vinculados. A estrutura já esta pronta para receber ESP32 e sensor de vazão.';
+    return 'O ambiente ainda não possui dispositivos vinculados. A estrutura já está pronta para receber ESP32 e sensor de vazão.';
   }
 
   if (alerts.some((alert) => alert.severity === 'critical')) {
@@ -211,7 +211,7 @@ const drawMetric = (page, { x, y, width, label, value, detail }) => {
 
 export const downloadReportPdf = (report) => {
   const page = pdfPainter();
-  const institution = report.account.company || 'Instituição nao informada';
+  const institution = report.account.company || 'Instituição não informada';
   const unit = report.account.unit || 'Unidade não informada';
   const fileName = `relatorio-${safeFileName(institution)}-${formatDate(report.generatedAt).replace(/\//g, '-')}.pdf`;
 
@@ -284,13 +284,13 @@ export const downloadReportPdf = (report) => {
 
   page.text('Dispositivos monitorados', margin, 632, 15, '#0d4b5e', true);
   const deviceLines = report.devices.length
-    ? report.devices.slice(0, 4).map((device) => `${device.name || 'Dispositivo'} | ${device.deviceCode || 'Sem código'} | ${device.status || 'Sem status'} | ${device.sensor?.name || 'Sensor nao definido'}`)
+    ? report.devices.slice(0, 4).map((device) => `${device.name || 'Dispositivo'} | ${device.deviceCode || 'Sem código'} | ${device.status || 'Sem status'} | ${device.sensor?.name || 'Sensor não definido'}`)
     : ['Nenhum dispositivo cadastrado no painel.'];
   deviceLines.forEach((line, index) => {
     page.text(line, margin, 656 + index * 16, 9, '#46656d');
   });
 
-  page.text('Alertas e ultimas leituras', margin, 735, 15, '#0d4b5e', true);
+  page.text('Alertas e últimas leituras', margin, 735, 15, '#0d4b5e', true);
   const alertText = report.alerts.length
     ? `${report.alerts.length} alerta(s): ${report.alerts.slice(0, 2).map((alert) => alert.title).join(', ')}`
     : 'Nenhum alerta técnico ativo no período.';

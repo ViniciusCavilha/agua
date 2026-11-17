@@ -197,10 +197,9 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { IonContent, IonIcon, IonPage, onIonViewDidLeave, onIonViewWillEnter } from '@ionic/vue';
 import { alertCircleOutline, hardwareChipOutline, shieldCheckmarkOutline, warningOutline } from 'ionicons/icons';
-import { useRoute } from 'vue-router';
 import AppShell from '../components/AppShell.vue';
 import ListItem from '../components/ListItem.vue';
 import MetricCard from '../components/MetricCard.vue';
@@ -214,7 +213,6 @@ import { generateTechnicalAlerts, syncTechnicalAlertNotifications } from '../ser
 
 const selectedMetric = ref(null);
 const activeHour = ref('');
-const route = useRoute();
 const devices = ref([]);
 const liveDeviceReadings = ref([]);
 const selectedDeviceId = ref('all');
@@ -222,6 +220,8 @@ const devicesError = ref('');
 let stopAuthListener = null;
 let stopSettingsListener = null;
 let stopReadingsListener = null;
+let activeUserId = getCurrentUser()?.uid || '';
+let loadSequence = 0;
 const settings = ref(getSettings());
 const consumptionData = ref(getConsumptionReadings(settings.value, devices.value));
 const dashboardGoal = computed(() => userGoals.value[0] || null);
@@ -464,11 +464,19 @@ const subscribeToRealtimeReadings = () => {
 };
 
 const loadDashboardDevices = async () => {
+  const requestId = ++loadSequence;
+  const requestedUserId = getCurrentUser()?.uid || '';
   settings.value = getSettings();
 
   try {
     devicesError.value = '';
-    devices.value = await listDevices();
+    const nextDevices = await listDevices();
+
+    if (requestId !== loadSequence || requestedUserId !== (getCurrentUser()?.uid || '')) {
+      return;
+    }
+
+    devices.value = nextDevices;
     if (selectedDeviceId.value !== 'all' && !devices.value.some((device) => device.id === selectedDeviceId.value)) {
       selectedDeviceId.value = 'all';
     }
@@ -476,6 +484,10 @@ const loadDashboardDevices = async () => {
     subscribeToRealtimeReadings();
     syncTechnicalAlertNotifications(technicalAlerts.value);
   } catch (error) {
+    if (requestId !== loadSequence) {
+      return;
+    }
+
     stopRealtimeReadings();
     devicesError.value = 'Não foi possível carregar dispositivos.';
     devices.value = [];
@@ -499,26 +511,30 @@ onIonViewWillEnter(loadDashboardDevices);
 onIonViewDidLeave(stopRealtimeReadings);
 
 onMounted(() => {
-  stopAuthListener = watchAuthUser(() => {
-    loadDashboardDevices();
-  });
+  stopAuthListener = watchAuthUser((user) => {
+    const nextUserId = user?.uid || '';
 
-  if (getCurrentUser()) {
-    loadDashboardDevices();
-  }
+    if (nextUserId === activeUserId) {
+      return;
+    }
+
+    activeUserId = nextUserId;
+    loadSequence += 1;
+    stopRealtimeReadings();
+    devices.value = [];
+    liveDeviceReadings.value = [];
+    selectedDeviceId.value = 'all';
+    devicesError.value = '';
+    consumptionData.value = getConsumptionReadings(settings.value, []);
+
+    if (user) {
+      loadDashboardDevices();
+    }
+  });
 
   window.addEventListener('focus', refreshDashboardDevices);
   stopSettingsListener = onSettingsChange(refreshDashboardSettings);
 });
-
-watch(
-  () => route.path,
-  (path) => {
-    if (path === '/dashboard') {
-      loadDashboardDevices();
-    }
-  },
-);
 
 onUnmounted(() => {
   stopAuthListener?.();
@@ -1169,6 +1185,8 @@ onUnmounted(() => {
   display: flex;
   inset: 0;
   justify-content: center;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 20px;
   position: fixed;
   z-index: 20;
@@ -1183,6 +1201,8 @@ onUnmounted(() => {
   display: grid;
   gap: 10px;
   max-width: 430px;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
   padding: 24px;
   position: relative;
   width: min(100%, 430px);
@@ -1291,6 +1311,17 @@ onUnmounted(() => {
 }
 
 @media (max-width: 560px) {
+  .metric-backdrop {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .metric-panel {
+    border-radius: 16px;
+    max-height: calc(100dvh - 24px);
+    padding: 20px;
+  }
+
   .hero-strip {
     grid-template-columns: 1fr;
     padding: 22px;

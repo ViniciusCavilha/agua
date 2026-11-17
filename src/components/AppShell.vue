@@ -26,10 +26,10 @@
           type="button"
           :aria-expanded="isMobileNavOpen"
           aria-controls="mobile-navigation"
-          aria-label="Abrir menu"
+          :aria-label="isMobileNavOpen ? 'Fechar menu' : 'Abrir menu'"
           @click="toggleMobileNav"
         >
-          <ion-icon :icon="menuOutline" />
+          <ion-icon :icon="isMobileNavOpen ? closeOutline : menuOutline" />
         </button>
         <div>
           <p>{{ displayedEyebrow }}</p>
@@ -95,7 +95,21 @@
       <slot />
     </section>
 
-    <nav id="mobile-navigation" class="bottom-nav" :class="{ open: isMobileNavOpen }" aria-label="Navegação mobile">
+    <button
+      v-if="isMobileNavOpen"
+      class="nav-backdrop"
+      type="button"
+      aria-label="Fechar navegação"
+      @click="closeMobileNav"
+    />
+
+    <nav
+      id="mobile-navigation"
+      class="bottom-nav"
+      :class="{ open: isMobileNavOpen }"
+      :aria-hidden="!isMobileNavOpen"
+      aria-label="Navegação mobile"
+    >
       <router-link v-for="item in bottomNavItems" :key="item.to" :to="item.to" :class="{ active: isActive(item.to) }" @click="handleMobileNavigation">
         <ion-icon :icon="item.icon" />
         <span>{{ item.shortLabel }}</span>
@@ -105,12 +119,13 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { IonIcon } from '@ionic/vue';
 import {
   barChartOutline,
   chevronDownOutline,
+  closeOutline,
   documentTextOutline,
   earthOutline,
   hardwareChipOutline,
@@ -166,6 +181,7 @@ const account = ref(getAccount());
 let stopNotificationsListener = null;
 let stopAccountListener = null;
 let stopAuthListener = null;
+let previousBodyOverflow = '';
 
 const navItems = [
   { label: 'Início', shortLabel: 'Início', to: '/dashboard', icon: homeOutline },
@@ -189,7 +205,7 @@ const periodOptions = [
 ];
 
 const firstName = computed(() => String(account.value.name || '').trim().split(/\s+/).filter(Boolean)[0] || '');
-const displayedEyebrow = computed(() => props.eyebrow || (firstName.value ? `Ola, ${firstName.value}` : 'Ola'));
+const displayedEyebrow = computed(() => props.eyebrow || (firstName.value ? `Olá, ${firstName.value}` : 'Olá'));
 const displayedMobileTitle = computed(() => props.mobileTitle || props.title);
 
 const refreshAccountName = async (user = getCurrentUser()) => {
@@ -270,6 +286,18 @@ const readAllNotifications = () => {
   notifications.value = markAllNotificationsRead();
 };
 
+const closeFloatingMenus = () => {
+  closePeriodMenu();
+  isNotificationsOpen.value = false;
+  closeMobileNav();
+};
+
+const handleEscapeKey = (event) => {
+  if (event.key === 'Escape') {
+    closeFloatingMenus();
+  }
+};
+
 const isActive = (path) => {
   if (path === '/consumo' || path === '/dispositivos') {
     return route.path.startsWith(path);
@@ -279,6 +307,8 @@ const isActive = (path) => {
 };
 
 onMounted(() => {
+  previousBodyOverflow = document.body.style.overflow;
+  window.addEventListener('keydown', handleEscapeKey);
   stopNotificationsListener = onNotificationsChange(refreshNotifications);
   stopAccountListener = onAccountChange((nextAccount) => {
     account.value = nextAccount;
@@ -290,9 +320,20 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  document.body.style.overflow = previousBodyOverflow;
+  window.removeEventListener('keydown', handleEscapeKey);
   stopNotificationsListener?.();
   stopAccountListener?.();
   stopAuthListener?.();
+});
+
+watch(
+  () => route.fullPath,
+  closeFloatingMenus,
+);
+
+watch(isMobileNavOpen, (isOpen) => {
+  document.body.style.overflow = isOpen ? 'hidden' : previousBodyOverflow;
 });
 </script>
 
@@ -302,6 +343,7 @@ onUnmounted(() => {
   color: var(--agua-texto);
   font-family: Poppins, sans-serif;
   min-height: 100%;
+  overflow-x: clip;
   padding-left: 248px;
 }
 
@@ -390,6 +432,7 @@ onUnmounted(() => {
   max-width: 1180px;
   padding: 28px clamp(18px, 4vw, 44px) 34px;
   width: 100%;
+  min-width: 0;
 }
 
 .topbar {
@@ -479,7 +522,9 @@ onUnmounted(() => {
 
 .notification-card {
   gap: 8px;
+  max-height: min(70vh, 520px);
   min-width: 310px;
+  overflow-y: auto;
 }
 
 .notification-head {
@@ -593,7 +638,8 @@ onUnmounted(() => {
 }
 
 .mobile-only,
-.bottom-nav {
+.bottom-nav,
+.nav-backdrop {
   display: none;
 }
 
@@ -609,7 +655,7 @@ onUnmounted(() => {
   }
 
   .workspace {
-    padding: 22px 18px;
+    padding: calc(22px + env(safe-area-inset-top)) 18px calc(22px + env(safe-area-inset-bottom));
   }
 
   .topbar {
@@ -670,7 +716,7 @@ onUnmounted(() => {
     justify-content: flex-start;
     left: 0;
     overflow-y: auto;
-    padding: 88px 16px 22px;
+    padding: calc(88px + env(safe-area-inset-top)) 16px calc(22px + env(safe-area-inset-bottom));
     position: fixed;
     top: 0;
     transform: translateX(-104%);
@@ -679,6 +725,17 @@ onUnmounted(() => {
     visibility: hidden;
     width: min(72vw, 252px);
     z-index: 6;
+  }
+
+  .nav-backdrop {
+    background: rgba(3, 16, 20, 0.42);
+    border: 0;
+    display: block;
+    inset: 0;
+    padding: 0;
+    position: fixed;
+    width: 100%;
+    z-index: 5;
   }
 
   .bottom-nav.open {

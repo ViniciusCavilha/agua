@@ -146,7 +146,7 @@
               </label>
               <label>
                 Local de instalação
-                <input v-model="linkForm.location" type="text" placeholder="Ex: Laboratorio 2" required />
+                <input v-model="linkForm.location" type="text" placeholder="Ex: Laboratório 2" required />
               </label>
               <label>
                 Unidade vinculada
@@ -953,6 +953,8 @@ onUnmounted(() => {
   display: flex;
   inset: 0;
   justify-content: center;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 20px;
   position: fixed;
   z-index: 20;
@@ -968,6 +970,8 @@ onUnmounted(() => {
   display: grid;
   gap: 14px;
   max-width: 430px;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
   padding: 24px;
   width: min(100%, 430px);
 }
@@ -1129,6 +1133,18 @@ onUnmounted(() => {
 }
 
 @media (max-width: 620px) {
+  .modal-backdrop {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .delete-modal,
+  .edit-modal {
+    border-radius: 16px;
+    max-height: calc(100dvh - 24px);
+    padding: 18px;
+  }
+
   .architecture-grid,
   .device-meta,
   .reading-row {
@@ -1147,6 +1163,11 @@ onUnmounted(() => {
 
   .edit-form {
     grid-template-columns: 1fr;
+  }
+
+  .modal-actions > button {
+    flex: 1 1 130px;
+    justify-content: center;
   }
 }
 </style>

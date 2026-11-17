@@ -13,7 +13,7 @@
               <ion-icon :icon="personAddOutline" />
               Novo acesso
             </span>
-            <h1>Crie sua conta para comecar a monitorar.</h1>
+            <h1>Crie sua conta para começar a monitorar.</h1>
             <p>Cadastre sua instituição e acompanhe consumo, metas e economia em um painel simples.</p>
           </div>
 
@@ -136,7 +136,7 @@
             </PrimaryButton>
           </form>
 
-          <p v-if="errorMessage" class="auth-error">{{ errorMessage }}</p>
+          <p v-if="errorMessage" class="auth-error" role="alert">{{ errorMessage }}</p>
 
           <div class="divider"><span />ou cadastre com<span /></div>
 
@@ -148,10 +148,10 @@
           <p class="switch-auth">Já tem uma conta? <router-link to="/login">Entrar</router-link></p>
         </section>
 
-        <aside class="info-panel" aria-label="Beneficios Água+">
+        <aside class="info-panel" aria-label="Benefícios Água+">
           <div class="info-content">
             <div class="drop"><ion-icon :icon="waterOutline" /></div>
-            <h2>Seu consumo, finalmente visivel.</h2>
+            <h2>Seu consumo, finalmente visível.</h2>
             <p>Organize leituras, acompanhe metas e entregue indicadores claros para a equipe.</p>
 
             <div class="benefits">
@@ -328,7 +328,7 @@ const getAuthMessage = (error) => {
   const code = error?.code || '';
 
   if (code.includes('permission-denied') || String(error?.message || '').includes('Missing or insufficient permissions')) {
-    return 'Sessao local antiga limpa. Tente criar a conta novamente.';
+    return 'Sessão local antiga limpa. Tente criar a conta novamente.';
   }
 
   if (code.includes('email-already-in-use')) {

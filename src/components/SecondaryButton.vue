@@ -1,5 +1,5 @@
 ﻿<template>
-  <button class="secondary" :disabled="disabled">
+  <button class="secondary" :type="type" :disabled="disabled">
     <span>
       <slot />
     </span>
@@ -8,6 +8,10 @@
 
 <script setup>
 defineProps({
+  type: {
+    type: String,
+    default: 'button',
+  },
   disabled: {
     type: Boolean,
     default: false,
